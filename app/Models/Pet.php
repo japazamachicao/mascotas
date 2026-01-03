@@ -16,8 +16,13 @@ class Pet extends Model
         'breed',
         'birth_date',
         'gender',
+        'color',
         'weight',
+        'chip_id',
+        'is_sterilized',
         'medical_notes',
+        'behavior',
+        'health_features',
         'profile_photo_path',
         'uuid',
         'qr_code_path',
@@ -26,7 +31,15 @@ class Pet extends Model
     protected $casts = [
         'birth_date' => 'date',
         'weight' => 'decimal:2',
+        'is_sterilized' => 'boolean',
+        'behavior' => 'array',
+        'health_features' => 'array',
     ];
+
+    public function getRouteKeyName()
+    {
+        return 'uuid';
+    }
 
     public function owner()
     {

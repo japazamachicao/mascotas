@@ -26,6 +26,9 @@ class Profile extends Component
     public $appointmentDate;
     public $appointmentTime;
     public $appointmentNotes;
+    
+    // Contact Modal
+    public $showContactModal = false;
 
     protected $rules = [
         'rating' => 'required|integer|min:1|max:5',

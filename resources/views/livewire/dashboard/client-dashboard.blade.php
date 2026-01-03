@@ -48,14 +48,29 @@
                     </div>
                     {{-- Actions --}}
                     <div class="bg-gray-50 px-5 py-3">
-                        <div class="text-sm flex justify-between">
-                            <a href="{{ route('pet.profile', $pet->uuid) }}" target="_blank" class="font-medium text-primary-600 hover:text-primary-500 flex items-center">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                Ver QR Público
-                            </a>
-                            <a href="#" class="font-medium text-gray-500 hover:text-gray-700">
-                                Editar
-                            </a>
+                        <div class="mt-4 flex flex-col gap-3">
+                            <!-- Quick Actions / Progress -->
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{{ route('dashboard.pet.edit', ['pet' => $pet->uuid, 'section' => 'behavior']) }}" 
+                                   class="flex-1 inline-flex justify-center items-center px-3 py-1.5 rounded-lg border {{ $pet->behavior ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100' }} text-xs font-medium transition">
+                                    <span class="mr-1">🧠</span> {{ $pet->behavior ? 'Carácter' : 'Agregar' }}
+                                </a>
+                                <a href="{{ route('dashboard.pet.edit', ['pet' => $pet->uuid, 'section' => 'health']) }}" 
+                                   class="flex-1 inline-flex justify-center items-center px-3 py-1.5 rounded-lg border {{ $pet->health_features ? 'border-green-200 bg-green-50 text-green-700' : 'border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100' }} text-xs font-medium transition">
+                                    <span class="mr-1">🩺</span> {{ $pet->health_features ? 'Salud' : 'Agregar' }}
+                                </a>
+                            </div>
+
+                            <div class="border-t border-gray-100 pt-3 flex justify-between items-center">
+                                <a href="{{ route('pet.profile', $pet->uuid) }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                    Ver Perfil
+                                </a>
+                                <a href="{{ route('dashboard.pet.edit', $pet) }}" class="text-gray-500 hover:text-gray-700 text-sm font-medium flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    Editar
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

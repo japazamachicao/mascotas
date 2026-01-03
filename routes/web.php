@@ -32,6 +32,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
     Route::get('/dashboard/proveedor', \App\Livewire\Dashboard\ProviderDashboard::class)->name('dashboard.provider');
     Route::get('/dashboard/mascota/crear', \App\Livewire\Dashboard\PetForm::class)->name('dashboard.pet.create');
+    Route::get('/dashboard/mascota/editar/{pet}', \App\Livewire\Dashboard\PetForm::class)->name('dashboard.pet.edit');
+    Route::get('/dashboard/direcciones', \App\Livewire\Dashboard\ClientAddresses::class)->name('dashboard.addresses');
 });
 
 Route::get('/seed-services', function () {
