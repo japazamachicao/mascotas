@@ -46,20 +46,8 @@
                  @endif
              </div>
              
-             <!-- Badges / Etiquetas Rápidas -->
+             <!-- Badges removidos y movidos a la sección de detalles -->
              <div class="mt-2 flex flex-wrap justify-center gap-2">
-                 @if(($profile->emergency_24h ?? false))
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 shadow-sm">
-                        🚨 Emergencias 24h
-                    </span>
-                 @endif
-                 
-                 @if(($profile->allows_home_visits ?? false))
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 shadow-sm">
-                        🏠 A Domicilio
-                    </span>
-                 @endif
-
                  @if(($profile->district))
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white bg-opacity-20 text-white border border-white border-opacity-30 backdrop-blur-sm">
                         📍 {{ $profile->district->name }}, {{ $profile->district->province->name ?? '' }}
@@ -135,19 +123,181 @@
                                 @endif
                                 
                                 <!-- Detalles específicos por rol -->
+                                <!-- Detalles específicos por rol -->
                                 <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Detalles específicos por rol -->
+                                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                     <!-- Veterinario -->
                                      @if($user->hasRole('veterinarian'))
-                                        <div class="border rounded p-3">
-                                            <span class="block text-xs text-gray-500 uppercase">CMVP</span>
-                                            <span class="font-medium text-gray-900">{{ $profile->license_number }}</span>
+                                        <div class="border rounded-lg p-4 bg-emerald-50 border-emerald-100 col-span-full">
+                                            <h4 class="text-xs text-emerald-800 uppercase font-bold mb-3">Servicios y Credenciales</h4>
+                                            <div class="flex flex-wrap gap-3 items-center">
+                                                <div class="border-r border-emerald-200 pr-4 mr-2">
+                                                    <span class="block text-[10px] text-emerald-600 uppercase tracking-wider">CMVP</span>
+                                                    <span class="font-bold text-gray-900 text-lg">{{ $profile->license_number }}</span>
+                                                </div>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @if($profile->emergency_24h ?? false)
+                                                        <span class="bg-white text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm">
+                                                            🚨 Emergencias 24h
+                                                        </span>
+                                                    @endif
+                                                    @if($profile->allows_home_visits ?? false)
+                                                        <span class="bg-white text-emerald-600 border border-emerald-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm">
+                                                            🏠 A Domicilio
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </div>
                                      @endif
+
+                                     <!-- Groomer / Estilista -->
+                                     @if($user->hasRole('groomer'))
+                                        <div class="border rounded-lg p-4 bg-pink-50 border-pink-100 col-span-full">
+                                            <h4 class="text-xs text-pink-800 uppercase font-bold mb-3">Detalles del Servicio</h4>
+                                            <div class="flex flex-wrap gap-2">
+                                                @if($profile->allows_home_visits ?? false)
+                                                    <span class="bg-white text-pink-600 border border-pink-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm">
+                                                        ✂️ Servicio a Domicilio
+                                                    </span>
+                                                @else
+                                                    <span class="bg-white text-gray-600 border border-gray-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm">
+                                                        🏢 Atención en Local
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                     @endif
+
+                                     <!-- Paseador -->
+                                     @if($user->hasRole('walker'))
+                                        <div class="border rounded-lg p-4 bg-yellow-50 border-yellow-100 col-span-full">
+                                            <h4 class="text-xs text-yellow-800 uppercase font-bold mb-3">Experiencia</h4>
+                                            <p class="text-sm text-gray-700">{{ $profile->experience ?? 'Experiencia no especificada.' }}</p>
+                                        </div>
+                                     @endif
+
+                                     <!-- Hotel -->
+                                     @if($user->hasRole('hotel'))
+                                        <div class="border rounded-lg p-4 bg-indigo-50 border-indigo-100 col-span-full">
+                                            <h4 class="text-xs text-indigo-800 uppercase font-bold mb-3">Detalles del Hospedaje</h4>
+                                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                                <div class="bg-white/60 p-2 rounded border border-indigo-100/50">
+                                                    <span class="block text-[10px] text-gray-500 uppercase tracking-wider">Check-in</span>
+                                                    <span class="font-bold text-indigo-900 text-lg">{{ $profile->check_in_time ? \Carbon\Carbon::parse($profile->check_in_time)->format('H:i') : '--' }}</span>
+                                                </div>
+                                                <div class="bg-white/60 p-2 rounded border border-indigo-100/50">
+                                                    <span class="block text-[10px] text-gray-500 uppercase tracking-wider">Check-out</span>
+                                                    <span class="font-bold text-indigo-900 text-lg">{{ $profile->check_out_time ? \Carbon\Carbon::parse($profile->check_out_time)->format('H:i') : '--' }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-wrap gap-2">
+                                                @if($profile->cage_free)
+                                                    <span class="bg-white text-indigo-600 border border-indigo-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">🚫 Sin Jaulas</span>
+                                                @endif
+                                                @if($profile->has_transport)
+                                                    <span class="bg-white text-indigo-600 border border-indigo-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">🚙 Movilidad Incluida</span>
+                                                @endif
+                                                @if($profile->emergency_24h ?? false)
+                                                    <span class="bg-white text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">🚨 Atención 24h</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                     @endif
+
+                                     <!-- Adiestrador -->
+                                     @if($user->hasRole('trainer'))
+                                        <div class="border rounded-lg p-4 bg-purple-50 border-purple-100 col-span-full">
+                                            <h4 class="text-xs text-purple-800 uppercase font-bold mb-3">Enfoque de Adiestramiento</h4>
+                                            <div class="flex flex-col sm:flex-row gap-4">
+                                                <div class="flex-1">
+                                                    <span class="block text-[10px] text-gray-500 uppercase">Metodología</span>
+                                                    <span class="font-medium text-gray-900 font-bold">{{ $profile->methodology ?? 'No especificada' }}</span>
+                                                </div>
+                                                <div class="flex items-center">
+                                                    @if($profile->allows_home_visits ?? false)
+                                                        <span class="bg-white text-purple-600 border border-purple-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">
+                                                            🏠 Clases a Domicilio
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                     @endif
+
+                                     <!-- Cuidador -->
+                                     @if($user->hasRole('pet_sitter'))
+                                        <div class="border rounded-lg p-4 bg-orange-50 border-orange-100 col-span-full">
+                                            <h4 class="text-xs text-orange-800 uppercase font-bold mb-3">Sobre el Cuidado</h4>
+                                            <div class="flex flex-wrap gap-3">
+                                                 <span class="bg-white text-orange-600 border border-orange-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
+                                                    🏠 Tipo de Vivienda: {{ $profile->housing_type }}
+                                                 </span>
+                                                 @if($profile->has_yard)
+                                                    <span class="bg-white text-green-600 border border-green-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
+                                                        🌳 Tiene Patio
+                                                    </span>
+                                                 @endif
+                                                 @if($profile->allows_home_visits ?? false)
+                                                    <span class="bg-white text-teal-600 border border-teal-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
+                                                        🚗 Va a tu casa
+                                                    </span>
+                                                 @endif
+                                            </div>
+                                        </div>
+                                     @endif
+                                     
+                                     <!-- Pet Taxi -->
+                                     @if($user->hasRole('pet_taxi'))
+                                        <div class="border rounded-lg p-4 bg-gray-50 border-gray-200 col-span-full">
+                                            <h4 class="text-xs text-gray-700 uppercase font-bold mb-3">Vehículo y Comodidades</h4>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                                                <div>
+                                                    <span class="block text-[10px] text-gray-500 uppercase">Vehículo</span>
+                                                    <span class="font-bold text-gray-900 text-lg">{{ $profile->vehicle_type ?? 'Estándar' }}</span>
+                                                </div>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @if($profile->has_ac)
+                                                        <span class="bg-white text-sky-600 border border-sky-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">❄️ Aire Acondicionado</span>
+                                                    @endif
+                                                    @if($profile->provides_crate)
+                                                        <span class="bg-white text-amber-600 border border-amber-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">📦 Transportadora</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                     @endif
+
+                                     <!-- Fotógrafo -->
+                                     @if($user->hasRole('pet_photographer'))
+                                        <div class="border rounded-lg p-4 bg-cyan-50 border-cyan-100 col-span-full">
+                                            <h4 class="text-xs text-cyan-800 uppercase font-bold mb-3">Estilo y Equipo</h4>
+                                            <div class="flex flex-wrap gap-3">
+                                                 <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
+                                                    📸 Especialidad: {{ $profile->specialty ?? 'General' }}
+                                                 </span>
+                                                 @if($profile->has_studio ?? false)
+                                                    <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
+                                                        💡 Estudio Propio
+                                                    </span>
+                                                 @else
+                                                     <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
+                                                        🏞️ Exteriores / A Domicilio
+                                                     </span>
+                                                 @endif
+                                            </div>
+                                        </div>
+                                     @endif
+
+                                     <!-- Albergue -->
                                      @if($user->hasRole('shelter') && $profile->donation_info)
-                                        <div class="col-span-full bg-blue-50 border border-blue-100 rounded p-4">
-                                            <span class="block text-xs text-blue-500 uppercase font-bold mb-1">Información de Donaciones</span>
+                                        <div class="col-span-full bg-blue-50 border border-blue-100 rounded-lg p-4">
+                                            <span class="block text-xs text-blue-500 uppercase font-bold mb-2">Información de Donaciones</span>
                                             <p class="text-sm text-blue-900 whitespace-pre-line">{{ $profile->donation_info }}</p>
                                         </div>
                                      @endif
+                                </div>
                                 </div>
                             </div>
                         
@@ -216,6 +366,15 @@
                                         </div>
                                     @endif
                                 @endauth
+                                
+                                @guest
+                                    <div class="bg-blue-50 p-6 rounded-lg border border-blue-100 mb-8 text-center">
+                                        <p class="text-blue-800 text-sm mb-3">¿Has contratado a este proveedor? Inicia sesión para compartir tu experiencia.</p>
+                                        <a href="{{ route('login') }}" class="inline-block bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 font-semibold py-2 px-4 rounded shadow-sm text-sm transition">
+                                            Iniciar Sesión para Opinar
+                                        </a>
+                                    </div>
+                                @endguest
 
                                 <!-- Controles de Filtros -->
                                 <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
@@ -256,25 +415,104 @@
                                 </div>
 
                                 <!-- Paginación con Estilos Explícitos -->
-                                <div class="mt-4 flex justify-center text-primary-600">
+                                <div class="mt-8"> <!-- Margen superior aumentado -->
                                     <style>
-                                        /* Override para paginación Azul (Primary) */
-                                        nav[role="navigation"] .hidden.sm\:flex-1.sm\:flex.sm\:items-center.sm\:justify-between {
+                                        /* Contenedor principal de la paginación */
+                                        nav[role="navigation"] {
                                             display: flex;
-                                            flex-direction: column;
+                                            justify-content: flex-end; /* A la derecha */
+                                            width: 100%;
                                             align-items: center;
                                         }
-                                        nav[role="navigation"] p {
-                                            color: #4B5563 !important; /* gray-600 */
-                                            margin-bottom: 10px;
+                                        
+                                        /* Forzar visualización flex para el contenedor interno de Laravel */
+                                        nav[role="navigation"] > div:nth-child(2) {
+                                            display: flex !important;
+                                            width: 100%;
+                                            justify-content: flex-end;
                                         }
-                                        nav[role="navigation"] span[aria-current="page"] > span {
-                                            background-color: #2563eb !important; /* blue-600 */
-                                            color: white !important;
+
+                                        /* Bloque de texto "Showing results..." */
+                                        nav[role="navigation"] div.hidden.sm\:flex-1.sm\:flex.sm\:items-center.sm\:justify-between > div:first-child p {
+                                            margin-bottom: 0 !important;
+                                            margin-right: 1.5rem; /* Separación con los números */
+                                            color: #6B7280 !important; /* gray-500 */
+                                            font-size: 0.875rem !important;
+                                            display: inline-block !important;
+                                            white-space: nowrap; /* Evitar saltos de línea */
+                                        }
+
+                                        /* Bloque de Botones (Números y Flechas) */
+                                        /* Quitamos el shadow y el border-radius del contenedor para que no se vea como un "rectángulo" */
+                                        /* Laravel usa 'isolate inline-flex -space-x-px rounded-md shadow-sm' en el span contenedor */
+                                        nav[role="navigation"] span.isolate,
+                                        nav[role="navigation"] span.shadow-sm {
+                                            box-shadow: none !important;
+                                            border-radius: 0 !important;
+                                            display: inline-flex !important;
+                                            gap: 0.25rem !important; /* Separar los botones un poco */
+                                        }
+
+                                        /* Asegurarnos de matar cualquier borde o ring en el contenedor */
+                                        nav[role="navigation"] span.isolate {
+                                            border: none !important;
+                                            box-shadow: none !important;
+                                            --tw-ring-color: transparent !important;
+                                            --tw-ring-offset-width: 0px !important;
+                                            --tw-ring-offset-color: transparent !important;
+                                            --tw-ring-width: 0px !important;
+                                        }
+
+                                        /* Estilos Base para TODOS los links/spans de paginación */
+                                        nav[role="navigation"] span.relative.inline-flex,
+                                        nav[role="navigation"] a.relative.inline-flex,
+                                        nav[role="navigation"] button.relative.inline-flex {
+                                            display: inline-flex !important;
+                                            align-items: center !important;
+                                            padding: 0.5rem 1rem !important; /* px-4 py-2 */
+                                            border: 1px solid #E5E7EB !important; /* border-gray-200 más suave */
+                                            background-color: #FFFFFF !important; /* bg-white por defecto */
+                                            color: #374151 !important; /* text-gray-700 */
+                                            font-size: 0.875rem !important; /* text-sm */
+                                            font-weight: 500 !important;
+                                            line-height: 1.25rem !important;
+                                            border-radius: 0.375rem !important; /* Redondear cada botón individualmente */
+                                            margin-left: 0 !important; /* Reset margin */
+                                            
+                                            /* Matar los focus rings de los botones individuales también por si acaso */
+                                            --tw-ring-color: transparent !important; 
+                                        }
+                                        
+                                        nav[role="navigation"] span.relative.inline-flex:first-child,
+                                        nav[role="navigation"] a.relative.inline-flex:first-child {
+                                             border-top-left-radius: 0.375rem;
+                                             border-bottom-left-radius: 0.375rem;
+                                        }
+                                        nav[role="navigation"] span.relative.inline-flex:last-child,
+                                        nav[role="navigation"] a.relative.inline-flex:last-child {
+                                             border-top-right-radius: 0.375rem;
+                                             border-bottom-right-radius: 0.375rem;
+                                        }
+
+                                        /* SOBRESCRIBIR ESTADO ACTIVO (Importante) */
+                                        /* Span que actúa como activo (Laravel lo envuelve en un span con aria-current) */
+                                        nav[role="navigation"] span[aria-current="page"] > span.relative.inline-flex {
+                                            background-color: #2563eb !important; /* AZUL */
+                                            color: #FFFFFF !important; /* BLANCO */
                                             border-color: #2563eb !important;
+                                            z-index: 10;
                                         }
-                                        nav[role="navigation"] a:hover {
-                                            background-color: #eff6ff !important; /* blue-50 */
+
+                                        /* Hover para los inactivos */
+                                        nav[role="navigation"] a.relative.inline-flex:hover {
+                                            background-color: #F3F4F6 !important; /* gray-50 */
+                                            color: #111827 !important; /* gray-900 */
+                                        }
+
+                                        /* Ajustes para SVGs (Flechas) */
+                                        nav[role="navigation"] svg {
+                                            width: 1.25rem !important;
+                                            height: 1.25rem !important;
                                         }
                                     </style>
                                     {{ $reviews->links() }}
@@ -300,7 +538,7 @@
                         </p>
                     </div>
 
-                    <button wire:click="$set('showBookingModal', true)" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none transform transition hover:-translate-y-0.5">
+                    <button wire:click="$set('showBookingModal', true)" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition">
                         Reservar Cita
                     </button>
                     

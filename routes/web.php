@@ -34,6 +34,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/mascota/crear', \App\Livewire\Dashboard\PetForm::class)->name('dashboard.pet.create');
 });
 
+Route::get('/seed-services', function () {
+    $seeder = new \Database\Seeders\ServiceSeeder();
+    $seeder->run();
+    return "Servicios sembrados correctamente! Ahora ve a <a href='/buscar'>/buscar</a>";
+});
+
 Route::post('/logout', function () {
     Auth::logout();
     request()->session()->invalidate();
