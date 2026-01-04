@@ -77,7 +77,7 @@
                                 <a href="{{ route('dashboard.addresses') }}" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('dashboard.addresses') ? 'border-primary-500 text-gray-900' : '' }}">
                                     Mis Direcciones
                                 </a>
-                                <a href="#" class="border-transparent text-gray-400 hover:text-gray-500 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 cursor-not-allowed" title="Próximamente">
+                                <a href="{{ route('dashboard.favorites') }}" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('dashboard.favorites') ? 'border-primary-500 text-gray-900' : '' }}">
                                     Favoritos
                                 </a>
                                 <a href="#" class="border-transparent text-gray-400 hover:text-gray-500 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 cursor-not-allowed" title="Próximamente">

@@ -106,6 +106,12 @@ class User extends Authenticatable
         return $this->hasRole('client');
     }
 
+    // Relaciones de Favoritos
+    public function favoriteProviders()
+    {
+        return $this->belongsToMany(User::class, 'favorites', 'user_id', 'provider_id')->withTimestamps();
+    }
+
     // Nuevas relaciones para Reseñas y Citas
     public function reviewsReceived()
     {

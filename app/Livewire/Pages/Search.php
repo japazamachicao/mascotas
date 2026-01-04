@@ -42,6 +42,7 @@ class Search extends Component
     public $departments;
     public $provinces = [];
     public $districts = [];
+    public $favoriteIds = [];
 
     protected $queryString = [
         'serviceType', 'search', 'department_id', 'province_id', 'district_id', 'sortBy',
@@ -51,6 +52,26 @@ class Search extends Component
     public function mount()
     {
         $this->departments = Department::orderBy('name')->get();
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            $this->favoriteIds = \Illuminate\Support\Facades\Auth::user()->favoriteProviders()->pluck('users.id')->toArray();
+        }
+    }
+
+    public function toggleFavorite($providerId)
+    {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        if (in_array($providerId, $this->favoriteIds)) {
+            $user->favoriteProviders()->detach($providerId);
+            $this->favoriteIds = array_diff($this->favoriteIds, [$providerId]);
+        } else {
+            $user->favoriteProviders()->attach($providerId);
+            $this->favoriteIds[] = $providerId;
+        }
     }
     
     // ...

@@ -55,6 +55,29 @@ class Profile extends Component
         if (!$this->profile) {
             abort(404, 'Perfil de proveedor no encontrado.');
         }
+
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            $this->isFavorite = \Illuminate\Support\Facades\Auth::user()->favoriteProviders()->where('provider_id', $this->user->id)->exists();
+        }
+    }
+
+    public $isFavorite = false;
+
+    public function toggleFavorite()
+    {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $currentUser = \Illuminate\Support\Facades\Auth::user();
+
+        if ($this->isFavorite) {
+            $currentUser->favoriteProviders()->detach($this->user->id);
+            $this->isFavorite = false;
+        } else {
+            $currentUser->favoriteProviders()->attach($this->user->id);
+            $this->isFavorite = true;
+        }
     }
 
     public function getReviewsProperty()

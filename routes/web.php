@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/mascota/crear', \App\Livewire\Dashboard\PetForm::class)->name('dashboard.pet.create');
     Route::get('/dashboard/mascota/editar/{pet}', \App\Livewire\Dashboard\PetForm::class)->name('dashboard.pet.edit');
     Route::get('/dashboard/direcciones', \App\Livewire\Dashboard\ClientAddresses::class)->name('dashboard.addresses');
+    Route::get('/dashboard/favoritos', \App\Livewire\Dashboard\ClientFavorites::class)->name('dashboard.favorites');
 });
 
 Route::get('/seed-services', function () {
