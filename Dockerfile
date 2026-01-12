@@ -49,7 +49,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 RUN apk add --no-cache nodejs npm
 
 # Copiar archivos de dependencias JS
-COPY package.json ./
+COPY package*.json ./
 
 # Instalar dependencias JS
 RUN npm install
