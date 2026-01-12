@@ -43,9 +43,14 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/seed-services', function () {
-    $seeder = new \Database\Seeders\ServiceSeeder();
-    $seeder->run();
-    return "Servicios sembrados correctamente! Ahora ve a <a href='/buscar'>/buscar</a>";
+    try {
+        // Ejecutar el seeder completo (Roles, Ubigeo, Servicios, Usuarios demo)
+        $seeder = new \Database\Seeders\DatabaseSeeder();
+        $seeder->run();
+        return "✅ Base de datos sembrada correctamente! (Roles, Ubigeos, Servicios y Usuarios creados). <br> Ve a <a href='/login'>/login</a> para entrar como admin@mascotas.pe / password";
+    } catch (\Exception $e) {
+        return "❌ Error al sembrar: " . $e->getMessage();
+    }
 });
 
 Route::post('/logout', function () {
