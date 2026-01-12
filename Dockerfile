@@ -45,8 +45,11 @@ COPY composer.json composer.lock ./
 # Instalar dependencias de producción
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
-# Copiar el resto de la aplicación
-COPY . .
+# Copiar el resto de la aplicación explícitamente
+COPY . /var/www/html
+
+# DEBUG: Verificar estructura durante el build
+RUN echo "📁 Listing /var/www/html during build:" && ls -la /var/www/html && ls -la /var/www/html/public || echo "⚠️ Public Missing in Build"
 
 # Generar autoloader optimizado
 RUN composer dump-autoload --optimize --classmap-authoritative
