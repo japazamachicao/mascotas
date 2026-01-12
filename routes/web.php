@@ -43,7 +43,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Rutas de IA (Salud)
     Route::get('/dashboard/salud/analizar', \App\Livewire\Dashboard\HealthAnalyzer::class)->name('dashboard.health.analyze');
-    Route::get('/dashboard/salud/plan', \App\Livewire\Dashboard\CarePlan::class)->name('dashboard.care.plan');
+    Route::get('/dashboard/salud/plan', \App\Livewire\Dashboard\CarePlanGenerator::class)->name('dashboard.care.plan');
     Route::get('/dashboard/salud/historial', \App\Livewire\Dashboard\HealthHistory::class)->name('dashboard.health.history');
 });
 
