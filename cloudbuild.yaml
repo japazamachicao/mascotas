@@ -34,7 +34,7 @@ steps:
       - '--set-env-vars'
       - 'APP_NAME=Kivets,APP_ENV=production,APP_DEBUG=false,LOG_CHANNEL=stderr'
       - '--set-secrets'
-      - '/var/www/html/.env=kivets-env:latest'
+      - '/secrets/.env=kivets-env:latest'
       - '--add-cloudsql-instances'
       - 'tucandidatoperu:us-central1:tucandidato-db'
 

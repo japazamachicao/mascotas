@@ -3,6 +3,14 @@ set -e
 
 echo "🚀 Starting Kivets application entrypoint..."
 
+# Copiar .env desde secrets si existe
+if [ -f /secrets/.env ]; then
+    echo "🔑 Loading environment from /secrets/.env..."
+    cp /secrets/.env /var/www/html/.env
+else
+    echo "⚠️  No .env file found in /secrets/.env"
+fi
+
 echo "📂 Checking file structure..."
 ls -la /var/www/html/public
 
