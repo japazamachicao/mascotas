@@ -32,13 +32,30 @@ class AppServiceProvider extends ServiceProvider
             ]);
 
             $bucket = $client->bucket($config['bucket']);
-            $adapter = new \League\Flysystem\GoogleCloudStorage\GoogleCloudStorageAdapter($bucket, $config['path_prefix'] ?? '');
             
-            return new \Illuminate\Filesystem\FilesystemAdapter(
+            // Use UniformBucketLevelAccessVisibility for public URLs
+            $adapter = new \League\Flysystem\GoogleCloudStorage\GoogleCloudStorageAdapter(
+                $bucket, 
+                $config['path_prefix'] ?? '',
+                new \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility()
+            );
+            
+            $driver = new \Illuminate\Filesystem\FilesystemAdapter(
                 new \League\Flysystem\Filesystem($adapter, $config),
                 $adapter,
                 $config
             );
+
+            // Set URL generator for public access
+            $driver->buildTemporaryUrlsUsing(function ($path, $expiration, $options) use ($config) {
+                return sprintf(
+                    'https://storage.googleapis.com/%s/%s',
+                    $config['bucket'],
+                    ltrim($path, '/')
+                );
+            });
+
+            return $driver;
         });
     }
 }
