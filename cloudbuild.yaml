@@ -1,0 +1,43 @@
+steps:
+  # 1. Instalar dependencias de PHP con Composer
+  - name: 'composer:2'
+    entrypoint: /bin/sh
+    args:
+      - -c
+      - |
+        composer install --no-dev --prefer-dist --no-progress --no-suggest --ignore-platform-reqs
+
+  # 2. Construir la imagen de Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/kivets:$COMMIT_SHA', '-t', 'gcr.io/$PROJECT_ID/kivets:latest', '.']
+
+  # 3. Subir la imagen a Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/kivets:$COMMIT_SHA']
+
+  # 4. Desplegar a Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'kivets'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/kivets:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '512Mi'
+      - '--set-env-vars'
+      - 'APP_NAME=Kivets,APP_ENV=production,APP_DEBUG=false,LOG_CHANNEL=stderr'
+      - '--set-secrets'
+      - '/var/www/html/.env=kivets-env:latest'
+      - '--add-cloudsql-instances'
+      - 'tucandidatoperu:us-central1:tucandidato-db'
+
+images:
+  - 'gcr.io/$PROJECT_ID/kivets:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/kivets:latest'

@@ -61,7 +61,102 @@
                             <input id="photo-upload" type="file" wire:model="photo" class="hidden">
                         </div>
                         @error('photo') <span class="text-red-500 text-xs font-medium">{{ $message }}</span> @enderror
+                        
+                        @if ($photo)
+                            <button 
+                                type="button"
+                                wire:click="detectBreed" 
+                                wire:loading.attr="disabled"
+                                class="mt-2 inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                <svg wire:loading.remove wire:target="detectBreed" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                                <svg wire:loading wire:target="detectBreed" class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span wire:loading.remove wire:target="detectBreed">🔬 Detectar Raza con IA</span>
+                                <span wire:loading wire:target="detectBreed">Analizando...</span>
+                            </button>
+                        @endif
                     </div>
+
+                    @if (session()->has('success'))
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+                            <p class="text-sm text-green-700">{{ session('success') }}</p>
+                        </div>
+                    @endif
+
+                    @if (session()->has('error'))
+                        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                            <p class="text-sm text-red-700">{{ session('error') }}</p>
+                        </div>
+                    @endif
+
+                    @if (!empty($detectedBreeds))
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 mb-6">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-purple-500 p-2 rounded-lg mr-3">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900">Razas Detectadas por IA</h4>
+                                    <p class="text-sm text-purple-700">Confianza: {{ round($breedConfidence * 100) }}%</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 mb-4">
+                                @foreach ($detectedBreeds as $detectedBreed)
+                                    <div class="flex items-center justify-between bg-white rounded-lg p-3">
+                                        <div>
+                                            <span class="font-semibold text-gray-900">{{ $detectedBreed['name'] }}</span>
+                                            @if (isset($detectedBreed['characteristics']))
+                                                <p class="text-xs text-gray-500 mt-1">{{ implode(', ', array_slice($detectedBreed['characteristics'], 0, 2)) }}</p>
+                                            @endif
+                                        </div>
+                                        <span class="text-purple-600 font-bold">{{ round($detectedBreed['percentage']) }}%</span>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            @if (!empty($nutritionalNeeds))
+                                <div class="bg-white rounded-lg p-4 mt-4">
+                                    <h5 class="font-semibold text-gray-900 mb-2 flex items-center">
+                                        <span class="mr-2">🥗</span> Necesidades Nutricionales
+                                    </h5>
+                                    <div class="grid grid-cols-2 gap-3 text-sm">
+                                        <div class="bg-blue-50 rounded p-2">
+                                            <p class="text-xs text-gray-600">Calorías diarias</p>
+                                            <p class="font-bold text-blue-700">{{ $nutritionalNeeds['calories']['daily_calories'] ?? 0 }} kcal</p>
+                                        </div>
+                                        <div class="bg-green-50 rounded p-2">
+                                            <p class="text-xs text-gray-600">Por comida (x2)</p>
+                                            <p class="font-bold text-green-700">{{ $nutritionalNeeds['calories']['per_meal'] ?? 0 }} kcal</p>
+                                        </div>
+                                        <div class="bg-orange-50 rounded p-2">
+                                            <p class="text-xs text-gray-600">Proteína mín.</p>
+                                            <p class="font-bold text-orange-700">{{ $nutritionalNeeds['nutrients']['protein']['min_percentage'] ?? 0 }}%</p>
+                                        </div>
+                                        <div class="bg-yellow-50 rounded p-2">
+                                            <p class="text-xs text-gray-600">Grasa mín.</p>
+                                            <p class="font-bold text-yellow-700">{{ $nutritionalNeeds['nutrients']['fat']['min_percentage'] ?? 0 }}%</p>
+                                        </div>
+                                    </div>
+                                    @if (isset($nutritionalNeeds['special_considerations']) && !empty($nutritionalNeeds['special_considerations']))
+                                        <div class="mt-3 bg-yellow-50 border-l-2 border-yellow-400 p-2">
+                                            <p class="text-xs font-semibold text-yellow-800 mb-1">Consideraciones especiales:</p>
+                                            @foreach ($nutritionalNeeds['special_considerations'] as $consideration)
+                                                <p class="text-xs text-yellow-700">• {{ $consideration }}</p>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @endif
 
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div class="space-y-1">

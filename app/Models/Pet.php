@@ -26,6 +26,10 @@ class Pet extends Model
         'profile_photo_path',
         'uuid',
         'qr_code_path',
+        'detected_breeds',
+        'breed_confidence',
+        'nutritional_needs',
+        'breed_detected_at',
     ];
 
     protected $casts = [
@@ -34,6 +38,10 @@ class Pet extends Model
         'is_sterilized' => 'boolean',
         'behavior' => 'array',
         'health_features' => 'array',
+        'detected_breeds' => 'array',
+        'breed_confidence' => 'float',
+        'nutritional_needs' => 'array',
+        'breed_detected_at' => 'datetime',
     ];
 
     public function getRouteKeyName()
@@ -44,5 +52,10 @@ class Pet extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function healthAnalyses()
+    {
+        return $this->hasMany(HealthAnalysis::class);
     }
 }

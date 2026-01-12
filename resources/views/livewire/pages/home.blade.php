@@ -13,7 +13,7 @@
                 <span class="block text-primary-400">lo harías</span>
             </h1>
             <p class="mt-6 text-xl text-gray-100 max-w-3xl mx-auto text-center font-medium shadow-sm">
-                Conecta con veterinarios, paseadores y hoteles cerca de ti. La comunidad más confiable de amantes de mascotas en Perú.
+                Conecta con veterinarios, paseadores y hoteles cerca de ti. Más análisis de salud con IA para el cuidado completo de tu mascota.
             </p>
 
             <!-- Buscador Central -->
@@ -49,8 +49,11 @@
             <div class="text-center mb-12">
                 <span class="text-primary-600 font-semibold tracking-wide uppercase text-sm">Nuestros Servicios</span>
                 <h2 class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                    Todo lo que tu mascota necesita en un solo lugar
+                    Todo lo que tu mascota necesita
                 </h2>
+                <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+                    Servicios profesionales y tecnología IA para el cuidado integral de tu compañero
+                </p>
             </div>
 
             <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -103,6 +106,77 @@
                 </a>
             </div>
 
+            <!-- Nueva Sección: Funcionalidades IA -->
+            <div class="mt-24 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-3xl p-8 md:p-12">
+                <div class="text-center mb-12">
+                    <div class="inline-block bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                        🚀 Powered by AI
+                    </div>
+                    <h2 class="text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                        Salud Inteligente para tu Mascota
+                    </h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+                        Tecnología de vanguardia para detectar problemas de salud temprano y crear planes personalizados
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- AI Feature 1 -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
+                        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 w-14 h-14 rounded-xl flex items-center justify-center text-3xl mb-4">
+                            🔬
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Análisis de Salud IA</h3>
+                        <p class="text-gray-600 mb-4">Analiza fotos de heces, orina y piel con IA avanzada. Detecta problemas temprano.</p>
+                        @auth
+                            <a href="{{ route('dashboard.health.analyze') }}" class="text-indigo-600 font-semibold hover:text-indigo-700 inline-flex items-center">
+                                Analizar ahora →
+                            </a>
+                        @else
+                            <a href="/demo/analisis" class="text-indigo-600 font-semibold hover:text-indigo-700 inline-flex items-center">
+                                Probar demo →
+                            </a>
+                        @endauth
+                    </div>
+
+                    <!-- AI Feature 2 -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
+                        <div class="bg-gradient-to-r from-purple-600 to-pink-600 w-14 h-14 rounded-xl flex items-center justify-center text-3xl mb-4">
+                            📋
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Plan de Cuidado IA</h3>
+                        <p class="text-gray-600 mb-4">Plan personalizado según raza, edad y necesidades. Nutrición, ejercicio y más.</p>
+                        @auth
+                            <a href="{{ route('dashboard.care.plan') }}" class="text-purple-600 font-semibold hover:text-purple-700 inline-flex items-center">
+                                Crear plan →
+                            </a>
+                        @else
+                            <a href="/demo/plan-cuidado" class="text-purple-600 font-semibold hover:text-purple-700 inline-flex items-center">
+                                Probar demo →
+                            </a>
+                        @endauth
+                    </div>
+
+                    <!-- AI Feature 3 -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
+                        <div class="bg-gradient-to-r from-teal-600 to-cyan-600 w-14 h-14 rounded-xl flex items-center justify-center text-3xl mb-4">
+                            📊
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Historial Unificado</h3>
+                        <p class="text-gray-600 mb-4">Todos tus análisis y planes en un solo lugar. Filtros inteligentes y exportación.</p>
+                        @auth
+                            <a href="{{ route('dashboard.health.history') }}" class="text-teal-600 font-semibold hover:text-teal-700 inline-flex items-center">
+                                Ver historial →
+                            </a>
+                        @else
+                            <a href="{{ route('register') }}" class="text-teal-600 font-semibold hover:text-teal-700 inline-flex items-center">
+                                Registrarse →
+                            </a>
+                        @endauth
+                    </div>
+                </div>
+            </div>
+
             <!-- Botón Ver Todo -->
             <div class="mt-12 text-center">
                 <a href="{{ route('search') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 transition">
@@ -117,7 +191,7 @@
     <div class="bg-gray-50 py-16 border-t border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center">
-                <h2 class="text-3xl font-extrabold text-gray-900">¿Por qué elegir Mascotas<span class="text-primary-600">.pe</span>?</h2>
+                <h2 class="text-3xl font-extrabold text-gray-900">¿Por qué elegir <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kivets.com</span>?</h2>
             </div>
             <div class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
                 <div class="text-center">

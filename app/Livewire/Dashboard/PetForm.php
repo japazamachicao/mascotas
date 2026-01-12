@@ -7,6 +7,8 @@ use Livewire\Component;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
+use App\Services\AIVisionService;
+use App\Services\DietRecommendationService;
 
 class PetForm extends Component
 {
@@ -36,6 +38,12 @@ class PetForm extends Component
     public $deworming_date;
 
     public $photo; // Para la imagen nueva
+    
+    // AI Detection
+    public $detectedBreeds = [];
+    public $breedConfidence = null;
+    public $nutritionalNeeds = [];
+    public $detectingBreed = false;
     
     // UI State
     #[Url(as: 'section')]
@@ -99,6 +107,69 @@ class PetForm extends Component
             $health = $pet->health_features ?? [];
             $this->vaccination_date = $health['vaccination_date'] ?? null;
             $this->deworming_date = $health['deworming_date'] ?? null;
+            
+            // Cargar datos de IA si existen
+            $this->detectedBreeds = $pet->detected_breeds ?? [];
+            $this->breedConfidence = $pet->breed_confidence;
+            $this->nutritionalNeeds = $pet->nutritional_needs ?? [];
+        }
+    }
+    
+    public function detectBreed()
+    {
+        if (!$this->photo) {
+            session()->flash('error', 'Debes subir una foto primero');
+            return;
+        }
+        
+        $this->detectingBreed = true;
+        
+        try {
+            // Guardar temporalmente la imagen
+            $tempPath = $this->photo->store('temp', 'public');
+            
+            // Detectar raza con IA
+            $aiService = new AIVisionService();
+            $result = $aiService->detectBreed('public/' . $tempPath);
+            
+            if (!$result['success']) {
+                throw new \Exception($result['error'] ?? 'Error al detectar la raza');
+            }
+            
+            $data = $result['data'];
+            $this->detectedBreeds = $data['breeds'] ?? [];
+            $this->breedConfidence = $data['confidence_score'] ?? 0;
+            
+            // Si se detectaron razas, calcular necesidades nutricionales
+            if (!empty($this->detectedBreeds) && $this->weight) {
+                $dietService = new DietRecommendationService();
+                $ageMonths = $this->birth_date 
+                    ? now()->diffInMonths($this->birth_date) 
+                    : 24; // Default 2 años si no hay fecha
+                
+                $this->nutritionalNeeds = $dietService->generateRecommendations(
+                    $this->detectedBreeds,
+                    (float) $this->weight,
+                    $ageMonths
+                );
+            }
+            
+            // Autocompletar el campo de raza si está vacío
+            if (empty($this->breed) && !empty($this->detectedBreeds)) {
+                $primaryBreed = $this->detectedBreeds[0]['name'] ?? '';
+                if (count($this->detectedBreeds) > 1) {
+                    $this->breed = 'Mestizo (' . implode(', ', array_column(array_slice($this->detectedBreeds, 0, 2), 'name')) . ')';
+                } else {
+                    $this->breed = $primaryBreed;
+                }
+            }
+            
+            session()->flash('success', 'Raza detectada exitosamente!');
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al detectar raza: ' . $e->getMessage());
+        } finally {
+            $this->detectingBreed = false;
         }
     }
 
@@ -158,6 +229,10 @@ class PetForm extends Component
             'profile_photo_path' => $photoPath,
             'behavior' => $behaviorData,
             'health_features' => $healthData,
+            'detected_breeds' => $this->detectedBreeds,
+            'breed_confidence' => $this->breedConfidence,
+            'nutritional_needs' => $this->nutritionalNeeds,
+            'breed_detected_at' => !empty($this->detectedBreeds) ? now() : null,
         ];
 
         if ($this->pet) {

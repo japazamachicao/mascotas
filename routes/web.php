@@ -21,6 +21,11 @@ Route::get('/buscar', \App\Livewire\Pages\Search::class)->name('search');
 Route::get('/perfil/{id}', \App\Livewire\Pages\Profile::class)->name('profile.show');
 Route::get('/p/{uuid}', \App\Livewire\Pages\PetProfile::class)->name('pet.profile');
 
+// Rutas Públicas de Demos IA
+Route::get('/demo/analisis', \App\Livewire\Demo\DemoHealthAnalyzer::class)->name('demo.health.analyze');
+Route::get('/demo/plan-cuidado', \App\Livewire\Demo\DemoCarePlan::class)->name('demo.care.plan');
+
+
 // Rutas Protegidas (Requieren Login)
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
