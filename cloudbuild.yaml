@@ -41,3 +41,6 @@ steps:
 images:
   - 'gcr.io/$PROJECT_ID/kivets:$COMMIT_SHA'
   - 'gcr.io/$PROJECT_ID/kivets:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
