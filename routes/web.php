@@ -40,6 +40,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/mascota/editar/{pet}', \App\Livewire\Dashboard\PetForm::class)->name('dashboard.pet.edit');
     Route::get('/dashboard/direcciones', \App\Livewire\Dashboard\ClientAddresses::class)->name('dashboard.addresses');
     Route::get('/dashboard/favoritos', \App\Livewire\Dashboard\ClientFavorites::class)->name('dashboard.favorites');
+    
+    // Rutas de IA (Salud)
+    Route::get('/dashboard/salud/analizar', \App\Livewire\Dashboard\HealthAnalyzer::class)->name('dashboard.health.analyze');
+    Route::get('/dashboard/salud/plan', \App\Livewire\Dashboard\CarePlan::class)->name('dashboard.care.plan');
+    Route::get('/dashboard/salud/historial', \App\Livewire\Dashboard\HealthHistory::class)->name('dashboard.health.history');
 });
 
 Route::get('/seed-services', function () {
