@@ -10,24 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS (CDN para MVP rápido) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0ea5e9', // Sky blue
-                            600: '#0284c7',
-                            700: '#0369a1',
-                        },
-                        secondary: {
-                            500: '#64748b',
-                        }
-                    },
+    <!-- Scripts & Styles -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                     }

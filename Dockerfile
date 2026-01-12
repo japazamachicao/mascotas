@@ -45,8 +45,23 @@ COPY composer.json composer.lock ./
 # Instalar dependencias de producción
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
+# Instalar Node.js
+RUN apk add --no-cache nodejs npm
+
+# Copiar archivos de dependencias JS
+COPY package.json ./
+
+# Instalar dependencias JS
+RUN npm install
+
 # Copiar el resto de la aplicación explícitamente
 COPY . /var/www/html
+
+# Construir assets (Vite/Tailwind) y limpiar
+RUN npm run build \
+    && rm -rf node_modules
+
+# DEBUG: Verificar estructura durante el build
 
 # DEBUG: Verificar estructura durante el build
 RUN echo "📁 Listing /var/www/html during build:" && ls -la /var/www/html && ls -la /var/www/html/public || echo "⚠️ Public Missing in Build"
