@@ -157,9 +157,9 @@
                                     <p class="mb-2 text-lg font-semibold text-gray-700 group-hover:text-indigo-700">
                                         <span class="text-indigo-600">Click para subir</span> o arrastra aquí
                                     </p>
-                                    <p class="text-sm text-gray-500">PNG, JPG, GIF (máx. 10MB)</p>
+                                    <p class="text-sm text-gray-500">JPG, JPEG, PNG, GIF, WebP (máx. 10MB)</p>
                                 </div>
-                                <input id="file-upload" wire:model="photo" type="file" class="hidden" accept="image/*">
+                                <input id="file-upload" wire:model="photo" type="file" class="hidden" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
                             </label>
                         @endif
                     </div>

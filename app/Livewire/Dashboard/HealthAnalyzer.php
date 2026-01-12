@@ -37,12 +37,12 @@ class HealthAnalyzer extends Component
         $this->validate([
             'selectedPetId' => 'required|exists:pets,id',
             'analysisType' => 'required|in:feces,urine,skin',
-            'photo' => 'required|image|max:10240', // Max 10MB
+            'photo' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:10240', // Max 10MB
         ], [
             'selectedPetId.required' => 'Debes seleccionar una mascota',
             'analysisType.required' => 'Debes seleccionar el tipo de análisis',
             'photo.required' => 'Debes subir una foto',
-            'photo.image' => 'El archivo debe ser una imagen',
+            'photo.mimes' => 'La foto debe ser JPG, JPEG, PNG, GIF o WebP',
             'photo.max' => 'La imagen no debe pesar más de 10MB',
         ]);
 
