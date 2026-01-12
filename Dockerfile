@@ -42,8 +42,8 @@ WORKDIR /var/www/html
 # Copiar archivos de composer
 COPY composer.json composer.lock ./
 
-# Instalar dependencias de producción
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+# Instalar dependencias de producción (update para regenerar lock con nuevos paquetes)
+RUN composer update --no-dev --no-scripts --no-autoloader --prefer-dist
 
 # Instalar Node.js
 RUN apk add --no-cache nodejs npm
