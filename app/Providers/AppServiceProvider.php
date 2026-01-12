@@ -40,20 +40,12 @@ class AppServiceProvider extends ServiceProvider
                 new \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility()
             );
             
-            $driver = new \Illuminate\Filesystem\FilesystemAdapter(
+            // Use custom adapter that supports url() method
+            $driver = (new \App\Support\GoogleCloudStorageAdapter(
                 new \League\Flysystem\Filesystem($adapter, $config),
                 $adapter,
                 $config
-            );
-
-            // Set URL generator for public access
-            $driver->buildTemporaryUrlsUsing(function ($path, $expiration, $options) use ($config) {
-                return sprintf(
-                    'https://storage.googleapis.com/%s/%s',
-                    $config['bucket'],
-                    ltrim($path, '/')
-                );
-            });
+            ))->setBucket($config['bucket']);
 
             return $driver;
         });
