@@ -198,7 +198,7 @@ class PetForm extends Component
         $photoPath = $this->existingPhoto;
         
         if ($this->photo) {
-            $photoPath = $this->photo->store('pets', env('FILESYSTEM_DISK', 'public'));
+            $photoPath = $this->photo->store('pets', config('filesystems.default'));
         }
 
         $behaviorData = [

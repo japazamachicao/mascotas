@@ -362,7 +362,7 @@ class ProviderDashboard extends Component
         
         if ($this->profile_photo) {
             $this->validate(['profile_photo' => 'image|max:5120']); // 5MB
-            $path = $this->profile_photo->store('profile-photos', env('FILESYSTEM_DISK', 'public'));
+            $path = $this->profile_photo->store('profile-photos', config('filesystems.default'));
             $this->profile_photo = null; // Reseteamos para que desaparezca el botón y se muestre la guardada
         }
 
@@ -396,7 +396,7 @@ class ProviderDashboard extends Component
             'verification_document.max' => 'El documento no debe pesar más de 10MB.',
         ]);
 
-        $path = $this->verification_document->store('verification-docs', env('FILESYSTEM_DISK', 'public'));
+        $path = $this->verification_document->store('verification-docs', config('filesystems.default'));
         
         $this->profile->update([
             'verification_document_path' => $path,
@@ -415,7 +415,7 @@ class ProviderDashboard extends Component
             'newImage' => 'required|image|max:10240', // 10MB
         ]);
 
-        $path = $this->newImage->store('portfolio', env('FILESYSTEM_DISK', 'public'));
+        $path = $this->newImage->store('portfolio', config('filesystems.default'));
 
         $this->user->portfolio()->create([
             'image_path' => $path,
