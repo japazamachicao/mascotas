@@ -356,34 +356,59 @@
                                 <!-- Formulario de Reseña (Movido Arriba) -->
                                 @auth
                                     @if(auth()->id() !== $user->id)
-                                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-8">
-                                            <h4 class="text-sm font-bold text-gray-900 mb-4">Escribe una reseña</h4>
-                                            <form wire:submit.prevent="saveReview">
-                                                <div class="mb-4">
-                                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tu Calificación</label>
-                                                    <div class="flex space-x-2">
-                                                        @foreach([1, 2, 3, 4, 5] as $start)
-                                                            <button type="button" wire:click="$set('rating', {{ $start }})" class="focus:outline-none transition transform hover:scale-110">
-                                                                <svg class="w-8 h-8 {{ $rating >= $start ? 'text-yellow-400' : 'text-gray-300' }}" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                                </svg>
-                                                            </button>
-                                                        @endforeach
+                                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-md mb-8">
+                                            <div class="mb-5">
+                                                <h4 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                                    <svg class="h-5 w-5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                    Escribe una reseña
+                                                </h4>
+                                                <p class="text-xs text-gray-400 mt-1">Comparte tu experiencia para ayudar a otros dueños de mascotas.</p>
+                                            </div>
+                                            
+                                            <form wire:submit.prevent="saveReview" class="space-y-5">
+                                                <div class="bg-gray-50/50 p-4 rounded-xl border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                    <div>
+                                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tu Calificación</label>
+                                                        <div class="flex items-center space-x-1">
+                                                            @foreach([1, 2, 3, 4, 5] as $start)
+                                                                <button type="button" wire:click="$set('rating', {{ $start }})" class="focus:outline-none transition-transform duration-150 active:scale-95 hover:scale-110">
+                                                                    <svg class="w-8 h-8 {{ $rating >= $start ? 'text-yellow-400 filter drop-shadow-sm' : 'text-gray-300' }}" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                    </svg>
+                                                                </button>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="sm:text-right">
+                                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-white border border-gray-100 shadow-sm text-primary-600 transition-all duration-300">
+                                                            @switch($rating)
+                                                                @case(1) 😠 Pésimo @break
+                                                                @case(2) ☹️ Malo @break
+                                                                @case(3) 😐 Regular @break
+                                                                @case(4) 🙂 Muy bueno @break
+                                                                @case(5) 🤩 ¡Excelente! @break
+                                                            @endswitch
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <div class="mb-4">
-                                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tu Comentario</label>
-                                                    <textarea wire:model="comment" rows="3" class="w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" placeholder="Cuéntanos tu experiencia..."></textarea>
-                                                    @error('comment') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+
+                                                <div class="space-y-1">
+                                                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tu Comentario</label>
+                                                    <textarea wire:model="comment" rows="3" class="w-full border border-gray-200 rounded-xl shadow-inner bg-gray-50/30 focus:bg-white focus:ring-4 focus:ring-primary-100 focus:border-primary-500 sm:text-sm p-4 transition-all duration-300 placeholder-gray-400" placeholder="Cuéntanos sobre la atención, puntualidad y cuidado de tu mascota..."></textarea>
+                                                    @error('comment') <span class="text-red-500 text-xs mt-1 block font-medium">{{ $message }}</span> @enderror
                                                 </div>
-                                                <div class="flex justify-end">
-                                                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none">
-                                                        Publicar Reseña
+
+                                                <div class="flex justify-end pt-2">
+                                                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent shadow-md text-sm font-bold rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 hover:shadow-lg hover:shadow-primary-500/20 transform hover:-translate-y-0.5 active:translate-y-0 focus:outline-none transition-all duration-200">
+                                                        Publicar Mi Reseña
                                                     </button>
                                                 </div>
                                             </form>
                                             @if ($errors->has('review'))
-                                                <div class="mt-3 text-red-600 text-sm font-medium">{{ $errors->first('review') }}</div>
+                                                <div class="mt-3 text-red-600 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-100">{{ $errors->first('review') }}</div>
                                             @endif
                                         </div>
                                     @endif
