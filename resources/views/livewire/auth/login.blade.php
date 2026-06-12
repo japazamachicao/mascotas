@@ -70,7 +70,7 @@
                     </div>
                     <div class="relative flex justify-center text-sm">
                         <span class="px-2 bg-white text-gray-500">
-                            ¿Eres nuevo en Mascotas.pe?
+                            ¿Eres nuevo en TodoPeludos.com?
                         </span>
                     </div>
                 </div>

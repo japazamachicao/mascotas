@@ -16,7 +16,7 @@ class DemoSeeder extends Seeder
     {
         // 1. Crear VETERINARIO DEMO
         $vetUser = User::firstOrCreate(
-            ['email' => 'vet_demo@mascotas.pe'],
+            ['email' => 'vet_demo@todopeludos.com'],
             [
                 'name' => 'Dr. Demo Veterinario',
                 'password' => Hash::make('password'), // Contraseña fácil
@@ -41,7 +41,7 @@ class DemoSeeder extends Seeder
 
         // 2. Crear CLIENTE DEMO
         $clientUser = User::firstOrCreate(
-            ['email' => 'cliente_demo@mascotas.pe'],
+            ['email' => 'cliente_demo@todopeludos.com'],
             [
                 'name' => 'Ana Cliente Demo',
                 'password' => Hash::make('password'),
@@ -66,8 +66,8 @@ class DemoSeeder extends Seeder
 
         $this->command->info('----------------------------------------------');
         $this->command->info('USUARIOS DEMO CREADOS:');
-        $this->command->info('1. Veterinario: vet_demo@mascotas.pe / password');
-        $this->command->info('2. Cliente:     cliente_demo@mascotas.pe / password');
+        $this->command->info('1. Veterinario: vet_demo@todopeludos.com / password');
+        $this->command->info('2. Cliente:     cliente_demo@todopeludos.com / password');
         $this->command->info('----------------------------------------------');
     }
 }

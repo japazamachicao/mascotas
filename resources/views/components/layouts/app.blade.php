@@ -22,19 +22,22 @@
     
     <!-- Navbar -->
     <!-- Navbar -->
-    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm backdrop-blur-md bg-opacity-90">
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm backdrop-blur-md bg-white/90">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <!-- Logo & Desktop Nav -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.location.href='/'">
                         <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-2 rounded-xl">
-                            <svg class="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                                <path d="M5 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                                <path d="M19 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                                <path d="M12 21a5 5 0 0 0 5-5H7a5 5 0 0 0 5 5Z"/>
                             </svg>
                         </div>
                         <span class="font-bold text-xl tracking-tight">
-                            <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kivets</span>
+                            <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">TodoPeludos</span>
                             <span class="text-gray-400 text-sm">.com</span>
                         </span>
                     </div>
@@ -58,38 +61,6 @@
                                 <a href="{{ route('dashboard') }}" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('dashboard') ? 'border-primary-500 text-gray-900' : '' }}">
                                     Mis Mascotas
                                 </a>
-                                
-                                <!-- Dropdown de Salud IA -->
-                                <div class="relative inline-flex items-center" x-data="{ open: false }">
-                                    <button @click="open = !open" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 pb-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('dashboard.health.*') || request()->routeIs('dashboard.care.*') ? 'border-primary-500 text-gray-900' : '' }}">
-                                        Salud IA
-                                        <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                        </svg>
-                                    </button>
-                                    <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute top-full left-0 z-50 mt-1 w-56 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" style="display: none;">
-                                        <div class="py-1">
-                                            <a href="{{ route('dashboard.health.analyze') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
-                                                <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                                                </svg>
-                                                Análisis de Salud
-                                            </a>
-                                            <a href="{{ route('dashboard.care.plan') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700">
-                                                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                                </svg>
-                                                Plan de Cuidado
-                                            </a>
-                                            <a href="{{ route('dashboard.health.history') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700">
-                                                <svg class="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                </svg>
-                                                Historial
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
                                 
                                 <a href="{{ route('dashboard.addresses') }}" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('dashboard.addresses') ? 'border-primary-500 text-gray-900' : '' }}">
                                     Mis Direcciones
@@ -132,7 +103,7 @@
                                      x-transition:leave="transition ease-in duration-75"
                                      x-transition:leave-start="transform opacity-100 scale-100"
                                      x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" 
+                                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none" 
                                      style="display: none;">
                                     
                                     <div class="px-4 py-2 border-b border-gray-100">
@@ -154,14 +125,6 @@
                                 </div>
                             </div>
                         @else
-                            <!-- AI Features - Siempre visibles -->
-                            <a href="/demo/analisis" class="text-indigo-600 hover:text-indigo-700 px-3 py-2 rounded-md text-sm font-bold transition">
-                                🔬 Análisis IA
-                            </a>
-                            <a href="/demo/plan-cuidado" class="text-purple-600 hover:text-purple-700 px-3 py-2 rounded-md text-sm font-bold transition">
-                                📋 Plan IA
-                            </a>
-                            
                             <a href="{{ route('login') }}" class="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition">Ingresar</a>
                             <a href="{{ route('register') }}" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition shadow-sm hover:shadow-md">Registrarme</a>
                         @endauth
@@ -196,9 +159,6 @@
                         <a href="{{ route('dashboard.provider') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mi Agenda</a>
                     @else
                         <a href="{{ route('dashboard') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mis Mascotas</a>
-                        <a href="{{ route('dashboard.health.analyze') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Análisis de Salud 🔬</a>
-                        <a href="{{ route('dashboard.care.plan') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Plan de Cuidado 📋</a>
-                        <a href="{{ route('dashboard.health.history') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Historial 📊</a>
                     @endif
                 @else
                     <a href="{{ route('register') }}" class="border-transparent text-primary-600 hover:bg-gray-50 hover:border-primary-300 hover:text-primary-800 block pl-3 pr-4 py-2 border-l-4 text-base font-bold">¿Eres Profesional? Únete</a>
@@ -252,7 +212,7 @@
     <footer class="bg-white border-t border-gray-200 mt-auto">
         <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
             <div class="mt-8 md:mt-0 md:order-1">
-                <p class="text-center text-sm text-gray-400">&copy; 2026 Kivets.com. Todos los derechos reservados. Desarrollado con ❤️ para las mascotas.</p>
+                <p class="text-center text-sm text-gray-400">&copy; 2026 TodoPeludos.com. Todos los derechos reservados. Desarrollado con ❤️ para las mascotas.</p>
             </div>
             <div class="flex justify-center space-x-6 md:order-2">
                 <a href="#" class="text-gray-400 hover:text-gray-500">

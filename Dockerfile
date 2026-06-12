@@ -66,18 +66,27 @@ RUN npm run build \
 # DEBUG: Verificar estructura durante el build
 RUN echo "📁 Listing /var/www/html during build:" && ls -la /var/www/html && ls -la /var/www/html/public || echo "⚠️ Public Missing in Build"
 
+# Verificar archivos críticos existen
+RUN echo "🔍 Verifying critical files:" \
+    && test -f /var/www/html/artisan && echo "✅ artisan exists" || echo "❌ artisan MISSING" \
+    && test -f /var/www/html/public/index.php && echo "✅ public/index.php exists" || echo "❌ public/index.php MISSING" \
+    && test -d /var/www/html/public && echo "✅ public directory exists" || echo "❌ public directory MISSING"
+
 # Generar autoloader optimizado
 RUN composer dump-autoload --optimize --classmap-authoritative
 
-# Copiar script de entrypoint
+# Copiar scripts
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/wait-for-php.sh /usr/local/bin/wait-for-php.sh
 
 # Configurar permisos, finales de línea y directorios necesarios
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache \
-    && apk add --no-cache dos2unix bash \
+    && apk add --no-cache dos2unix bash netcat-openbsd \
     && dos2unix /usr/local/bin/entrypoint.sh \
+    && dos2unix /usr/local/bin/wait-for-php.sh \
     && chmod +x /usr/local/bin/entrypoint.sh \
+    && chmod +x /usr/local/bin/wait-for-php.sh \
     && mkdir -p /run/nginx \
     && mkdir -p /var/log/supervisor
 

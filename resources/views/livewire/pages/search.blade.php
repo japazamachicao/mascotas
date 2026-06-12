@@ -211,6 +211,19 @@
                                 <span class="text-gray-500">{{ $result->district->province->name ?? '' }}</span>
                             </div>
                             
+                            <!-- Precio base -->
+                            @if(!empty($result->price_from) && $result->price_from > 0)
+                                <div class="flex items-center justify-between bg-primary-50 px-3 py-2 rounded-lg border border-primary-100">
+                                    <span class="text-xs font-bold text-primary-700 uppercase tracking-wide">Desde</span>
+                                    <span class="text-lg font-black text-primary-900">S/ {{ number_format($result->price_from, 0) }}</span>
+                                </div>
+                            @elseif(isset($result->hourly_rate) && $result->hourly_rate > 0)
+                                <div class="flex items-center justify-between bg-primary-50 px-3 py-2 rounded-lg border border-primary-100">
+                                    <span class="text-xs font-bold text-primary-700 uppercase tracking-wide">Por hora</span>
+                                    <span class="text-lg font-black text-primary-900">S/ {{ number_format($result->hourly_rate, 0) }}</span>
+                                </div>
+                            @endif
+
                             <!-- Badges y Atributos Específicos -->
                             @if(in_array($serviceType, ['veterinarian', 'trainer', 'groomer']))
                                 <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed pl-1">{{ $result->bio ?? 'Sin presentación.' }}</p>

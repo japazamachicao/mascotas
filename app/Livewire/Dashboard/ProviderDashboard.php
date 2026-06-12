@@ -14,6 +14,7 @@ class ProviderDashboard extends Component
     
     // Campos editables (Comunes)
     public $bio;
+    public $price_from;
     public $website_url;
     public $facebook_url;
     public $instagram_url;
@@ -77,6 +78,7 @@ class ProviderDashboard extends Component
     {
         $rules = [
             'bio' => 'nullable|string|max:1000',
+            'price_from' => 'nullable|numeric|min:0',
             'website_url' => 'nullable|url',
             'facebook_url' => 'nullable|url',
             'instagram_url' => 'nullable|url',
@@ -216,6 +218,9 @@ class ProviderDashboard extends Component
         // Cargar estado de visualización
         $this->verification_status = $this->profile->is_verified;
 
+        // Cargar precio base (común a todos los roles con precio)
+        $this->price_from = $this->profile->price_from ?? null;
+
         // Cargar redes sociales (comunes)
         $this->website_url = $this->profile->website_url;
         $this->facebook_url = $this->profile->facebook_url;
@@ -289,7 +294,8 @@ class ProviderDashboard extends Component
             'tiktok_url' => $this->tiktok_url,
             'whatsapp_number' => $this->whatsapp_number,
             'availability' => $this->availability,
-            'district_id' => $this->district_id, // Guardar ubicación para filtros
+            'district_id' => $this->district_id,
+            'price_from' => $this->price_from ?: null,
         ];
 
         if ($this->user->hasRole('veterinarian')) {
@@ -363,7 +369,8 @@ class ProviderDashboard extends Component
         if ($this->profile_photo) {
             $this->validate(['profile_photo' => 'image|max:5120']); // 5MB
             $path = $this->profile_photo->store('profile-photos', config('filesystems.default'));
-            $this->profile_photo = null; // Reseteamos para que desaparezca el botón y se muestre la guardada
+            $this->user->update(['profile_photo_path' => $path]);
+            $this->profile_photo = null;
         }
 
         // La lógica de documento ahora se maneja principalmente en uploadVerificationDocument

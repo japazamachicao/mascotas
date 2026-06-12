@@ -30,6 +30,9 @@ class Profile extends Component
     // Contact Modal
     public $showContactModal = false;
 
+    // WhatsApp link tras agendar cita
+    public $waLink = null;
+
     protected $rules = [
         'rating' => 'required|integer|min:1|max:5',
         'comment' => 'required|string|min:5|max:500',
@@ -174,10 +177,40 @@ class Profile extends Component
             'notes' => $this->appointmentNotes,
         ]);
 
+        // Generar link de WhatsApp al proveedor para que el cliente pueda confirmar directamente
+        $whatsapp = $this->profile->whatsapp_number ?? null;
+        $waLink = null;
+        if ($whatsapp) {
+            $phone = preg_replace('/\D/', '', $whatsapp);
+            if (strlen($phone) === 9) {
+                $phone = '51' . $phone; // Añadir código Perú
+            }
+            $date = \Carbon\Carbon::parse($scheduledAt)->format('d/m/Y H:i');
+            $clientName = auth()->user()->name;
+            $msg = urlencode("Hola {$this->user->name}, soy {$clientName}. Acabo de solicitar una cita para el {$date} a través de TodoPeludos.com. ¿Puedes confirmarme?");
+            $waLink = "https://wa.me/{$phone}?text={$msg}";
+        }
+
+        $this->waLink = $waLink;
         $this->showBookingModal = false;
         $this->reset(['appointmentDate', 'appointmentTime', 'appointmentNotes']);
-        
-        session()->flash('message', 'Solicitud de cita enviada. El proveedor confirmará pronto.');
+
+        session()->flash('message', 'Solicitud enviada. ' . ($waLink ? 'Escríbele al proveedor por WhatsApp para confirmar.' : 'El proveedor confirmará pronto.'));
+    }
+
+    public function openBookingModal()
+    {
+        $this->showBookingModal = true;
+    }
+
+    public function openContactModal()
+    {
+        $this->showContactModal = true;
+    }
+
+    public function closeContactModal()
+    {
+        $this->showContactModal = false;
     }
 
     public function openImage($path)

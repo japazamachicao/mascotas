@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         
         // Admin
         $admin = User::firstOrCreate(
-            ['email' => 'admin@mascotas.pe'],
+            ['email' => 'admin@todopeludos.com'],
             [
                 'name' => 'Admin User',
                 'password' => bcrypt('password'),
@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
 
         // Veterinario
         $vet = User::firstOrCreate(
-            ['email' => 'vet@mascotas.pe'],
+            ['email' => 'vet@todopeludos.com'],
             [
                 'name' => 'Dr. Veterinario',
                 'password' => bcrypt('password'),
@@ -50,7 +50,7 @@ class DatabaseSeeder extends Seeder
 
         // Paseador
         $walker = User::firstOrCreate(
-            ['email' => 'walker@mascotas.pe'],
+            ['email' => 'walker@todopeludos.com'],
             [
                 'name' => 'Juan Paseador',
                 'password' => bcrypt('password'),
@@ -69,7 +69,7 @@ class DatabaseSeeder extends Seeder
 
         // Estilista (Groomer)
         $groomer = User::firstOrCreate(
-            ['email' => 'groomer@mascotas.pe'],
+            ['email' => 'groomer@todopeludos.com'],
             [
                 'name' => 'Ana Estilista',
                 'password' => bcrypt('password'),
@@ -77,15 +77,17 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $groomer->syncRoles(['groomer']);
-        $groomer->groomerProfile()->create([
-            'bio' => 'Especialista en cortes de raza y spa canino.',
-            'allows_home_visits' => false,
-            'district_id' => '150101'
-        ]);
+        if (!$groomer->groomerProfile) {
+            $groomer->groomerProfile()->create([
+                'bio' => 'Especialista en cortes de raza y spa canino.',
+                'allows_home_visits' => false,
+                'district_id' => '150101'
+            ]);
+        }
 
         // Hotel Canino
         $hotel = User::firstOrCreate(
-            ['email' => 'hotel@mascotas.pe'],
+            ['email' => 'hotel@todopeludos.com'],
             [
                 'name' => 'Hotel De Pelos',
                 'password' => bcrypt('password'),
@@ -109,7 +111,7 @@ class DatabaseSeeder extends Seeder
 
         // Cliente
         $client = User::firstOrCreate(
-            ['email' => 'cliente@mascotas.pe'],
+            ['email' => 'cliente@todopeludos.com'],
             [
                 'name' => 'Cliente Demo',
                 'password' => bcrypt('password'),
@@ -120,7 +122,7 @@ class DatabaseSeeder extends Seeder
 
         // Albergue
         $shelter = User::firstOrCreate(
-            ['email' => 'shelter@mascotas.pe'],
+            ['email' => 'shelter@todopeludos.com'],
             [
                 'name' => 'Albergue Esperanza',
                 'password' => bcrypt('password'),
@@ -143,7 +145,7 @@ class DatabaseSeeder extends Seeder
 
         // Trainer
         $trainer = User::firstOrCreate(
-            ['email' => 'trainer@mascotas.pe'],
+            ['email' => 'trainer@todopeludos.com'],
             [
                 'name' => 'César Millan (Fan)',
                 'password' => bcrypt('password'),
@@ -163,7 +165,7 @@ class DatabaseSeeder extends Seeder
 
         // Pet Sitter
         $sitter = User::firstOrCreate(
-            ['email' => 'sitter@mascotas.pe'],
+            ['email' => 'sitter@todopeludos.com'],
             [
                 'name' => 'Claudia Cuidadora',
                 'password' => bcrypt('password'),
@@ -184,7 +186,7 @@ class DatabaseSeeder extends Seeder
         
         // Pet Taxi
         $taxi = User::firstOrCreate(
-            ['email' => 'taxi@mascotas.pe'],
+            ['email' => 'taxi@todopeludos.com'],
             [
                 'name' => 'Taxi Mascota Segura',
                 'password' => bcrypt('password'),
@@ -205,7 +207,7 @@ class DatabaseSeeder extends Seeder
 
         // Fotógrafo
         $photo = User::firstOrCreate(
-            ['email' => 'photo@mascotas.pe'],
+            ['email' => 'photo@todopeludos.com'],
             [
                 'name' => 'Fotonimal',
                 'password' => bcrypt('password'),
@@ -223,12 +225,5 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // Cliente
-        $client = User::factory()->create([
-            'name' => 'Cliente Demo',
-            'email' => 'cliente@mascotas.pe',
-            'password' => bcrypt('password'),
-        ]);
-        $client->assignRole('client');
     }
 }

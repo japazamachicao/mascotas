@@ -5,6 +5,8 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+[x-cloak] { display: none !important; }
+
 @theme {
     --font-sans: 'Inter', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     
@@ -16,3 +18,51 @@
     
     --color-secondary-500: #64748b;
 }
+
+/* Premium Form Control Base Styles */
+@layer base {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    border: 1px solid #e5e7eb !important; /* border-gray-200 / default border */
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 0.625rem 0.875rem; /* py-2.5 px-3.5 */
+    background-color: #f9fafb; /* bg-gray-50 */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+    font-size: 0.875rem; /* sm:text-sm */
+    color: #111827; /* gray-900 */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="date"]:focus,
+  input[type="time"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  select:focus,
+  textarea:focus {
+    outline: none !important;
+    background-color: #ffffff !important;
+    border-color: #0284c7 !important; /* primary-600 */
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important; /* ring-primary-100/ring-opacity-50 */
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.25rem;
+    color: #0284c7 !important;
+    transition: all 0.2s ease-in-out;
+  }
+}
+

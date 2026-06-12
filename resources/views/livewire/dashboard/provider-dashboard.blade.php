@@ -1,10 +1,20 @@
 <div class="py-12">
     <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-        
+
+        @if(session('onboarding'))
+            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div>
+                    <p class="text-sm font-semibold text-blue-800">{{ session('onboarding') }}</p>
+                    <p class="text-xs text-blue-600 mt-1">Agrega tu ubicación, bio, horarios y al menos una foto de portafolio para destacar en las búsquedas.</p>
+                </div>
+            </div>
+        @endif
+
         <!-- Welcome Section -->
         <div class="mb-8">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                Panel Profesional - @if($user->hasRole('veterinarian')) Veterinario @elseif($user->hasRole('walker')) Paseador @else Estilista @endif
+                Panel Profesional - @if($user->hasRole('veterinarian')) Veterinario @elseif($user->hasRole('walker')) Paseador @elseif($user->hasRole('groomer')) Estilista @elseif($user->hasRole('hotel')) Hotel @elseif($user->hasRole('shelter')) Albergue @elseif($user->hasRole('trainer')) Adiestrador @elseif($user->hasRole('pet_sitter')) Cuidador @elseif($user->hasRole('pet_taxi')) Transporte @elseif($user->hasRole('pet_photographer')) Fotógrafo @endif
             </h2>
             <p class="mt-1 text-sm text-gray-500">
                 Gestiona tu disponibilidad, portafolio y perfil público.
@@ -82,12 +92,22 @@
                             Horarios de Atención
                         </button>
 
-                        <button @click="activeTab = 'portfolio'" 
+                        <button @click="activeTab = 'portfolio'"
                             :class="activeTab === 'portfolio' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
                             class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
                             <svg :class="activeTab === 'portfolio' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             Mi Portafolio
                         </button>
+
+                        <a href="{{ route('dashboard.provider.appointments') }}"
+                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent">
+                            <svg class="shrink-0 -ml-1 mr-3 h-6 w-6 text-gray-400 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            Mis Citas
+                            @php $pendingCount = \App\Models\Appointment::where('provider_id', auth()->id())->where('status', 'pending')->count(); @endphp
+                            @if($pendingCount > 0)
+                                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $pendingCount }}</span>
+                            @endif
+                        </a>
                     </nav>
                 </div>
             </div>
@@ -272,6 +292,22 @@
                                     </div>
                                     <p class="mt-2 text-sm text-gray-500">Esta es tu carta de presentación. Sé descriptivo y amable.</p>
                                 </div>
+
+                                {{-- Precio base (común) --}}
+                                @if(!$user->hasRole('shelter'))
+                                <div class="sm:col-span-3">
+                                    <label class="block text-sm font-medium text-gray-700">
+                                        Precio desde (S/)
+                                    </label>
+                                    <div class="mt-1 relative rounded-md shadow-sm">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">S/</span>
+                                        </div>
+                                        <input type="number" min="0" step="0.50" wire:model="price_from" class="pl-8 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="0.00">
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">Precio mínimo de tu servicio. Ayuda a los clientes a encontrarte.</p>
+                                </div>
+                                @endif
 
                                 {{-- Campos Específicos --}}
                                 @if($user->hasRole('veterinarian'))

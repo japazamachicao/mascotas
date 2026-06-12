@@ -182,19 +182,19 @@
 
                                     <div class="col-span-1 md:col-span-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Nombre / Alias</label>
-                                        <input wire:model="name" type="text" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm h-10" placeholder="Ej: Mi Casa, Oficina, Parque Reducto">
+                                        <input wire:model="name" type="text" class="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm h-10" placeholder="Ej: Mi Casa, Oficina, Parque Reducto">
                                         @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                     </div>
                                     
                                     <div class="col-span-1 md:col-span-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Dirección Exacta</label>
-                                        <input wire:model="address" type="text" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm h-10" placeholder="Av. Larco 123, Dpto 401">
+                                        <input wire:model="address" type="text" class="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm h-10" placeholder="Av. Larco 123, Dpto 401">
                                         @error('address') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div class="col-span-1 md:col-span-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-1">Referencia (Opcional)</label>
-                                        <input wire:model="reference" type="text" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm h-10" placeholder="Frente al supermercado...">
+                                        <input wire:model="reference" type="text" class="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm h-10" placeholder="Frente al supermercado...">
                                     </div>
 
                                     <div class="col-span-1 md:col-span-2 bg-gray-50 p-3 rounded-lg flex items-center">

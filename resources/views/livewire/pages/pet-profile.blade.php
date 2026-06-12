@@ -4,7 +4,7 @@
         <div class="flex justify-center mb-6">
             <span class="flex items-center gap-2 text-gray-400 font-medium tracking-wide text-sm uppercase">
                 <img class="h-6 w-auto opacity-50" src="https://cdn-icons-png.flaticon.com/512/616/616554.png" alt="Logo">
-                Mascotas.pe
+                TodoPeludos.com
             </span>
         </div>
 
@@ -103,7 +103,7 @@
                 
                 <!-- Footer -->
                 <div class="mt-5 pt-2 border-t border-gray-50 text-center">
-                    <p class="text-[10px] text-gray-300 uppercase tracking-wider">Verificado por Mascotas.pe</p>
+                    <p class="text-[10px] text-gray-300 uppercase tracking-wider">Verificado por TodoPeludos.com</p>
                     <div class="mt-1 opacity-80 hover:opacity-100 transition duration-500 flex justify-center">
                          <div class="scale-50 origin-top -mb-24">
                             {!! $qrCode !!}

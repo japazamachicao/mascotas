@@ -1,0 +1,152 @@
+<div class="py-10">
+    <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Mis Citas</h2>
+                <p class="text-sm text-gray-500 mt-1">Gestiona las solicitudes de tus clientes.</p>
+            </div>
+            <a href="{{ route('dashboard.provider') }}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">← Volver al Panel</a>
+        </div>
+
+        @if(session('message'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
+                 class="mb-6 bg-green-50 border border-green-200 text-green-800 text-sm font-medium px-4 py-3 rounded-lg">
+                {{ session('message') }}
+            </div>
+        @endif
+
+        <!-- Tabs de estado -->
+        <div class="flex gap-2 mb-6 flex-wrap">
+            @foreach(['pending' => 'Pendientes', 'confirmed' => 'Confirmadas', 'completed' => 'Completadas', 'cancelled' => 'Canceladas', 'all' => 'Todas'] as $status => $label)
+                @php
+                    $badge = $counts[$status] ?? null;
+                    $isActive = $filterStatus === $status;
+                @endphp
+                <button wire:click="$set('filterStatus', '{{ $status }}')"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold border transition
+                        {{ $isActive
+                            ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}">
+                    {{ $label }}
+                    @if($badge !== null && $badge > 0)
+                        <span class="ml-1.5 {{ $isActive ? 'bg-white text-primary-700' : 'bg-gray-100 text-gray-700' }} text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $badge }}</span>
+                    @endif
+                </button>
+            @endforeach
+        </div>
+
+        <!-- Lista de citas -->
+        <div class="space-y-4">
+            @forelse($appointments as $apt)
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+
+                        <!-- Info cliente -->
+                        <div class="flex items-start gap-4 flex-1">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($apt->client->name) }}&background=0ea5e9&color=fff&size=48"
+                                 class="w-12 h-12 rounded-full shrink-0" alt="{{ $apt->client->name }}">
+                            <div>
+                                <p class="font-bold text-gray-900 text-base">{{ $apt->client->name }}</p>
+                                <p class="text-sm text-gray-500">{{ $apt->client->email }}</p>
+                                @if($apt->pet)
+                                    <p class="text-xs text-gray-400 mt-0.5">🐾 {{ $apt->pet->name }} ({{ $apt->pet->species }})</p>
+                                @endif
+                                @if($apt->notes)
+                                    <p class="text-sm text-gray-600 mt-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 italic">"{{ $apt->notes }}"</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Fecha y estado -->
+                        <div class="shrink-0 flex flex-col items-end gap-3">
+                            <div class="text-right">
+                                <p class="text-sm font-bold text-gray-800">{{ $apt->scheduled_at->format('d M Y') }}</p>
+                                <p class="text-xs text-gray-500">{{ $apt->scheduled_at->format('H:i') }} hrs</p>
+                            </div>
+
+                            @php
+                                $statusStyles = [
+                                    'pending'   => 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                                    'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                    'completed' => 'bg-green-50 text-green-700 border-green-200',
+                                    'cancelled'  => 'bg-red-50 text-red-700 border-red-200',
+                                ];
+                                $statusLabels = [
+                                    'pending'   => 'Pendiente',
+                                    'confirmed' => 'Confirmada',
+                                    'completed' => 'Completada',
+                                    'cancelled'  => 'Cancelada',
+                                ];
+                            @endphp
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full border {{ $statusStyles[$apt->status] ?? '' }}">
+                                {{ $statusLabels[$apt->status] ?? $apt->status }}
+                            </span>
+
+                            <!-- Acciones -->
+                            <div class="flex gap-2">
+                                @if($apt->status === 'pending')
+                                    <button wire:click="confirm({{ $apt->id }})"
+                                        class="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition">
+                                        Confirmar
+                                    </button>
+                                    <button wire:click="$set('confirmingCancel', {{ $apt->id }})"
+                                        class="px-3 py-1.5 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">
+                                        Rechazar
+                                    </button>
+                                @elseif($apt->status === 'confirmed')
+                                    <button wire:click="complete({{ $apt->id }})"
+                                        class="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition">
+                                        Completar
+                                    </button>
+                                    <button wire:click="$set('confirmingCancel', {{ $apt->id }})"
+                                        class="px-3 py-1.5 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">
+                                        Cancelar
+                                    </button>
+                                @endif
+
+                                @if($apt->client->whatsapp ?? null)
+                                    <a href="https://wa.me/51{{ preg_replace('/\D/','',$apt->client->whatsapp ?? '') }}"
+                                       target="_blank"
+                                       class="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition flex items-center gap-1">
+                                        WA
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal de confirmación de cancelación -->
+                @if($confirmingCancel === $apt->id)
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-4 -mt-2">
+                        <p class="text-sm text-red-800 font-semibold mb-3">¿Confirmas que quieres cancelar esta cita?</p>
+                        <div class="flex gap-2">
+                            <button wire:click="cancel({{ $apt->id }})"
+                                class="px-4 py-1.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700">
+                                Sí, cancelar
+                            </button>
+                            <button wire:click="$set('confirmingCancel', null)"
+                                class="px-4 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50">
+                                No, volver
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
+            @empty
+                <div class="text-center py-16 bg-white rounded-xl border border-gray-100">
+                    <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p class="mt-4 text-gray-500 font-medium">No hay citas en este estado.</p>
+                </div>
+            @endforelse
+        </div>
+
+        <div class="mt-6">
+            {{ $appointments->links() }}
+        </div>
+
+    </div>
+</div>

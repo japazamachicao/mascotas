@@ -29,13 +29,13 @@
                     <p class="text-gray-600">Todos tus análisis y planes en un solo lugar</p>
                 </div>
                 <div class="flex gap-3">
-                    <a href="{{ route('dashboard.health.analyze') }}" class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold">
+                    <a href="#" class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                         Análisis
                     </a>
-                    <a href="{{ route('dashboard.care.plan') }}" class="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 transition shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold">
+                    <a href="#" class="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 transition shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -112,10 +112,10 @@
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">No hay registros aún</h3>
                 <p class="text-gray-600 mb-8">Comienza realizando un análisis de salud o generando un plan de cuidado para tu mascota</p>
                 <div class="flex gap-4 justify-center">
-                    <a href="{{ route('dashboard.health.analyze') }}" class="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-8 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition font-semibold shadow-lg">
+                    <a href="#" class="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-8 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition font-semibold shadow-lg">
                         Hacer Análisis
                     </a>
-                    <a href="{{ route('dashboard.care.plan') }}" class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-8 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 transition font-semibold shadow-lg">
+                    <a href="#" class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-8 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 transition font-semibold shadow-lg">
                         Crear Plan
                     </a>
                 </div>
@@ -359,7 +359,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                     Para ver el plan completo con todas las secciones, visita el
-                                    <a href="{{ route('dashboard.care.plan') }}" class="font-bold text-purple-900 hover:underline">Generador de Planes</a>
+                                    <a href="#" class="font-bold text-purple-900 hover:underline">Generador de Planes</a>
                                 </p>
                             </div>
                         </div>

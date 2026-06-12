@@ -62,24 +62,6 @@
                         </div>
                         @error('photo') <span class="text-red-500 text-xs font-medium">{{ $message }}</span> @enderror
                         
-                        @if ($photo)
-                            <button 
-                                type="button"
-                                wire:click="detectBreed" 
-                                wire:loading.attr="disabled"
-                                class="mt-2 inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                            >
-                                <svg wire:loading.remove wire:target="detectBreed" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                </svg>
-                                <svg wire:loading wire:target="detectBreed" class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span wire:loading.remove wire:target="detectBreed">🔬 Detectar Raza con IA</span>
-                                <span wire:loading wire:target="detectBreed">Analizando...</span>
-                            </button>
-                        @endif
                     </div>
 
                     @if (session()->has('success'))
@@ -94,80 +76,16 @@
                         </div>
                     @endif
 
-                    @if (!empty($detectedBreeds))
-                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 mb-6">
-                            <div class="flex items-center mb-4">
-                                <div class="bg-purple-500 p-2 rounded-lg mr-3">
-                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-gray-900">Razas Detectadas por IA</h4>
-                                    <p class="text-sm text-purple-700">Confianza: {{ round($breedConfidence * 100) }}%</p>
-                                </div>
-                            </div>
-
-                            <div class="space-y-2 mb-4">
-                                @foreach ($detectedBreeds as $detectedBreed)
-                                    <div class="flex items-center justify-between bg-white rounded-lg p-3">
-                                        <div>
-                                            <span class="font-semibold text-gray-900">{{ $detectedBreed['name'] }}</span>
-                                            @if (isset($detectedBreed['characteristics']))
-                                                <p class="text-xs text-gray-500 mt-1">{{ implode(', ', array_slice($detectedBreed['characteristics'], 0, 2)) }}</p>
-                                            @endif
-                                        </div>
-                                        <span class="text-purple-600 font-bold">{{ round($detectedBreed['percentage']) }}%</span>
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            @if (!empty($nutritionalNeeds))
-                                <div class="bg-white rounded-lg p-4 mt-4">
-                                    <h5 class="font-semibold text-gray-900 mb-2 flex items-center">
-                                        <span class="mr-2">🥗</span> Necesidades Nutricionales
-                                    </h5>
-                                    <div class="grid grid-cols-2 gap-3 text-sm">
-                                        <div class="bg-blue-50 rounded p-2">
-                                            <p class="text-xs text-gray-600">Calorías diarias</p>
-                                            <p class="font-bold text-blue-700">{{ $nutritionalNeeds['calories']['daily_calories'] ?? 0 }} kcal</p>
-                                        </div>
-                                        <div class="bg-green-50 rounded p-2">
-                                            <p class="text-xs text-gray-600">Por comida (x2)</p>
-                                            <p class="font-bold text-green-700">{{ $nutritionalNeeds['calories']['per_meal'] ?? 0 }} kcal</p>
-                                        </div>
-                                        <div class="bg-orange-50 rounded p-2">
-                                            <p class="text-xs text-gray-600">Proteína mín.</p>
-                                            <p class="font-bold text-orange-700">{{ $nutritionalNeeds['nutrients']['protein']['min_percentage'] ?? 0 }}%</p>
-                                        </div>
-                                        <div class="bg-yellow-50 rounded p-2">
-                                            <p class="text-xs text-gray-600">Grasa mín.</p>
-                                            <p class="font-bold text-yellow-700">{{ $nutritionalNeeds['nutrients']['fat']['min_percentage'] ?? 0 }}%</p>
-                                        </div>
-                                    </div>
-                                    @if (isset($nutritionalNeeds['special_considerations']) && !empty($nutritionalNeeds['special_considerations']))
-                                        <div class="mt-3 bg-yellow-50 border-l-2 border-yellow-400 p-2">
-                                            <p class="text-xs font-semibold text-yellow-800 mb-1">Consideraciones especiales:</p>
-                                            @foreach ($nutritionalNeeds['special_considerations'] as $consideration)
-                                                <p class="text-xs text-yellow-700">• {{ $consideration }}</p>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                </div>
-                            @endif
-                        </div>
-                    @endif
-
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div class="space-y-1">
                             <label for="name" class="block text-sm font-semibold text-gray-700">Nombre *</label>
-                            <input wire:model="name" type="text" id="name" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition" placeholder="Ej: Rocky">
+                            <input wire:model="name" type="text" id="name" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition" placeholder="Ej: Rocky">
                             @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="space-y-1">
                             <label for="species" class="block text-sm font-semibold text-gray-700">Especie *</label>
-                            <select wire:model.live="species" id="species" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition">
+                            <select wire:model.live="species" id="species" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition">
                                 <option value="Perro">Perro 🐶</option>
                                 <option value="Gato">Gato 🐱</option>
                                 <option value="Otro">Otro 🐰</option>
@@ -176,7 +94,7 @@
 
                         <div class="space-y-1">
                             <label for="breed" class="block text-sm font-semibold text-gray-700">Raza</label>
-                            <input list="breeds" wire:model="breed" type="text" id="breed" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition" placeholder="Busca o escribe...">
+                            <input list="breeds" wire:model="breed" type="text" id="breed" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition" placeholder="Busca o escribe...">
                             <datalist id="breeds">
                                 @foreach($this->breeds as $breedOption)
                                     <option value="{{ $breedOption }}">
@@ -186,7 +104,7 @@
                         
                         <div class="space-y-1">
                             <label for="gender" class="block text-sm font-semibold text-gray-700">Género *</label>
-                            <select wire:model="gender" id="gender" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition">
+                            <select wire:model="gender" id="gender" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition">
                                 <option value="M">Macho ♂</option>
                                 <option value="F">Hembra ♀</option>
                             </select>
@@ -194,7 +112,7 @@
 
                         <div class="space-y-1">
                             <label for="color" class="block text-sm font-semibold text-gray-700">Color *</label>
-                            <select wire:model="color" id="color" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition">
+                            <select wire:model="color" id="color" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition">
                                 <option value="">Selecciona...</option>
                                 @foreach($this->colors as $colorOption)
                                     <option value="{{ $colorOption }}">{{ $colorOption }}</option>
@@ -205,7 +123,7 @@
                         <div class="space-y-1">
                             <label for="weight" class="block text-sm font-semibold text-gray-700">Peso (kg) *</label>
                             <div class="relative rounded-md shadow-sm">
-                                <input wire:model="weight" type="number" step="0.1" id="weight" class="block w-full rounded-lg border-gray-300 pl-4 pr-12 focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 bg-gray-50 focus:bg-white transition" placeholder="0.0">
+                                <input wire:model="weight" type="number" step="0.1" id="weight" class="block w-full rounded-lg border border-gray-300 pl-4 pr-12 focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 bg-gray-50 focus:bg-white transition" placeholder="0.0">
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                     <span class="text-gray-500 sm:text-sm">kg</span>
                                 </div>
@@ -215,12 +133,12 @@
 
                         <div class="space-y-1">
                             <label for="birth_date" class="block text-sm font-semibold text-gray-700">Fecha Nacimiento <span class="text-gray-400 font-normal">(Aprox)</span></label>
-                            <input wire:model="birth_date" type="date" id="birth_date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition">
+                            <input wire:model="birth_date" type="date" id="birth_date" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition">
                         </div>
 
                         <div class="space-y-1">
                             <label for="chip_id" class="block text-sm font-semibold text-gray-700">N° Microchip <span class="text-gray-400 font-normal">(Opcional)</span></label>
-                            <input wire:model="chip_id" type="text" id="chip_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition" placeholder="Ej: 981098...">
+                            <input wire:model="chip_id" type="text" id="chip_id" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-gray-50 focus:bg-white transition" placeholder="Ej: 981098...">
                         </div>
                     </div>
                 </div>
@@ -333,18 +251,18 @@
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div class="space-y-1">
                                 <label for="vaccination_date" class="block text-sm font-semibold text-gray-700">Última Vacunación 💉</label>
-                                <input wire:model="vaccination_date" type="date" id="vaccination_date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm py-3 px-4 bg-white transition">
+                                <input wire:model="vaccination_date" type="date" id="vaccination_date" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm py-3 px-4 bg-white transition">
                                 <p class="text-xs text-gray-500 mt-1">Fecha de su última vacuna importante.</p>
                             </div>
 
                             <div class="space-y-1">
                                 <label for="deworming_date" class="block text-sm font-semibold text-gray-700">Última Desparasitación 🦠</label>
-                                <input wire:model="deworming_date" type="date" id="deworming_date" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm py-3 px-4 bg-white transition">
+                                <input wire:model="deworming_date" type="date" id="deworming_date" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm py-3 px-4 bg-white transition">
                             </div>
 
                             <div class="flex items-center pt-4">
                                 <label class="inline-flex items-center cursor-pointer">
-                                    <input wire:model="is_sterilized" type="checkbox" class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50 h-5 w-5">
+                                    <input wire:model="is_sterilized" type="checkbox" class="rounded border border-gray-300 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50 h-5 w-5">
                                     <span class="ml-3 text-sm font-medium text-gray-700">¿Está esterilizado?</span>
                                 </label>
                             </div>
@@ -352,7 +270,7 @@
                             <!-- Notas Moved Here too -->
                             <div class="sm:col-span-2 space-y-1">
                                 <label for="medical_notes" class="block text-sm font-semibold text-gray-700">Notas Médicas / Alergias</label>
-                                <textarea wire:model="medical_notes" id="medical_notes" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-white transition" placeholder="Ej: Alérgico al pollo, toma medicación para el corazón..."></textarea>
+                                <textarea wire:model="medical_notes" id="medical_notes" rows="3" class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-3 px-4 bg-white transition" placeholder="Ej: Alérgico al pollo, toma medicación para el corazón..."></textarea>
                             </div>
                         </div>
                     </div>

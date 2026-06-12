@@ -4,7 +4,7 @@
     <div class="relative bg-white overflow-hidden">
         <div class="absolute inset-0">
             <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Mascota feliz">
-            <div class="absolute inset-0 bg-gray-900 bg-opacity-60"></div>
+            <div class="absolute inset-0 bg-gray-900/60"></div>
         </div>
         
         <div class="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
@@ -13,7 +13,7 @@
                 <span class="block text-primary-400">lo harías</span>
             </h1>
             <p class="mt-6 text-xl text-gray-100 max-w-3xl mx-auto text-center font-medium shadow-sm">
-                Conecta con veterinarios, paseadores y hoteles cerca de ti. Más análisis de salud con IA para el cuidado completo de tu mascota.
+                Encuentra veterinarios, paseadores, hoteles y más servicios de confianza cerca de ti.
             </p>
 
             <!-- Buscador Central -->
@@ -56,131 +56,40 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                <!-- Card Veterinarios -->
-                <a href="{{ route('search', ['role' => 'veterinarian']) }}" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-teal-50 rounded-full opacity-50 z-0"></div>
+            @php
+                $services = [
+                    ['type' => 'veterinarian', 'label' => 'Veterinarios',    'desc' => 'Consultas presenciales o a domicilio con especialistas calificados.',        'color' => 'teal',   'icon' => 'M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z'],
+                    ['type' => 'walker',       'label' => 'Paseadores',       'desc' => 'Paseos seguros con profesionales certificados cerca de tu zona.',             'color' => 'orange', 'icon' => 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1'],
+                    ['type' => 'groomer',      'label' => 'Estilistas',        'desc' => 'Baño, corte y estética para que tu mascota siempre luzca perfecta.',          'color' => 'pink',   'icon' => 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01'],
+                    ['type' => 'hotel',        'label' => 'Hoteles',           'desc' => 'Hospedaje con amor familiar cuando tú no puedes estar.',                       'color' => 'indigo', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+                    ['type' => 'trainer',      'label' => 'Adiestradores',     'desc' => 'Educación canina con métodos positivos. A domicilio o en su establecimiento.', 'color' => 'yellow', 'icon' => 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'],
+                    ['type' => 'pet_sitter',   'label' => 'Cuidadores',        'desc' => 'Cuidan a tu mascota en su propio hogar con toda la atención que merece.',      'color' => 'green',  'icon' => 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'],
+                    ['type' => 'pet_taxi',     'label' => 'Taxi Pet',          'desc' => 'Transporte seguro y cómodo para tus mascotas al veterinario o peluquería.',    'color' => 'sky',    'icon' => 'M8 7h12m0 0l-4-4m4 4l-4 4m0 5H4m0 0l4 4m-4-4l4-4'],
+                    ['type' => 'pet_photographer','label' => 'Fotógrafos',     'desc' => 'Sesiones profesionales para inmortalizar los mejores momentos de tu mascota.', 'color' => 'purple', 'icon' => 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z'],
+                    ['type' => 'shelter',      'label' => 'Albergues',         'desc' => 'Apoya la adopción responsable y encuentra refugios que necesitan ayuda.',       'color' => 'rose',   'icon' => 'M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9'],
+                ];
+            @endphp
+
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach($services as $s)
+                <a href="{{ route('search', ['serviceType' => $s['type']]) }}" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-7 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                     <div class="relative z-10">
-                        <span class="inline-flex items-center justify-center p-3 bg-teal-100 text-teal-600 rounded-xl mb-6 shadow-sm group-hover:bg-teal-600 group-hover:text-white transition-colors duration-300">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        <span class="inline-flex items-center justify-center p-3 bg-{{ $s['color'] }}-100 text-{{ $s['color'] }}-600 rounded-xl mb-5 shadow-sm group-hover:bg-{{ $s['color'] }}-600 group-hover:text-white transition-colors duration-300">
+                            <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $s['icon'] }}" />
                             </svg>
                         </span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-teal-600 transition-colors">Veterinarios</h3>
-                        <p class="text-gray-500 leading-relaxed">
-                            Especialistas calificados cerca de ti. Agenda consultas presenciales o a domicilio con total confianza.
-                        </p>
+                        <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-{{ $s['color'] }}-600 transition-colors">{{ $s['label'] }}</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed">{{ $s['desc'] }}</p>
                     </div>
                 </a>
-
-                <!-- Card Paseadores -->
-                <a href="{{ route('search', ['role' => 'walker']) }}" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-orange-50 rounded-full opacity-50 z-0"></div>
-                    <div class="relative z-10">
-                        <span class="inline-flex items-center justify-center p-3 bg-orange-100 text-orange-600 rounded-xl mb-6 shadow-sm group-hover:bg-orange-600 group-hover:text-white transition-colors duration-300">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                            </svg>
-                        </span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-orange-600 transition-colors">Paseadores</h3>
-                        <p class="text-gray-500 leading-relaxed">
-                            Paseos seguros y divertidos. Tracking GPS en tiempo real para que sepas siempre dónde está tu amigo.
-                        </p>
-                    </div>
-                </a>
-
-                <!-- Card Hoteles -->
-                <a href="{{ route('search', ['role' => 'hotel']) }}" class="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-50 rounded-full opacity-50 z-0"></div>
-                    <div class="relative z-10">
-                        <span class="inline-flex items-center justify-center p-3 bg-indigo-100 text-indigo-600 rounded-xl mb-6 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                        </span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors">Hoteles y Hospedaje</h3>
-                        <p class="text-gray-500 leading-relaxed">
-                            Un segundo hogar cuando tú no estás. Hopsedajes libre de jaulas y con amor de familia.
-                        </p>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Nueva Sección: Funcionalidades IA -->
-            <div class="mt-24 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-3xl p-8 md:p-12">
-                <div class="text-center mb-12">
-                    <div class="inline-block bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-sm font-semibold mb-4">
-                        🚀 Powered by AI
-                    </div>
-                    <h2 class="text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                        Salud Inteligente para tu Mascota
-                    </h2>
-                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-                        Tecnología de vanguardia para detectar problemas de salud temprano y crear planes personalizados
-                    </p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- AI Feature 1 -->
-                    <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
-                        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 w-14 h-14 rounded-xl flex items-center justify-center text-3xl mb-4">
-                            🔬
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Análisis de Salud IA</h3>
-                        <p class="text-gray-600 mb-4">Analiza fotos de heces, orina y piel con IA avanzada. Detecta problemas temprano.</p>
-                        @auth
-                            <a href="{{ route('dashboard.health.analyze') }}" class="text-indigo-600 font-semibold hover:text-indigo-700 inline-flex items-center">
-                                Analizar ahora →
-                            </a>
-                        @else
-                            <a href="/demo/analisis" class="text-indigo-600 font-semibold hover:text-indigo-700 inline-flex items-center">
-                                Probar demo →
-                            </a>
-                        @endauth
-                    </div>
-
-                    <!-- AI Feature 2 -->
-                    <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
-                        <div class="bg-gradient-to-r from-purple-600 to-pink-600 w-14 h-14 rounded-xl flex items-center justify-center text-3xl mb-4">
-                            📋
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Plan de Cuidado IA</h3>
-                        <p class="text-gray-600 mb-4">Plan personalizado según raza, edad y necesidades. Nutrición, ejercicio y más.</p>
-                        @auth
-                            <a href="{{ route('dashboard.care.plan') }}" class="text-purple-600 font-semibold hover:text-purple-700 inline-flex items-center">
-                                Crear plan →
-                            </a>
-                        @else
-                            <a href="/demo/plan-cuidado" class="text-purple-600 font-semibold hover:text-purple-700 inline-flex items-center">
-                                Probar demo →
-                            </a>
-                        @endauth
-                    </div>
-
-                    <!-- AI Feature 3 -->
-                    <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
-                        <div class="bg-gradient-to-r from-teal-600 to-cyan-600 w-14 h-14 rounded-xl flex items-center justify-center text-3xl mb-4">
-                            📊
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Historial Unificado</h3>
-                        <p class="text-gray-600 mb-4">Todos tus análisis y planes en un solo lugar. Filtros inteligentes y exportación.</p>
-                        @auth
-                            <a href="{{ route('dashboard.health.history') }}" class="text-teal-600 font-semibold hover:text-teal-700 inline-flex items-center">
-                                Ver historial →
-                            </a>
-                        @else
-                            <a href="{{ route('register') }}" class="text-teal-600 font-semibold hover:text-teal-700 inline-flex items-center">
-                                Registrarse →
-                            </a>
-                        @endauth
-                    </div>
-                </div>
+                @endforeach
             </div>
 
             <!-- Botón Ver Todo -->
             <div class="mt-12 text-center">
                 <a href="{{ route('search') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 transition">
-                    Ver todos los servicios
+                    Explorar todos los proveedores
                     <svg class="ml-2 -mr-1 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                 </a>
             </div>
@@ -191,7 +100,7 @@
     <div class="bg-gray-50 py-16 border-t border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center">
-                <h2 class="text-3xl font-extrabold text-gray-900">¿Por qué elegir <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kivets.com</span>?</h2>
+                <h2 class="text-3xl font-extrabold text-gray-900">¿Por qué elegir <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">TodoPeludos.com</span>?</h2>
             </div>
             <div class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
                 <div class="text-center">

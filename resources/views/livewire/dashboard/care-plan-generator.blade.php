@@ -199,7 +199,7 @@
                             <p class="text-purple-100 text-lg">{{ $petData['species'] }} • {{ $petData['breed'] }} • {{ round($petData['weight'], 1) }} kg</p>
                         </div>
                         <div class="flex gap-3">
-                            <a href="{{ route('dashboard.health.history') }}" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-6 py-3 rounded-xl transition font-semibold flex items-center gap-2">
+                            <a href="#" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-6 py-3 rounded-xl transition font-semibold flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -448,7 +448,7 @@
                 <!-- Footer con acciones -->
                 <div class="bg-white rounded-2xl shadow-xl p-6">
                     <div class="flex flex-col md:flex-row gap-4 justify-center">
-                        <a href="{{ route('dashboard.health.history') }}" class="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition font-semibold shadow-lg text-lg">
+                        <a href="#" class="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition font-semibold shadow-lg text-lg">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>

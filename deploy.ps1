@@ -44,7 +44,7 @@ gcloud run deploy $SERVICE_NAME `
   --min-instances 0 `
   --port 8080 `
   --set-env-vars="APP_NAME=Kivets,APP_ENV=production,APP_DEBUG=false,LOG_CHANNEL=stderr,DB_CONNECTION=mysql,DB_SOCKET=/cloudsql/tucandidatoperu:us-central1:tucandidato-db,DB_DATABASE=kivets" `
-  --set-secrets="/var/www/html/.env=kivets-env:latest" `
+  --set-secrets="/secrets/.env=kivets-env:latest" `
   --add-cloudsql-instances="tucandidatoperu:us-central1:tucandidato-db"
 
 # Obtener URL del servicio

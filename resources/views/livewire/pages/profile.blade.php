@@ -53,7 +53,7 @@
                      @endif
                      
                      @if($profile->facebook_url)
-                         <a href="{{ $profile->facebook_url }}" target="_blank" class="group relative p-2 bg-white/10 rounded-full hover:bg-[#1877F2]/20 hover:bg-opacity-50 transition-all duration-300" title="Facebook">
+                         <a href="{{ $profile->facebook_url }}" target="_blank" class="group relative p-2 bg-white/10 rounded-full hover:bg-[#1877F2]/20 transition-all duration-300" title="Facebook">
                              <svg class="w-5 h-5 text-gray-200 group-hover:text-[#1877F2] fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                          </a>
                      @endif
@@ -73,7 +73,7 @@
              </div>
              <div class="mt-2 flex flex-wrap justify-center gap-2">
                  @if(($profile->district))
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white bg-opacity-20 text-white border border-white border-opacity-30 backdrop-blur-sm">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white border border-white/30 backdrop-blur-sm">
                         📍 {{ $profile->district->name }}, {{ $profile->district->province->name ?? '' }}
                     </span>
                  @endif
@@ -86,26 +86,24 @@
         
         <!-- Mensaje Global de Éxito -->
         @if (session()->has('message'))
-            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" class="mb-6 rounded-md bg-green-50 p-4 border border-green-200 shadow-sm relative">
-                <div class="flex">
-                    <div class="shrink-0">
-                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
+            <div x-data="{ show: true }" x-show="show" class="mb-6 rounded-xl bg-green-50 p-4 border border-green-200 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <svg class="h-5 w-5 text-green-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-green-800">{{ session('message') }}</p>
+                        @if($waLink)
+                            <a href="{{ $waLink }}" target="_blank"
+                               class="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-bold rounded-lg transition">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Confirmar por WhatsApp
+                            </a>
+                        @endif
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-green-800">{{ session('message') }}</p>
-                    </div>
-                    <div class="ml-auto pl-3">
-                        <div class="-mx-1.5 -my-1.5">
-                            <button @click="show = false" type="button" class="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600">
-                                <span class="sr-only">Cerrar</span>
-                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+                    <button @click="show = false" class="text-green-400 hover:text-green-600">
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
                 </div>
             </div>
         @endif
@@ -332,7 +330,7 @@
                                     @foreach($user->portfolio as $img)
                                         <div class="group relative rounded-lg overflow-hidden border border-gray-200 aspect-w-10 aspect-h-7 shadow-sm hover:shadow-md transition cursor-pointer" wire:click="openImage('{{ $img->image_path }}')">
                                             <img src="{{ \Illuminate\Support\Facades\Storage::url($img->image_path) }}" class="object-cover w-full h-full transform group-hover:scale-105 transition duration-500">
-                                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition duration-300 flex items-center justify-center">
+                                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-300 flex items-center justify-center">
                                                 <svg class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                                                 </svg>
@@ -375,7 +373,7 @@
                                                 </div>
                                                 <div class="mb-4">
                                                     <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tu Comentario</label>
-                                                    <textarea wire:model="comment" rows="3" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" placeholder="Cuéntanos tu experiencia..."></textarea>
+                                                    <textarea wire:model="comment" rows="3" class="w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" placeholder="Cuéntanos tu experiencia..."></textarea>
                                                     @error('comment') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                                 </div>
                                                 <div class="flex justify-end">
@@ -554,22 +552,33 @@
                 <!-- Tarjeta de Acción / Reserva -->
                 <div class="bg-white rounded-xl shadow-lg border border-primary-100 p-6 sticky top-6">
                     <div class="text-center mb-6">
-                        <p class="text-sm text-gray-500 mb-1">Precio Referencial</p>
+                        <p class="text-sm text-gray-500 mb-1">Precio</p>
                         <p class="text-3xl font-extrabold text-gray-900">
-                            @if(isset($profile->hourly_rate)) S/ {{ $profile->hourly_rate }} <span class="text-sm font-normal text-gray-500">/hora</span>
-                            @else <span class="text-xl">Consultar</span>
+                            @if(!empty($profile->price_from) && $profile->price_from > 0)
+                                <span class="text-base font-normal text-gray-500">desde </span>S/ {{ number_format($profile->price_from, 0) }}
+                            @elseif(isset($profile->hourly_rate) && $profile->hourly_rate > 0)
+                                S/ {{ number_format($profile->hourly_rate, 0) }} <span class="text-base font-normal text-gray-500">/hora</span>
+                            @else
+                                <span class="text-xl text-gray-400">Consultar</span>
                             @endif
                         </p>
                     </div>
 
-                    <button wire:click="$set('showBookingModal', true)" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition">
-                        Reservar Cita
-                    </button>
-                    
-                    <button wire:click="$set('showContactModal', true)" class="w-full mt-3 flex justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition">
+                    @auth
+                        <button wire:click="openBookingModal" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition">
+                            Reservar Cita
+                        </button>
+                    @else
+                        <a href="{{ route('login') }}" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition">
+                            Iniciar sesión para reservar
+                        </a>
+                    @endauth
+
+                    <button wire:click="openContactModal" class="w-full mt-3 flex justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition">
                         Contactar
                     </button>
 
+                    @auth
                     <button wire:click="toggleFavorite" class="w-full mt-3 flex justify-center items-center py-3 px-4 border rounded-lg shadow-sm text-sm font-bold focus:outline-none transition {{ $isFavorite ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100' : 'border-gray-200 text-gray-500 hover:bg-gray-50' }}">
                         @if($isFavorite)
                             <svg class="w-5 h-5 mr-2 fill-current" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
@@ -579,6 +588,7 @@
                             Guardar como Favorito
                         @endif
                     </button>
+                    @endauth
 
                     <div class="mt-6 border-t pt-6">
                         <h4 class="font-semibold text-gray-900 mb-4 flex items-center">
@@ -613,9 +623,9 @@
     @if($showContactModal)
         <div class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="$set('showContactModal', false)"></div>
+                <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true" wire:click="closeContactModal"></div>
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full">
+                <div class="relative z-10 inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full">
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="sm:flex sm:items-start">
                             <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -625,7 +635,7 @@
                                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Contacto Directo</h3>
                                 <div class="mt-4 space-y-4">
                                     @if($profile->whatsapp_number ?? false)
-                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $profile->whatsapp_number) }}?text=Hola,%20vi%20tu%20perfil%20en%20Mascotas.pe" target="_blank" class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition">
+                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $profile->whatsapp_number) }}?text=Hola,%20vi%20tu%20perfil%20en%20TodoPeludos.com" target="_blank" class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition">
                                             <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.463 1.065 2.876 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
                                             Chatear por WhatsApp
                                         </a>
@@ -641,7 +651,7 @@
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" wire:click="$set('showContactModal', false)" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
+                        <button type="button" wire:click="closeContactModal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
                             Cerrar
                         </button>
                     </div>
@@ -651,7 +661,7 @@
     @endif
 
     @if($selectedImage)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 transition-opacity p-4" x-data @keydown.window.escape="$wire.closeImage()">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 transition-opacity p-4" x-data @keydown.window.escape="$wire.closeImage()">
             <div class="relative max-w-5xl max-h-screen">
                 <button wire:click="closeImage" class="absolute -top-12 right-0 text-white hover:text-gray-300 focus:outline-none">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -665,11 +675,11 @@
     @if($showBookingModal)
         <div class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="$set('showBookingModal', false)"></div>
+                <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true" wire:click="$set('showBookingModal', false)"></div>
 
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="relative z-10 inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="sm:flex sm:items-start">
                             <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -679,21 +689,21 @@
                                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Reservar Servicio</h3>
                                 <div class="mt-2 text-sm text-gray-500">
                                     <p class="mb-4">Ingresa la fecha y hora preferida. El proveedor confirmará la disponibilidad.</p>
-                                    
+
                                     <div class="space-y-4">
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700">Fecha</label>
-                                            <input type="date" wire:model="appointmentDate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                                            <label for="appointmentDate" class="block text-xs font-medium text-gray-700">Fecha</label>
+                                            <input id="appointmentDate" type="date" wire:model="appointmentDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                                             @error('appointmentDate') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700">Hora</label>
-                                            <input type="time" wire:model="appointmentTime" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                                            <label for="appointmentTime" class="block text-xs font-medium text-gray-700">Hora</label>
+                                            <input id="appointmentTime" type="time" wire:model="appointmentTime" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                                             @error('appointmentTime') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700">Notas / Detalles</label>
-                                            <textarea wire:model="appointmentNotes" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" placeholder="Raza, tamaño, necesidades especiales..."></textarea>
+                                            <label for="appointmentNotes" class="block text-xs font-medium text-gray-700">Notas / Detalles</label>
+                                            <textarea id="appointmentNotes" wire:model="appointmentNotes" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" placeholder="Raza, tamaño, necesidades especiales..."></textarea>
                                         </div>
                                     </div>
                                 </div>

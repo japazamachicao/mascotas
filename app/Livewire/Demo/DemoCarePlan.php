@@ -53,15 +53,17 @@ class DemoCarePlan extends Component
                 throw new \Exception($breedResult['error'] ?? 'Error al detectar la raza');
             }
 
-            $breedData = $breedResult['data'];
+            $data = $breedResult['data'];
+            $detectedBreeds = $data['breeds'] ?? [];
 
             $this->petData = [
                 'name' => 'Tu Mascota',
-                'species' => $breedData['species'] ?? 'dog',
-                'breed' => $breedData['breed'] ?? $breedData['primary_breed'] ?? 'Mestizo',
-                'age' => 3, // Default
-                'weight' => $breedData['estimated_weight'] ?? 10,
-                'activity_level' => 'moderate',
+                'species' => $data['primary_species'] === 'cat' ? 'Gato' : 'Perro',
+                'breed' => !empty($detectedBreeds) ? $detectedBreeds[0]['name'] : 'Mestizo',
+                'detected_breeds' => $detectedBreeds,
+                'weight' => 15, // Default
+                'age_months' => 24, // Default: 2 años
+                'energy_level' => 'media',
             ];
 
             // Generar plan

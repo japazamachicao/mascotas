@@ -14,7 +14,7 @@ class PetSeeder extends Seeder
     {
         // Crear un Dueño de prueba
         $owner = User::firstOrCreate(
-            ['email' => 'cliente@mascotas.pe'],
+            ['email' => 'cliente@todopeludos.com'],
             [
                 'name' => 'Ana Dueña',
                 'password' => Hash::make('password'),

@@ -138,15 +138,30 @@ class AIVisionService
             $text = preg_replace('/```\s*$/', '', $text);
             $text = trim($text);
             
-            // Decodificar JSON
-            $analysis = json_decode($text, true);
+            // Solo eliminar caracteres de control realmente problemáticos
+            // NO tocar los saltos de línea normales que Gemini usa para formatear el JSON
+            // Solo eliminar null bytes y otros caracteres binarios
+            $text = preg_replace('/[\x00-\x08\x0B-\x0C\x0E-\x1F]/', '', $text);
+            
+            // Decodificar JSON con flags para manejar casos edge
+            $analysis = json_decode($text, true, 512, JSON_INVALID_UTF8_IGNORE);
             
             if (json_last_error() !== JSON_ERROR_NONE) {
                 Log::error('JSON decode error', [
-                    'text' => $text,
-                    'error' => json_last_error_msg()
+                    'error_code' => json_last_error(),
+                    'error_msg' => json_last_error_msg(),
+                    'text_preview' => substr($text, 0, 500),
+                    'text_length' => strlen($text),
+                    'first_char' => substr($text, 0, 1),
+                    'last_char' => substr($text, -1)
                 ]);
-                throw new \Exception('Error al procesar la respuesta de la IA');
+                
+                // Retornar error pero con el texto crudo para debugging
+                return [
+                    'success' => false,
+                    'error' => 'Error al procesar la respuesta de la IA: ' . json_last_error_msg(),
+                    'raw_text' => $text
+                ];
             }
 
             return [

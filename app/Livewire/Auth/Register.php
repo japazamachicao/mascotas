@@ -64,7 +64,12 @@ class Register extends Component
         // 4. Iniciar sesión y redirigir
         Auth::login($user);
 
-        return redirect()->route('home');
+        if ($this->role !== 'client') {
+            session()->flash('onboarding', '¡Bienvenido! Completa tu perfil para aparecer en los resultados de búsqueda.');
+            return redirect()->route('dashboard.provider');
+        }
+
+        return redirect()->route('dashboard');
     }
 
     public function render()

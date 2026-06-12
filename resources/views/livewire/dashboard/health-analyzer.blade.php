@@ -307,7 +307,7 @@
                             <button wire:click="resetAnalysis" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
                                 Nuevo Análisis
                             </button>
-                            <a href="{{ route('dashboard.health.history') }}" class="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition font-medium">
+                            <a href="#" class="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition font-medium">
                                 Ver Historial →
                             </a>
                         </div>
