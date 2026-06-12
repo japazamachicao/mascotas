@@ -26,13 +26,16 @@ class Search extends Component
     public $province_id = '';
     public $district_id = '';
     
-    // Colecciones para los selects
     // Filtros Específicos
     public $filterHomeVisits = false;
     public $filterHasTransport = false;
     public $filterCageFree = false;
     public $filterHasYard = false;
     public $filterHasAc = false;
+
+    // Nuevos Filtros
+    public $filterVerified = false;
+    public $filter24h = false;
 
     // Filtros Generales
     public $search = '';
@@ -46,12 +49,21 @@ class Search extends Component
 
     protected $queryString = [
         'serviceType', 'search', 'department_id', 'province_id', 'district_id', 'sortBy',
-        'filterHomeVisits', 'filterHasTransport', 'filterCageFree', 'filterHasYard', 'filterHasAc'
+        'filterHomeVisits', 'filterHasTransport', 'filterCageFree', 'filterHasYard', 'filterHasAc',
+        'filterVerified', 'filter24h'
     ];
 
     public function mount()
     {
         $this->departments = Department::orderBy('name')->get();
+        
+        if ($this->department_id) {
+            $this->provinces = Province::where('department_id', $this->department_id)->orderBy('name')->get();
+        }
+        if ($this->province_id) {
+            $this->districts = District::where('province_id', $this->province_id)->orderBy('name')->get();
+        }
+        
         if (\Illuminate\Support\Facades\Auth::check()) {
             $this->favoriteIds = \Illuminate\Support\Facades\Auth::user()->favoriteProviders()->pluck('users.id')->toArray();
         }
@@ -78,10 +90,27 @@ class Search extends Component
 
     public function updatedDepartmentId($value)
     {
-        // ...
+        $this->province_id = '';
+        $this->district_id = '';
+        $this->districts = [];
+        
+        if ($value) {
+            $this->provinces = Province::where('department_id', $value)->orderBy('name')->get();
+        } else {
+            $this->provinces = [];
+        }
     }
 
-    // ...
+    public function updatedProvinceId($value)
+    {
+        $this->district_id = '';
+        
+        if ($value) {
+            $this->districts = District::where('province_id', $value)->orderBy('name')->get();
+        } else {
+            $this->districts = [];
+        }
+    }
 
     public function render()
     {
@@ -119,6 +148,15 @@ class Search extends Component
         // 1. Filtro por Nombre
         if ($this->search) {
             $query->where('users.name', 'like', '%' . $this->search . '%');
+        }
+
+        // 1b. Filtros Generales Nuevos
+        if ($this->filterVerified) {
+            $query->where("{$tableName}.is_verified", true);
+        }
+
+        if ($this->filter24h && $this->serviceType === 'veterinarian') {
+            $query->where('emergency_24h', true);
         }
 
         // 2. Filtros Específicos

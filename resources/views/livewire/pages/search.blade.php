@@ -6,9 +6,6 @@
             <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-primary-50/50 opacity-40 blur-3xl pointer-events-none"></div>
             
             <div class="relative z-10">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary-50 text-primary-700 tracking-wide uppercase mb-3">
-                    🔍 Búsqueda Inteligente
-                </span>
                 <h1 class="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Explora Profesionales</h1>
                 <p class="text-gray-500 mb-8 max-w-2xl text-sm sm:text-base">Encuentra veterinarios y paseadores certificados cerca de ti con reseñas verificadas.</p>
                 
@@ -22,7 +19,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
-                            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Nombre del veterinario o paseador..." class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all duration-300 text-sm shadow-sm hover:border-gray-300">
+                            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Nombre del veterinario o paseador..." class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-white focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all duration-350 text-sm shadow-sm hover:border-gray-300">
                         </div>
                     </div>
 
@@ -35,7 +32,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                             </div>
-                            <select wire:model.live="serviceType" class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300">
+                            <select wire:model.live="serviceType" class="w-full pl-11 pr-10 py-2.5 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 appearance-none transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300">
                                 <option value="veterinarian">Veterinarios</option>
                                 <option value="walker">Paseadores</option>
                                 <option value="trainer">Adiestradores</option>
@@ -45,6 +42,11 @@
                                 <option value="pet_taxi">Pet Taxi</option>
                                 <option value="pet_hotel">Hospedaje</option>
                             </select>
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
@@ -58,12 +60,17 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
-                            <select wire:model.live="department_id" class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300">
+                            <select wire:model.live="department_id" class="w-full pl-11 pr-10 py-2.5 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 appearance-none transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300">
                                 <option value="">Todos</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                 @endforeach
                             </select>
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
@@ -77,12 +84,17 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
-                            <select wire:model.live="province_id" class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300" {{ empty($provinces) ? 'disabled' : '' }}>
+                            <select wire:model.live="province_id" class="w-full pl-11 pr-10 py-2.5 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 appearance-none transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300 disabled:bg-gray-100/80 disabled:text-gray-400 disabled:cursor-not-allowed" {{ empty($provinces) ? 'disabled' : '' }}>
                                 <option value="">Todas</option>
                                 @foreach($provinces as $prov)
                                     <option value="{{ $prov->id }}">{{ $prov->name }}</option>
                                 @endforeach
                             </select>
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
@@ -96,63 +108,106 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
-                            <select wire:model.live="district_id" class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300" {{ empty($districts) ? 'disabled' : '' }}>
+                            <select wire:model.live="district_id" class="w-full pl-11 pr-10 py-2.5 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 appearance-none transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300 disabled:bg-gray-100/80 disabled:text-gray-400 disabled:cursor-not-allowed" {{ empty($districts) ? 'disabled' : '' }}>
                                 <option value="">Todos</option>
                                 @foreach($districts as $dist)
                                     <option value="{{ $dist->id }}">{{ $dist->name }}</option>
                                 @endforeach
                             </select>
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Filtros Específicos (Dynamic) -->
-                @if(in_array($serviceType, ['veterinarian', 'trainer', 'groomer', 'pet_sitter', 'pet_hotel', 'pet_taxi']))
-                    <div class="mt-6 flex flex-wrap gap-4">
+                <!-- Filtros Adicionales (Row Premium de Checkboxes) -->
+                <div class="mt-6 border-t border-gray-150/70 pt-5">
+                    <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Filtros de Servicio</span>
+                    <div class="flex flex-wrap gap-3">
+                        <!-- Filtro: Verificado -->
+                        <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:bg-gray-50 transition select-none group focus-within:ring-2 focus-within:ring-primary-100">
+                            <input type="checkbox" wire:model.live="filterVerified" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2.5 h-4 w-4 cursor-pointer">
+                            <span class="text-sm font-semibold text-gray-700 flex items-center gap-1.5 cursor-pointer">
+                                <span class="text-primary-600 font-bold text-[10px] bg-primary-50 px-1.5 py-0.5 rounded border border-primary-100">✓</span>
+                                Verificados
+                            </span>
+                        </label>
+
+                        <!-- Filtro: A Domicilio -->
                         @if(in_array($serviceType, ['veterinarian', 'trainer', 'groomer', 'pet_sitter']))
-                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:bg-gray-50 transition">
-                                <input type="checkbox" wire:model.live="filterHomeVisits" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2">
-                                <span class="text-sm font-medium text-gray-700">A Domicilio</span>
+                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:bg-gray-50 transition select-none group focus-within:ring-2 focus-within:ring-primary-100">
+                                <input type="checkbox" wire:model.live="filterHomeVisits" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2.5 h-4 w-4 cursor-pointer">
+                                <span class="text-sm font-semibold text-gray-700 flex items-center gap-1.5 cursor-pointer">
+                                    <span class="text-emerald-600 font-bold text-[10px] bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">🏠</span>
+                                    A Domicilio
+                                </span>
                             </label>
                         @endif
 
-                        @if($serviceType === 'pet_hotel')
-                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:bg-gray-50 transition">
-                                <input type="checkbox" wire:model.live="filterCageFree" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2">
-                                <span class="text-sm font-medium text-gray-700">Sin Jaulas (Cage Free)</span>
+                        <!-- Filtro: Emergencias 24h -->
+                        @if($serviceType === 'veterinarian')
+                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:bg-gray-50 transition select-none group focus-within:ring-2 focus-within:ring-primary-100">
+                                <input type="checkbox" wire:model.live="filter24h" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2.5 h-4 w-4 cursor-pointer">
+                                <span class="text-sm font-semibold text-gray-700 flex items-center gap-1.5 cursor-pointer">
+                                    <span class="text-rose-600 font-bold text-[10px] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">⏰</span>
+                                    Emergencias 24h
+                                </span>
                             </label>
-                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:bg-gray-50 transition">
-                                <input type="checkbox" wire:model.live="filterHasTransport" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2">
-                                <span class="text-sm font-medium text-gray-700">Movilidad Incluida</span>
+                        @endif
+
+                        <!-- Filtros Específicos Dinámicos -->
+                        @if($serviceType === 'pet_hotel')
+                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:bg-gray-50 transition select-none group focus-within:ring-2 focus-within:ring-primary-100">
+                                <input type="checkbox" wire:model.live="filterCageFree" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2.5 h-4 w-4 cursor-pointer">
+                                <span class="text-sm font-semibold text-gray-700 cursor-pointer">Sin Jaulas</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:bg-gray-50 transition select-none group focus-within:ring-2 focus-within:ring-primary-100">
+                                <input type="checkbox" wire:model.live="filterHasTransport" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2.5 h-4 w-4 cursor-pointer">
+                                <span class="text-sm font-semibold text-gray-700 cursor-pointer">Movilidad Incluida</span>
                             </label>
                         @endif
 
                         @if($serviceType === 'pet_sitter')
-                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:bg-gray-50 transition">
-                                <input type="checkbox" wire:model.live="filterHasYard" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2">
-                                <span class="text-sm font-medium text-gray-700">Tiene Patio / Jardín</span>
+                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:bg-gray-50 transition select-none group focus-within:ring-2 focus-within:ring-primary-100">
+                                <input type="checkbox" wire:model.live="filterHasYard" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2.5 h-4 w-4 cursor-pointer">
+                                <span class="text-sm font-semibold text-gray-700 cursor-pointer">Tiene Patio / Jardín</span>
                             </label>
                         @endif
 
                         @if($serviceType === 'pet_taxi')
-                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm hover:bg-gray-50 transition">
-                                <input type="checkbox" wire:model.live="filterHasAc" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2">
-                                <span class="text-sm font-medium text-gray-700">Aire Acondicionado</span>
+                            <label class="inline-flex items-center cursor-pointer bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:bg-gray-50 transition select-none group focus-within:ring-2 focus-within:ring-primary-100">
+                                <input type="checkbox" wire:model.live="filterHasAc" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mr-2.5 h-4 w-4 cursor-pointer">
+                                <span class="text-sm font-semibold text-gray-700 cursor-pointer">Aire Acondicionado</span>
                             </label>
                         @endif
                     </div>
-                @endif
+                </div>
 
                 <!-- Filtros secundarios / Ordenamiento -->
                 <div class="mt-6 flex justify-between items-center border-t border-gray-100 pt-5">
                     <p class="text-sm text-gray-500 font-medium">Mostrando <span class="text-gray-900 font-bold">{{ $results->total() }}</span> resultados</p>
                     <div class="flex items-center space-x-3">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ordenar:</span>
-                        <select wire:model.live="sortBy" class="py-1.5 pl-3 pr-8 border-gray-200 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 bg-white shadow-sm cursor-pointer hover:border-gray-300">
-                            <option value="best_rated">Mejores Calificados ⭐️</option>
-                            <option value="newest">Nuevos Ingresos</option>
-                            <option value="name_asc">A - Z</option>
-                        </select>
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Ordenar por:</span>
+                        <div class="relative group min-w-[180px]">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                                </svg>
+                            </div>
+                            <select wire:model.live="sortBy" class="w-full pl-9 pr-8 py-1.5 border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 appearance-none shadow-sm cursor-pointer hover:border-gray-300 transition-all">
+                                <option value="best_rated">Mejores Calificados</option>
+                                <option value="newest">Nuevos Ingresos</option>
+                                <option value="name_asc">Nombre (A - Z)</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                                <svg class="h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
