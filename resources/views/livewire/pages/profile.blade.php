@@ -402,7 +402,7 @@
                                                 </div>
 
                                                 <div class="flex justify-end pt-2">
-                                                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent shadow-md text-sm font-bold rounded-xl text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 hover:shadow-lg hover:shadow-primary-500/20 transform hover:-translate-y-0.5 active:translate-y-0 focus:outline-none transition-all duration-200">
+                                                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent shadow-md text-sm font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-500/20 transform hover:-translate-y-0.5 active:translate-y-0 focus:outline-none transition-all duration-200">
                                                         Publicar Mi Reseña
                                                     </button>
                                                 </div>

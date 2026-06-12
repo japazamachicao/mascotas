@@ -28,7 +28,7 @@
                 <!-- Logo & Desktop Nav -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.location.href='/'">
-                        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-2 rounded-xl">
+                        <div class="bg-primary-600 p-2 rounded-xl">
                             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
                                 <path d="M5 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
@@ -37,7 +37,7 @@
                             </svg>
                         </div>
                         <span class="font-bold text-xl tracking-tight">
-                            <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">TodoPeludos</span>
+                            <span class="text-primary-600">TodoPeludos</span>
                             <span class="text-gray-400 text-sm">.com</span>
                         </span>
                     </div>
@@ -139,7 +139,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                             <!-- Icono cerrar -->
-                            <svg x-show="mobileMenuOpen" class="hidden h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg x-show="mobileMenuOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
