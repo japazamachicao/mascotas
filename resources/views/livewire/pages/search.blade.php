@@ -2,73 +2,107 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <!-- Header del Buscador (Diseño Elevado) -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-10 p-6 md:p-8 relative overflow-hidden">
-            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-primary-50 opacity-50 blur-3xl pointer-events-none"></div>
+        <div class="bg-white rounded-2xl shadow-md shadow-gray-100/50 border border-gray-200/60 mb-10 p-6 md:p-8 relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-primary-50/50 opacity-40 blur-3xl pointer-events-none"></div>
             
             <div class="relative z-10">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary-50 text-primary-700 tracking-wide uppercase mb-3">
+                    🔍 Búsqueda Inteligente
+                </span>
                 <h1 class="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">Explora Profesionales</h1>
-                <p class="text-gray-500 mb-8 max-w-2xl">Encuentra veterinarios y paseadores certificados cerca de ti con reseñas verificadas.</p>
+                <p class="text-gray-500 mb-8 max-w-2xl text-sm sm:text-base">Encuentra veterinarios y paseadores certificados cerca de ti con reseñas verificadas.</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
                     <!-- Barra de Búsqueda (Texto) -->
                     <div class="md:col-span-4">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Buscar Profesional</label>
                         <div class="relative group">
-                            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Nombre del veterinario o paseador..." class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all duration-300 text-sm shadow-sm hover:border-gray-300">
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
+                            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Nombre del veterinario o paseador..." class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all duration-300 text-sm shadow-sm hover:border-gray-300">
                         </div>
                     </div>
 
                     <!-- Tipo de Servicio -->
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Servicio</label>
-                        <select wire:model.live="serviceType" class="w-full py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300">
-                            <option value="veterinarian">Veterinarios</option>
-                            <option value="walker">Paseadores</option>
-                            <option value="trainer">Adiestradores</option>
-                            <option value="pet_sitter">Cuidadores</option>
-                            <option value="groomer">Estilistas / Baño</option>
-                            <option value="pet_photographer">Fotógrafos</option>
-                            <option value="pet_taxi">Pet Taxi</option>
-                            <option value="pet_hotel">Hospedaje</option>
-                        </select>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <select wire:model.live="serviceType" class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300">
+                                <option value="veterinarian">Veterinarios</option>
+                                <option value="walker">Paseadores</option>
+                                <option value="trainer">Adiestradores</option>
+                                <option value="pet_sitter">Cuidadores</option>
+                                <option value="groomer">Estilistas / Baño</option>
+                                <option value="pet_photographer">Fotógrafos</option>
+                                <option value="pet_taxi">Pet Taxi</option>
+                                <option value="pet_hotel">Hospedaje</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Departamento -->
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Departamento</label>
-                        <select wire:model.live="department_id" class="w-full py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300">
-                            <option value="">Todos</option>
-                            @foreach($departments as $dept)
-                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <select wire:model.live="department_id" class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300">
+                                <option value="">Todos</option>
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Provincia -->
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Provincia</label>
-                        <select wire:model.live="province_id" class="w-full py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300" {{ empty($provinces) ? 'disabled' : '' }}>
-                            <option value="">Todas</option>
-                            @foreach($provinces as $prov)
-                                <option value="{{ $prov->id }}">{{ $prov->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <select wire:model.live="province_id" class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300" {{ empty($provinces) ? 'disabled' : '' }}>
+                                <option value="">Todas</option>
+                                @foreach($provinces as $prov)
+                                    <option value="{{ $prov->id }}">{{ $prov->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Distrito -->
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Distrito</label>
-                        <select wire:model.live="district_id" class="w-full py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300" {{ empty($districts) ? 'disabled' : '' }}>
-                            <option value="">Todos</option>
-                            @foreach($districts as $dist)
-                                <option value="{{ $dist->id }}">{{ $dist->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <select wire:model.live="district_id" class="w-full pl-11 py-2.5 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all text-sm shadow-sm cursor-pointer hover:border-gray-300" {{ empty($districts) ? 'disabled' : '' }}>
+                                <option value="">Todos</option>
+                                @foreach($districts as $dist)
+                                    <option value="{{ $dist->id }}">{{ $dist->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -130,7 +164,7 @@
                 <div class="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-primary-900/5 transition-all duration-300 transform hover:-translate-y-1 relative flex flex-col h-full">
                     
                     <!-- Cover / Header de Tarjeta (Opcional: podrías poner un banner de color) -->
-                    <div class="h-20 bg-gradient-to-r from-gray-50 to-gray-100 opacity-50 absolute w-full top-0 left-0 z-0"></div>
+                    <div class="h-20 bg-gray-50/70 border-b border-gray-100/50 absolute w-full top-0 left-0 z-0"></div>
 
                     <div class="p-6 relative z-10 flex-1 flex flex-col">
                         <div class="flex justify-between items-start">
@@ -179,7 +213,7 @@
                                         @endphp
                                         <div class="flex text-yellow-400 gap-0.5">
                                             @for($i=1; $i<=5; $i++)
-                                                <svg class="w-3.5 h-3.5 {{ $i <= round($rating) ? 'fill-current' : 'text-gray-200 fill-current' }}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1-81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                                <svg class="w-3.5 h-3.5 {{ $i <= round($rating) ? 'fill-current' : 'text-gray-200 fill-current' }}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                                             @endfor
                                         </div>
                                         <span class="ml-1.5 text-xs text-gray-400 font-semibold mt-0.5">({{ $ratingCount }} reseñas)</span>
@@ -312,9 +346,9 @@
 
                         <!-- Action Footer -->
                         <div class="mt-6 pt-4 border-t border-gray-100 flex items-center gap-3">
-                            <a href="{{ route('profile.show', $result->user->id) }}" class="flex-1 text-center bg-blue-600 text-white py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg text-sm flex items-center justify-center group-hover:scale-[1.02]">
+                            <a href="{{ route('profile.show', $result->user->id) }}" class="flex-1 text-center bg-primary-600 text-white py-2.5 rounded-xl font-bold hover:bg-primary-700 transition-all shadow-md hover:shadow-lg text-sm flex items-center justify-center group-hover:scale-[1.02]">
                                 Ver Perfil
-                                <svg class="w-4 h-4 ml-2 text-blue-200 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg class="w-4 h-4 ml-2 text-primary-200 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
                             </a>
