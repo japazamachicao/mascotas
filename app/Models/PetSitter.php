@@ -9,7 +9,7 @@ class PetSitter extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'district_id', 'verification_document_path', 'is_verified', 'verification_attempts', 'bio', 'housing_type', 'has_yard', 'allows_home_visits', 'website_url', 'facebook_url', 'instagram_url', 'tiktok_url', 'whatsapp_number', 'availability'];
+    protected $fillable = ['user_id', 'district_id', 'verification_document_path', 'is_verified', 'verification_attempts', 'bio', 'housing_type', 'has_yard', 'allows_home_visits', 'website_url', 'facebook_url', 'instagram_url', 'tiktok_url', 'whatsapp_number', 'availability', 'latitude', 'longitude'];
 
     protected $casts = [
         'has_yard' => 'boolean',

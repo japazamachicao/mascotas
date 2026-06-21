@@ -9,7 +9,7 @@ class Shelter extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'district_id', 'verification_document_path', 'is_verified', 'verification_attempts', 'bio', 'address', 'capacity', 'accepting_adoptions', 'accepting_volunteers', 'accepting_donations', 'donation_info', 'website_url', 'facebook_url', 'instagram_url', 'tiktok_url', 'whatsapp_number', 'availability'];
+    protected $fillable = ['user_id', 'district_id', 'verification_document_path', 'is_verified', 'verification_attempts', 'bio', 'address', 'capacity', 'accepting_adoptions', 'accepting_volunteers', 'accepting_donations', 'donation_info', 'website_url', 'facebook_url', 'instagram_url', 'tiktok_url', 'whatsapp_number', 'availability', 'latitude', 'longitude'];
 
     protected $casts = [
         'accepting_adoptions' => 'boolean',

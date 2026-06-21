@@ -128,4 +128,4 @@ The entrypoint (`docker/entrypoint.sh`) at startup: copies `.env` from `/secrets
 
 ### Database Seeding
 
-A `/seed-services` web route exists to run `DatabaseSeeder` directly from the browser (development convenience). Default demo credentials: `admin@mascotas.pe` / `password`.
+A `/seed-services` web route exists to run `DatabaseSeeder` directly from the browser (development convenience). Default demo credentials: `admin@todopeludos.com` / `password`.

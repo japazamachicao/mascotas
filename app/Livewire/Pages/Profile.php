@@ -11,7 +11,10 @@ class Profile extends Component
 
     public $user;
     public $profile;
+    public $allProfiles = [];
     public $activeTab = 'about'; 
+    public $selectedRole;
+    public $providerLevel = []; 
     
     // Review Form
     public $rating = 5;
@@ -26,6 +29,10 @@ class Profile extends Component
     public $appointmentDate;
     public $appointmentTime;
     public $appointmentNotes;
+    public $selectedPetId = null;
+    public $selectedServices = [];
+    public $providerServices = [];
+    public $totalPrice = 0.0;
     
     // Contact Modal
     public $showContactModal = false;
@@ -58,6 +65,9 @@ class Profile extends Component
         if (!$this->profile) {
             abort(404, 'Perfil de proveedor no encontrado.');
         }
+
+        $this->allProfiles = $this->user->getActiveProviderProfiles();
+        $this->providerServices = $this->user->services;
 
         if (\Illuminate\Support\Facades\Auth::check()) {
             $this->isFavorite = \Illuminate\Support\Facades\Auth::user()->favoriteProviders()->where('provider_id', $this->user->id)->exists();
@@ -119,15 +129,50 @@ class Profile extends Component
 
     public function detectProfile()
     {
-        if ($this->user->hasRole('veterinarian')) $this->profile = $this->user->veterinarianProfile;
-        elseif ($this->user->hasRole('walker')) $this->profile = $this->user->walkerProfile;
-        elseif ($this->user->hasRole('groomer')) $this->profile = $this->user->groomerProfile;
-        elseif ($this->user->hasRole('hotel')) $this->profile = $this->user->hotelProfile;
-        elseif ($this->user->hasRole('shelter')) $this->profile = $this->user->shelterProfile;
-        elseif ($this->user->hasRole('trainer')) $this->profile = $this->user->trainerProfile;
-        elseif ($this->user->hasRole('pet_sitter')) $this->profile = $this->user->petSitterProfile;
-        elseif ($this->user->hasRole('pet_taxi')) $this->profile = $this->user->petTaxiProfile;
-        elseif ($this->user->hasRole('pet_photographer')) $this->profile = $this->user->petPhotographerProfile;
+        $role = $this->selectedRole ?: request()->query('role');
+ 
+        $roleMap = [
+            'veterinarian' => 'veterinarianProfile',
+            'walker' => 'walkerProfile',
+            'groomer' => 'groomerProfile',
+            'hotel' => 'hotelProfile',
+            'shelter' => 'shelterProfile',
+            'trainer' => 'trainerProfile',
+            'pet_sitter' => 'petSitterProfile',
+            'pet_taxi' => 'petTaxiProfile',
+            'pet_photographer' => 'petPhotographerProfile',
+        ];
+
+        if ($role && isset($roleMap[$role]) && $this->user->hasRole($role)) {
+            $relation = $roleMap[$role];
+            $this->profile = $this->user->$relation;
+            $this->selectedRole = $role;
+            $this->providerLevel = $this->user->getProfileLevel($this->profile);
+            return;
+        }
+
+        foreach ($roleMap as $roleName => $relationName) {
+            if ($this->user->hasRole($roleName) && $this->user->$relationName) {
+                $this->profile = $this->user->$relationName;
+                $this->selectedRole = $roleName;
+                $this->providerLevel = $this->user->getProfileLevel($this->profile);
+                return;
+            }
+        }
+        $this->providerLevel = [];
+    }
+
+    public function switchProfileRole($role)
+    {
+        $this->selectedRole = $role;
+        $this->detectProfile();
+        
+        $this->selectedServices = [];
+        $this->totalPrice = $this->profile->price_from ?? 0.0;
+        
+        if ($this->profile && $this->profile->latitude && $this->profile->longitude) {
+            $this->dispatch('profile-role-changed', latitude: $this->profile->latitude, longitude: $this->profile->longitude);
+        }
     }
 
     public function saveReview()
@@ -138,6 +183,25 @@ class Profile extends Component
 
         if (auth()->id() === $this->user->id) {
             $this->addError('review', 'No puedes reseñarte a ti mismo.');
+            return;
+        }
+
+        // Validar que el usuario haya completado al menos un servicio con este proveedor antes de poder reseñar
+        $hasCompletedAppointment = \App\Models\Appointment::where('client_id', auth()->id())
+            ->where('provider_id', $this->user->id)
+            ->where('status', 'completed')
+            ->exists();
+        if (!$hasCompletedAppointment) {
+            $this->addError('review', 'Debes haber completado al menos una cita con este proveedor para poder dejar una reseña.');
+            return;
+        }
+
+        // Evitar reseñas duplicadas del mismo usuario al mismo proveedor
+        $existingReview = \App\Models\Review::where('user_id', auth()->id())
+            ->where('provider_id', $this->user->id)
+            ->exists();
+        if ($existingReview) {
+            $this->addError('review', 'Ya has dejado una reseña para este proveedor.');
             return;
         }
 
@@ -161,20 +225,69 @@ class Profile extends Component
             return redirect()->route('login');
         }
 
-        $this->validate([
+        $hasServices = $this->user->services()->exists();
+
+        $validationRules = [
             'appointmentDate' => 'required|date|after:today',
             'appointmentTime' => 'required',
+            'selectedPetId' => 'required|exists:pets,id,user_id,' . auth()->id(),
             'appointmentNotes' => 'nullable|string|max:500',
+        ];
+
+        if ($hasServices) {
+            $validationRules['selectedServices'] = 'required|array|min:1';
+            $validationRules['selectedServices.*'] = 'exists:provider_services,id,user_id,' . $this->user->id;
+        }
+
+        $this->validate($validationRules, [
+            'selectedServices.required' => 'Debes seleccionar al menos un servicio del catálogo.',
+            'selectedServices.min' => 'Debes seleccionar al menos un servicio del catálogo.',
         ]);
+
+        // Validar si la fecha seleccionada está bloqueada por el proveedor
+        $isBlocked = \App\Models\BlockedDate::where('provider_id', $this->user->id)
+            ->whereDate('blocked_date', $this->appointmentDate)
+            ->exists();
+
+        if ($isBlocked) {
+            $this->addError('appointmentDate', 'El proveedor ha bloqueado esta fecha y no está disponible.');
+            return;
+        }
 
         $scheduledAt = $this->appointmentDate . ' ' . $this->appointmentTime . ':00';
 
-        \App\Models\Appointment::create([
+        $appointment = \App\Models\Appointment::create([
             'client_id' => auth()->id(),
             'provider_id' => $this->user->id,
+            'pet_id' => $this->selectedPetId,
             'scheduled_at' => $scheduledAt,
             'status' => 'pending',
             'notes' => $this->appointmentNotes,
+        ]);
+
+        // Enviar notificación al proveedor
+        $this->user->notify(new \App\Notifications\AppointmentBooked($appointment));
+
+        if ($hasServices) {
+            foreach ($this->selectedServices as $serviceId) {
+                $service = \App\Models\ProviderService::find($serviceId);
+                if ($service) {
+                    $appointment->services()->attach($serviceId, [
+                        'price_at_booking' => $service->price,
+                    ]);
+                }
+            }
+        }
+
+        $amount = $hasServices 
+            ? \App\Models\ProviderService::whereIn('id', $this->selectedServices)->sum('price')
+            : ($this->profile->price_from ?? 0.0);
+
+        \App\Models\Payment::create([
+            'appointment_id' => $appointment->id,
+            'amount' => $amount,
+            'payment_method' => 'yape',
+            'status' => 'pending',
         ]);
 
         // Generar link de WhatsApp al proveedor para que el cliente pueda confirmar directamente
@@ -193,14 +306,27 @@ class Profile extends Component
 
         $this->waLink = $waLink;
         $this->showBookingModal = false;
-        $this->reset(['appointmentDate', 'appointmentTime', 'appointmentNotes']);
+        $this->reset(['appointmentDate', 'appointmentTime', 'appointmentNotes', 'selectedPetId']);
 
         session()->flash('message', 'Solicitud enviada. ' . ($waLink ? 'Escríbele al proveedor por WhatsApp para confirmar.' : 'El proveedor confirmará pronto.'));
     }
 
+    public function getPetsProperty()
+    {
+        return auth()->check() ? \App\Models\Pet::where('user_id', auth()->id())->get() : collect();
+    }
+
     public function openBookingModal()
     {
+        $this->selectedServices = [];
+        $this->totalPrice = $this->profile->price_from ?? 0.0;
         $this->showBookingModal = true;
+    }
+
+    public function updatedSelectedServices()
+    {
+        $this->totalPrice = \App\Models\ProviderService::whereIn('id', $this->selectedServices)
+            ->sum('price');
     }
 
     public function openContactModal()

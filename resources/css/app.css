@@ -31,7 +31,7 @@
   input[type="url"],
   select,
   textarea {
-    border: 1px solid #e5e7eb !important; /* border-gray-200 / default border */
+    border: 1px solid #e5e7eb; /* border-gray-200 / default border */
     border-radius: 0.5rem; /* rounded-lg */
     padding: 0.625rem 0.875rem; /* py-2.5 px-3.5 */
     background-color: #f9fafb; /* bg-gray-50 */
@@ -51,18 +51,67 @@
   input[type="url"]:focus,
   select:focus,
   textarea:focus {
-    outline: none !important;
-    background-color: #ffffff !important;
-    border-color: #0284c7 !important; /* primary-600 */
-    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important; /* ring-primary-100/ring-opacity-50 */
+    outline: none;
+    background-color: #ffffff;
+    border-color: #0284c7; /* primary-600 */
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); /* ring-primary-100/ring-opacity-50 */
   }
 
   input[type="checkbox"],
   input[type="radio"] {
-    border: 1px solid #d1d5db !important;
+    border: 1px solid #d1d5db;
     border-radius: 0.25rem;
-    color: #0284c7 !important;
+    color: #0284c7;
     transition: all 0.2s ease-in-out;
+  }
+}
+
+/* Category Card Premium Hover Styling */
+.category-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.category-card .icon-container {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.category-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: rgba(2, 132, 199, 0.3) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+.category-card:hover .icon-container {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+}
+
+/* Bulletproof Hero Section Grid Layout */
+.hero-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 2rem !important;
+  align-items: center !important;
+}
+
+.hero-left {
+  grid-column: span 1 / span 1 !important;
+}
+
+.hero-right {
+  grid-column: span 1 / span 1 !important;
+}
+
+@media (min-width: 768px) {
+  .hero-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  }
+  .hero-left {
+    grid-column: span 6 / span 6 !important;
+  }
+  .hero-right {
+    grid-column: span 6 / span 6 !important;
   }
 }
 

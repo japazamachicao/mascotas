@@ -1,3 +1,70 @@
+@push('meta')
+    @php
+        $roleName = [
+            'veterinarian' => 'Veterinario',
+            'walker' => 'Paseador de Perros',
+            'trainer' => 'Adiestrador Canino',
+            'pet_sitter' => 'Cuidador de Mascotas',
+            'groomer' => 'Estilista de Mascotas',
+            'pet_photographer' => 'Fotógrafo de Mascotas',
+            'pet_taxi' => 'Pet Taxi y Transporte',
+            'pet_hotel' => 'Hospedaje de Mascotas',
+        ][$user->roles->first()->name ?? ''] ?? 'Profesional de Mascotas';
+        
+        $profileDesc = $profile->bio ?? $profile->experience ?? $profile->description ?? 'Profesional verificado en TodoPeludos.com';
+        $profileImage = $user->profile_photo_path ? \Illuminate\Support\Facades\Storage::url($user->profile_photo_path) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=0ea5e9&color=fff&size=128';
+        $location = ($profile->district) ? $profile->district->name . ', ' . $profile->district->province->name : 'Perú';
+        
+        $schemaType = ($user->hasRole('veterinarian')) ? 'VeterinaryCare' : 'LocalBusiness';
+        
+        $price = $profile->price_from ?? $profile->hourly_rate ?? 0;
+        $priceRange = $price > 0 ? "Desde S/ " . number_format($price, 2) : "A convenir";
+    @endphp
+    <title>{{ $user->name }} | {{ $roleName }} en {{ $location }} | TodoPeludos.com</title>
+    <meta name="description" content="{{ \Illuminate\Support\Str::limit(strip_tags($profileDesc), 155) }}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="profile">
+    <meta property="og:url" content="{{ request()->fullUrl() }}">
+    <meta property="og:title" content="{{ $user->name }} | {{ $roleName }} en {{ $location }}">
+    <meta property="og:description" content="{{ \Illuminate\Support\Str::limit(strip_tags($profileDesc), 155) }}">
+    <meta property="og:image" content="{{ $profileImage }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="{{ $user->name }} | {{ $roleName }} en {{ $location }}">
+    <meta property="twitter:description" content="{{ \Illuminate\Support\Str::limit(strip_tags($profileDesc), 155) }}">
+    <meta property="twitter:image" content="{{ $profileImage }}">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@type": "{{ $schemaType }}",
+        "name": "{{ $user->name }}",
+        "image": "{{ $profileImage }}",
+        "description": "{{ str_replace('"', '\\"', strip_tags($profileDesc)) }}",
+        @if($profile->whatsapp_number)
+        "telephone": "{{ $profile->whatsapp_number }}",
+        @endif
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "{{ $profile->district->name ?? 'Perú' }}",
+            "addressRegion": "{{ $profile->district->province->name ?? '' }}",
+            "addressCountry": "PE"
+        },
+        "priceRange": "{{ $priceRange }}"
+        @if($this->totalReviews > 0)
+        ,"aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "{{ $this->averageRating }}",
+            "reviewCount": "{{ $this->totalReviews }}"
+        }
+        @endif
+    }
+    </script>
+@endpush
+
 <div class="min-h-screen bg-gray-50 pb-12">
     <!-- Header / Cover con Gradiente y Foto -->
     <div class="relative bg-gray-800 pb-16"> <!-- Reducido más el espacio -->
@@ -15,26 +82,46 @@
                     @endif
                 </div>
                 @if($profile->is_verified ?? false)
-                    <div class="absolute bottom-1 right-1 bg-green-500 text-white rounded-full p-1.5 border-2 border-white shadow-sm" title="Perfil Verificado">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <div class="absolute bottom-1 right-1 bg-emerald-500 text-white rounded-full p-1.5 border-2 border-white shadow-sm flex items-center justify-center" title="Perfil Verificado">
+                        <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
+                            <path d="M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.7l-3.61.81.34 3.68L1 12l2.44 2.79-.34 3.69 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.2 3.61-.82-.34-3.68L23 12zm-13 5l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
                     </div>
                 @endif
              </div>
              
              <div class="text-center mt-3">
                  <h1 class="text-2xl font-extrabold text-white tracking-tight sm:text-3xl shadow-sm">{{ $user->name }}</h1>
-                 <p class="text-lg text-primary-100 font-medium">
-                    @if($user->hasRole('veterinarian')) Veterinario
-                    @elseif($user->hasRole('walker')) Paseador
-                    @elseif($user->hasRole('groomer')) Estilista
-                    @elseif($user->hasRole('hotel')) Hotel Canino
-                    @elseif($user->hasRole('shelter')) Albergue
-                    @elseif($user->hasRole('trainer')) Adiestrador
-                    @elseif($user->hasRole('pet_sitter')) Cuidador
-                    @elseif($user->hasRole('pet_taxi')) Transporte
-                    @elseif($user->hasRole('pet_photographer')) Fotógrafo
-                    @endif
-                 </p>
+                 <div class="flex items-center justify-center flex-wrap gap-2">
+                    @php
+                        $roleLabels = [
+                            'veterinarian' => '🩺 Veterinario',
+                            'walker' => '🐕 Paseador',
+                            'groomer' => '✂️ Estilista',
+                            'hotel' => '🏨 Hotel Canino',
+                            'shelter' => '🏠 Albergue',
+                            'trainer' => '🎓 Adiestrador',
+                            'pet_sitter' => '🐾 Cuidador',
+                            'pet_taxi' => '🚗 Transporte',
+                            'pet_photographer' => '📸 Fotógrafo',
+                        ];
+                    @endphp
+                    @foreach($allProfiles as $roleName => $roleProfile)
+                        <button wire:click="switchProfileRole('{{ $roleName }}')"
+                            class="inline-flex items-center px-3 py-1 text-sm font-bold rounded-full transition-all duration-200 border backdrop-blur-sm
+                            {{ $selectedRole === $roleName 
+                                ? 'bg-white text-primary-800 border-white shadow-md' 
+                                : 'bg-white/15 text-white border-white/10 hover:bg-white/30' }}">
+                            {{ $roleLabels[$roleName] ?? 'Profesional' }}
+                        </button>
+                    @endforeach
+                 </div>
+
+                 @if(!empty($providerLevel))
+                     <div class="mt-2.5 flex items-center justify-center">
+                         <x-level-badge level="{{ $providerLevel['name'] }}" size="sm" class="bg-white/20 text-white border-white/10 backdrop-blur-xs" />
+                     </div>
+                 @endif
 
                  <!-- Rating Promedio (Nuevo) -->
                  @if($this->totalReviews > 0)
@@ -119,6 +206,9 @@
                         <button wire:click="$set('activeTab', 'about')" class="flex-1 py-4 px-1 text-center text-sm font-medium hover:bg-gray-50 transition {{ $activeTab === 'about' ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50' : 'text-gray-500' }}">
                             Sobre Mí
                         </button>
+                        <button wire:click="$set('activeTab', 'services')" class="flex-1 py-4 px-1 text-center text-sm font-medium hover:bg-gray-50 transition {{ $activeTab === 'services' ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50' : 'text-gray-500' }}">
+                            Servicios <span class="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">{{ $providerServices->count() }}</span>
+                        </button>
                         <button wire:click="$set('activeTab', 'portfolio')" class="flex-1 py-4 px-1 text-center text-sm font-medium hover:bg-gray-50 transition {{ $activeTab === 'portfolio' ? 'text-primary-600 border-b-2 border-primary-500 bg-primary-50' : 'text-gray-500' }}">
                             Portafolio
                         </button>
@@ -137,10 +227,16 @@
                                 @if($profile->address)
                                     <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
                                         <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Ubicación / Dirección</h4>
-                                        <p class="text-gray-600 text-sm flex items-start">
+                                        <p class="text-gray-600 text-sm flex items-start mb-3">
                                             <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                             {{ $profile->address }}
                                         </p>
+                                        @if($profile->latitude && $profile->longitude)
+                                            <div id="profile-map" class="h-64 w-full rounded-xl border border-gray-200 mt-2 z-10" 
+                                                 x-data="{ initMap() { this.$nextTick(() => { window.initLeafletMapForProfile({{ $profile->latitude }}, {{ $profile->longitude }}); }); } }" 
+                                                 x-init="initMap()" 
+                                                 wire:ignore></div>
+                                        @endif
                                     </div>
                                 @endif
                                 
@@ -160,15 +256,21 @@
                                                 </div>
                                                 <div class="flex flex-wrap gap-2">
                                                     @if($profile->emergency_24h ?? false)
-                                                        <span class="bg-white text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm">
-                                                            🚨 Emergencias 24h
-                                                        </span>
-                                                    @endif
-                                                    @if($profile->allows_home_visits ?? false)
-                                                        <span class="bg-white text-emerald-600 border border-emerald-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm">
-                                                            🏠 A Domicilio
-                                                        </span>
-                                                    @endif
+                                                         <span class="bg-white text-rose-600 border border-rose-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                             <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                             </svg>
+                                                             Emergencias 24h
+                                                         </span>
+                                                     @endif
+                                                     @if($profile->allows_home_visits ?? false)
+                                                         <span class="bg-white text-emerald-600 border border-emerald-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                             <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                                             </svg>
+                                                             A Domicilio
+                                                         </span>
+                                                     @endif
                                                 </div>
                                             </div>
                                         </div>
@@ -180,14 +282,20 @@
                                             <h4 class="text-xs text-pink-800 uppercase font-bold mb-3">Detalles del Servicio</h4>
                                             <div class="flex flex-wrap gap-2">
                                                 @if($profile->allows_home_visits ?? false)
-                                                    <span class="bg-white text-pink-600 border border-pink-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm">
-                                                        ✂️ Servicio a Domicilio
-                                                    </span>
-                                                @else
-                                                    <span class="bg-white text-gray-600 border border-gray-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center shadow-sm">
-                                                        🏢 Atención en Local
-                                                    </span>
-                                                @endif
+                                                     <span class="bg-white text-pink-600 border border-pink-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                         <svg class="w-4 h-4 text-pink-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                                         </svg>
+                                                         Servicio a Domicilio
+                                                     </span>
+                                                 @else
+                                                     <span class="bg-white text-gray-600 border border-gray-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                         <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                                                         </svg>
+                                                         Atención en Local
+                                                     </span>
+                                                 @endif
                                             </div>
                                         </div>
                                      @endif
@@ -216,14 +324,29 @@
                                             </div>
                                             <div class="flex flex-wrap gap-2">
                                                 @if($profile->cage_free)
-                                                    <span class="bg-white text-indigo-600 border border-indigo-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">🚫 Sin Jaulas</span>
-                                                @endif
-                                                @if($profile->has_transport)
-                                                    <span class="bg-white text-indigo-600 border border-indigo-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">🚙 Movilidad Incluida</span>
-                                                @endif
-                                                @if($profile->emergency_24h ?? false)
-                                                    <span class="bg-white text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">🚨 Atención 24h</span>
-                                                @endif
+                                                     <span class="bg-white text-indigo-600 border border-indigo-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                         <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                                                         </svg>
+                                                         Sin Jaulas
+                                                     </span>
+                                                 @endif
+                                                 @if($profile->has_transport)
+                                                     <span class="bg-white text-indigo-600 border border-indigo-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                         <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125a1.125 1.125 0 001.125-1.125V9.75M3.75 14.25h16.5M3.75 14.25V9.75m16.5 4.5V9.75m0 0a3.75 3.75 0 00-3.75-3.75H8.25m9.75 3.75H3.75M8.25 6h7.5M8.25 6L6.75 9.75m9-3.75l1.5 9.75" />
+                                                         </svg>
+                                                         Movilidad Incluida
+                                                     </span>
+                                                 @endif
+                                                 @if($profile->emergency_24h ?? false)
+                                                     <span class="bg-white text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                         <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                         </svg>
+                                                         Atención 24h
+                                                     </span>
+                                                 @endif
                                             </div>
                                         </div>
                                      @endif
@@ -253,17 +376,26 @@
                                         <div class="border rounded-lg p-4 bg-orange-50 border-orange-100 col-span-full">
                                             <h4 class="text-xs text-orange-800 uppercase font-bold mb-3">Sobre el Cuidado</h4>
                                             <div class="flex flex-wrap gap-3">
-                                                 <span class="bg-white text-orange-600 border border-orange-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
-                                                    🏠 Tipo de Vivienda: {{ $profile->housing_type }}
+                                                 <span class="bg-white text-orange-600 border border-orange-200 text-xs px-3 py-1.5 rounded-md font-bold flex items-center gap-1.5 shadow-sm">
+                                                      <svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                                      </svg>
+                                                      Tipo de Vivienda: {{ $profile->housing_type }}
                                                  </span>
                                                  @if($profile->has_yard)
-                                                    <span class="bg-white text-green-600 border border-green-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
-                                                        🌳 Tiene Patio
+                                                    <span class="bg-white text-green-600 border border-green-200 text-xs px-3 py-1.5 rounded-md font-bold flex items-center gap-1.5 shadow-sm">
+                                                         <svg class="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 20m0-17c4.97 0 9 4.03 9 9 0 2.12-.74 4.07-1.97 5.61L12 20" />
+                                                         </svg>
+                                                         Tiene Patio
                                                     </span>
                                                  @endif
                                                  @if($profile->allows_home_visits ?? false)
-                                                    <span class="bg-white text-teal-600 border border-teal-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
-                                                        🚗 Va a tu casa
+                                                    <span class="bg-white text-teal-600 border border-teal-200 text-xs px-3 py-1.5 rounded-md font-bold flex items-center gap-1.5 shadow-sm">
+                                                         <svg class="w-4 h-4 text-teal-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125a1.125 1.125 0 001.125-1.125V9.75" />
+                                                         </svg>
+                                                         Va a tu casa
                                                     </span>
                                                  @endif
                                             </div>
@@ -281,11 +413,21 @@
                                                 </div>
                                                 <div class="flex flex-wrap gap-2">
                                                     @if($profile->has_ac)
-                                                        <span class="bg-white text-sky-600 border border-sky-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">❄️ Aire Acondicionado</span>
-                                                    @endif
-                                                    @if($profile->provides_crate)
-                                                        <span class="bg-white text-amber-600 border border-amber-200 text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">📦 Transportadora</span>
-                                                    @endif
+                                                         <span class="bg-white text-sky-600 border border-sky-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                             <svg class="w-4 h-4 text-sky-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18m-3-6l-3 3m0 0l-3-3m3 3V3m0 12l-3-3m0 0l-3 3m3-3v6M6 9l3 3m0 0l-3 3m3-3H3m12 0l-3 3m0 0l-3-3m3-3h6" />
+                                                             </svg>
+                                                             Aire Acondicionado
+                                                         </span>
+                                                     @endif
+                                                     @if($profile->provides_crate)
+                                                         <span class="bg-white text-amber-600 border border-amber-200 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
+                                                             <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25" />
+                                                             </svg>
+                                                             Transportadora
+                                                         </span>
+                                                     @endif
                                                 </div>
                                             </div>
                                         </div>
@@ -296,18 +438,28 @@
                                         <div class="border rounded-lg p-4 bg-cyan-50 border-cyan-100 col-span-full">
                                             <h4 class="text-xs text-cyan-800 uppercase font-bold mb-3">Estilo y Equipo</h4>
                                             <div class="flex flex-wrap gap-3">
-                                                 <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
-                                                    📸 Especialidad: {{ $profile->specialty ?? 'General' }}
-                                                 </span>
-                                                 @if($profile->has_studio ?? false)
-                                                    <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
-                                                        💡 Estudio Propio
+                                                    <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold flex items-center gap-1.5 shadow-sm">
+                                                        <svg class="w-4 h-4 text-cyan-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                                                        </svg>
+                                                        Especialidad: {{ $profile->specialty ?? 'General' }}
                                                     </span>
-                                                 @else
-                                                     <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold shadow-sm">
-                                                        🏞️ Exteriores / A Domicilio
-                                                     </span>
-                                                 @endif
+                                                    @if($profile->has_studio ?? false)
+                                                       <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold flex items-center gap-1.5 shadow-sm">
+                                                           <svg class="w-4 h-4 text-cyan-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                               <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+                                                           </svg>
+                                                           Estudio Propio
+                                                       </span>
+                                                    @else
+                                                        <span class="bg-white text-cyan-600 border border-cyan-200 text-xs px-3 py-1.5 rounded-md font-bold flex items-center gap-1.5 shadow-sm">
+                                                            <svg class="w-4 h-4 text-cyan-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+                                                            </svg>
+                                                            Exteriores / A Domicilio
+                                                        </span>
+                                                    @endif
                                             </div>
                                         </div>
                                      @endif
@@ -454,6 +606,24 @@
                                                     @endfor
                                                 </div>
                                                 <p class="text-sm text-gray-600">{{ $review->comment }}</p>
+
+                                                @if($review->provider_response)
+                                                    <div class="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100 relative">
+                                                        <div class="absolute top-0 left-6 -mt-1.5 w-3 h-3 bg-gray-50 border-t border-l border-gray-100 transform rotate-45"></div>
+                                                        <div class="flex items-start gap-2.5">
+                                                            <div class="shrink-0">
+                                                                <img class="h-6 w-6 rounded-full border bg-white object-cover" src="{{ $user->profile_photo_path ? \Illuminate\Support\Facades\Storage::url($user->profile_photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=0ea5e9&color=fff' }}" alt="">
+                                                            </div>
+                                                            <div>
+                                                                <div class="flex items-center gap-2">
+                                                                    <h6 class="text-xs font-bold text-gray-900">Respuesta de {{ $user->name }}</h6>
+                                                                    <span class="text-[9px] text-gray-400 font-semibold">{{ \Carbon\Carbon::parse($review->replied_at)->diffForHumans() }}</span>
+                                                                </div>
+                                                                <p class="text-xs text-gray-600 mt-0.5 font-medium">{{ $review->provider_response }}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     @empty
@@ -565,7 +735,40 @@
                                     {{ $reviews->links() }}
                                 </div>
                             </div>
-                        @else
+                        @elseif($activeTab === 'services')
+                            @if($providerServices->count() > 0)
+                                <div class="space-y-4">
+                                    <h3 class="text-gray-900 font-bold mb-4">Catálogo de Servicios</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        @foreach($providerServices as $service)
+                                            <div class="p-4 rounded-xl border border-gray-100 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                                                <div>
+                                                    <h4 class="font-bold text-gray-900 text-base">{{ $service->name }}</h4>
+                                                    @if($service->description)
+                                                        <p class="text-sm text-gray-500 mt-1">{{ $service->description }}</p>
+                                                    @endif
+                                                </div>
+                                                <div class="mt-4 flex items-center justify-between border-t pt-3">
+                                                    @if($service->duration_minutes)
+                                                        <span class="text-xs text-gray-400 flex items-center">
+                                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                            {{ $service->duration_minutes }} min
+                                                        </span>
+                                                    @else
+                                                        <span></span>
+                                                    @endif
+                                                    <span class="text-lg font-extrabold text-primary-600">S/ {{ number_format($service->price, 2) }}</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <div class="text-center py-12 text-gray-500">
+                                    <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                                    <p class="mt-2">Este proveedor aún no ha registrado servicios en su catálogo.</p>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -667,6 +870,9 @@
                                     @else
                                         <p class="text-sm text-gray-500 text-center italic mb-2">Este usuario no ha registrado WhatsApp.</p>
                                     @endif
+                                    <a href="{{ route('dashboard.messages', ['contactId' => $user->id]) }}" class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 transition">
+                                        💬 Chat Interno
+                                    </a>
                                     <a href="mailto:{{ $user->email }}" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                                         <svg class="h-5 w-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                         {{ $user->email }}
@@ -717,18 +923,63 @@
 
                                     <div class="space-y-4">
                                         <div>
-                                            <label for="appointmentDate" class="block text-xs font-medium text-gray-700">Fecha</label>
+                                            <label for="selectedPetId" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mascota</label>
+                                            @if($this->pets->count() > 0)
+                                                <select id="selectedPetId" wire:model="selectedPetId" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                                                    <option value="">Selecciona tu mascota</option>
+                                                    @foreach($this->pets as $pet)
+                                                        <option value="{{ $pet->id }}">{{ $pet->name }} ({{ $pet->species }})</option>
+                                                    @endforeach
+                                                </select>
+                                            @else
+                                                <div class="mt-1 text-xs text-red-600 bg-red-50 p-2.5 rounded border border-red-200">
+                                                    No tienes mascotas registradas.
+                                                    <a href="{{ route('dashboard.pet.create') }}" class="font-bold underline hover:text-red-800">Registrar mascota aquí</a> primero para poder agendar una cita.
+                                                </div>
+                                            @endif
+                                            @error('selectedPetId') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div>
+                                            <label for="appointmentDate" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Fecha</label>
                                             <input id="appointmentDate" type="date" wire:model="appointmentDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                                            @error('appointmentDate') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                            @error('appointmentDate') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
-                                            <label for="appointmentTime" class="block text-xs font-medium text-gray-700">Hora</label>
+                                            <label for="appointmentTime" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Hora</label>
                                             <input id="appointmentTime" type="time" wire:model="appointmentTime" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                                            @error('appointmentTime') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                            @error('appointmentTime') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
-                                            <label for="appointmentNotes" class="block text-xs font-medium text-gray-700">Notas / Detalles</label>
+                                            <label for="appointmentNotes" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Notas / Detalles</label>
                                             <textarea id="appointmentNotes" wire:model="appointmentNotes" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm" placeholder="Raza, tamaño, necesidades especiales..."></textarea>
+                                        </div>
+
+                                        @if($providerServices && $providerServices->count() > 0)
+                                            <div class="border-t pt-4">
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Servicios a contratar</label>
+                                                <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3 bg-gray-50/50">
+                                                    @foreach($providerServices as $service)
+                                                        <label class="flex items-start gap-3 p-2 rounded-lg hover:bg-white hover:shadow-sm transition cursor-pointer border border-transparent hover:border-gray-100">
+                                                            <input type="checkbox" wire:model.live="selectedServices" value="{{ $service->id }}" class="mt-1 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                                            <div class="flex-1">
+                                                                <div class="flex justify-between font-semibold text-gray-900 text-sm">
+                                                                    <span>{{ $service->name }}</span>
+                                                                    <span>S/ {{ number_format($service->price, 2) }}</span>
+                                                                </div>
+                                                                @if($service->description)
+                                                                    <p class="text-xs text-gray-500">{{ $service->description }}</p>
+                                                                @endif
+                                                            </div>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                                @error('selectedServices') <span class="text-red-500 text-xs mt-1 block font-semibold">{{ $message }}</span> @enderror
+                                            </div>
+                                        @endif
+
+                                        <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+                                            <span class="text-sm font-bold text-gray-700 uppercase">Monto Total Estimado:</span>
+                                            <span class="text-xl font-extrabold text-primary-600">S/ {{ number_format($totalPrice, 2) }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -736,9 +987,15 @@
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" wire:click="bookAppointment" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
-                            Enviar Solicitud
-                        </button>
+                        @if($this->pets->count() > 0)
+                            <button type="button" wire:click="bookAppointment" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                                Enviar Solicitud
+                            </button>
+                        @else
+                            <button type="button" disabled class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-400 text-base font-medium text-white cursor-not-allowed sm:ml-3 sm:w-auto sm:text-sm">
+                                Enviar Solicitud
+                            </button>
+                        @endif
                         <button type="button" wire:click="$set('showBookingModal', false)" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                             Cancelar
                         </button>
@@ -748,3 +1005,39 @@
         </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+    window.initLeafletMapForProfile = function(lat, lng) {
+        const container = L.DomUtil.get('profile-map');
+        if (container != null) {
+            container._leaflet_id = null;
+        }
+
+        const map = L.map('profile-map').setView([lat, lng], 16);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        let providerIcon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        L.marker([lat, lng], {icon: providerIcon}).addTo(map);
+    }
+
+    window.addEventListener('profile-role-changed', event => {
+        const data = event.detail;
+        if (data.latitude && data.longitude) {
+            window.initLeafletMapForProfile(data.latitude, data.longitude);
+        }
+    });
+</script>
+@endpush

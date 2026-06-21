@@ -11,6 +11,18 @@ class ProviderDashboard extends Component
 
     public $user;
     public $profile;
+    public $selectedRole;
+    public $providerRoles = [
+        'veterinarian' => 'Veterinario',
+        'walker' => 'Paseador',
+        'groomer' => 'Estilista / Baño',
+        'hotel' => 'Hospedaje',
+        'shelter' => 'Albergue',
+        'trainer' => 'Adiestrador',
+        'pet_sitter' => 'Cuidador',
+        'pet_taxi' => 'Pet Taxi',
+        'pet_photographer' => 'Fotógrafo',
+    ];
     
     // Campos editables (Comunes)
     public $bio;
@@ -21,6 +33,8 @@ class ProviderDashboard extends Component
     public $tiktok_url;
     public $whatsapp_number;
     public $district_id; // Ubicación para filtros
+    public $latitude;
+    public $longitude;
     
     // Específicos Veterinario
     public $license_number;
@@ -74,6 +88,42 @@ class ProviderDashboard extends Component
     public $imageTitle;
     public $portfolioImages = [];
 
+    // Servicios (Catálogo)
+    public $providerServices = [];
+    public $serviceId;
+    public $serviceName;
+    public $serviceDescription;
+    public $servicePrice;
+    public $serviceDuration;
+    public $isEditingService = false;
+
+    // Métodos de Pago
+    public $yape_number;
+    public $plin_number;
+    public $yape_qr;
+    public $plin_qr;
+    public $existingYapeQr;
+    public $existingPlinQr;
+
+    // Reseñas Recibidas y Respuestas
+    public $receivedReviews = [];
+    public $replyText = [];
+
+    // Onboarding checklist
+    public $completenessScore = 0;
+    public $completenessChecklist = [];
+    public $providerLevel = [];
+
+    // Estadísticas
+    public $totalEarnings = 0;
+    public $monthlyEarnings = 0;
+    public $acceptanceRate = 100;
+    public $completedAppointmentsCount = 0;
+    public $activeAppointmentsCount = 0;
+    public $averageRating = 0.0;
+    public $recentPayments = [];
+    public $todayAppointments = [];
+
     protected function rules()
     {
         $rules = [
@@ -86,48 +136,50 @@ class ProviderDashboard extends Component
             'whatsapp_number' => 'nullable|string|max:20',
             'newImage' => 'nullable|image|max:10240', // 10MB
             'district_id' => 'required|exists:districts,id',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'availability' => 'array',
             'availability.*.active' => 'boolean',
             'availability.*.start' => 'required_if:availability.*.active,true',
             'availability.*.end' => 'required_if:availability.*.active,true',
         ];
 
-        if ($this->user->hasRole('veterinarian')) {
+        if ($this->selectedRole === 'veterinarian') {
             $rules['license_number'] = 'nullable|string|max:50';
             $rules['address'] = 'nullable|string|max:255';
             $rules['allows_home_visits'] = 'boolean';
             $rules['emergency_24h'] = 'boolean';
-        } elseif ($this->user->hasRole('walker')) {
+        } elseif ($this->selectedRole === 'walker') {
             $rules['hourly_rate'] = 'nullable|numeric|min:0';
-        } elseif ($this->user->hasRole('groomer')) {
+        } elseif ($this->selectedRole === 'groomer') {
              $rules['address'] = 'nullable|string|max:255';
              $rules['allows_home_visits'] = 'boolean';
-        } elseif ($this->user->hasRole('hotel')) {
+        } elseif ($this->selectedRole === 'hotel') {
             $rules['address'] = 'nullable|string|max:255';
             $rules['capacity'] = 'nullable|integer|min:1';
             $rules['check_in_time'] = 'nullable';
             $rules['check_out_time'] = 'nullable';
             $rules['cage_free'] = 'boolean';
             $rules['has_transport'] = 'boolean';
-        } elseif ($this->user->hasRole('shelter')) {
+        } elseif ($this->selectedRole === 'shelter') {
             $rules['address'] = 'nullable|string|max:255';
             $rules['donation_info'] = 'nullable|string|max:1000';
             $rules['accepting_adoptions'] = 'boolean';
             $rules['accepting_volunteers'] = 'boolean';
             $rules['accepting_donations'] = 'boolean';
-        } elseif ($this->user->hasRole('trainer')) {
+        } elseif ($this->selectedRole === 'trainer') {
             $rules['methodology'] = 'nullable|string|max:255';
             $rules['certification'] = 'nullable|string|max:255';
             $rules['allows_home_visits'] = 'boolean';
-        } elseif ($this->user->hasRole('pet_sitter')) {
+        } elseif ($this->selectedRole === 'pet_sitter') {
             $rules['housing_type'] = 'nullable|string|max:255';
             $rules['has_yard'] = 'boolean';
             $rules['allows_home_visits'] = 'boolean';
-        } elseif ($this->user->hasRole('pet_taxi')) {
+        } elseif ($this->selectedRole === 'pet_taxi') {
             $rules['vehicle_type'] = 'nullable|string|max:255';
             $rules['has_ac'] = 'boolean';
             $rules['provides_crate'] = 'boolean';
-        } elseif ($this->user->hasRole('pet_photographer')) {
+        } elseif ($this->selectedRole === 'pet_photographer') {
             $rules['specialty'] = 'nullable|string|max:255';
             $rules['has_studio'] = 'boolean';
         }
@@ -138,98 +190,230 @@ class ProviderDashboard extends Component
     public function mount()
     {
         $this->user = Auth::user();
+        
+        $userProviderRoles = array_values(array_intersect(
+            $this->user->roles->pluck('name')->toArray(),
+            array_keys($this->providerRoles)
+        ));
+
+        if (!empty($userProviderRoles)) {
+            $this->selectedRole = $userProviderRoles[0];
+        }
+
         $this->loadProfile(); // Carga datos del perfil
         $this->loadUbigeo(); // Carga lógica de departamentos/provincias
         $this->loadPortfolio();
+        $this->loadServices();
+        $this->loadStats();
+        $this->loadReviews();
+        $this->calculateCompleteness();
     }
 
     public function loadProfile()
     {
-        if ($this->user->hasRole('veterinarian')) {
-            $this->profile = $this->user->veterinarianProfile;
-            $this->bio = $this->profile->bio;
-            $this->address = $this->profile->address;
-            $this->allows_home_visits = $this->profile->allows_home_visits;
-            $this->license_number = $this->profile->license_number;
-            $this->emergency_24h = $this->profile->emergency_24h;
-            $this->district_id = $this->profile->district_id;
-        } elseif ($this->user->hasRole('walker')) {
-            $this->profile = $this->user->walkerProfile;
-            $this->bio = $this->profile->experience;
-            $this->hourly_rate = $this->profile->hourly_rate;
-            $this->district_id = $this->profile->district_id;
-        } elseif ($this->user->hasRole('groomer')) {
-            $this->profile = $this->user->groomerProfile;
-            $this->bio = $this->profile->bio;
-            $this->address = $this->profile->address;
-            $this->allows_home_visits = $this->profile->allows_home_visits;
-            $this->district_id = $this->profile->district_id;
-        } elseif ($this->user->hasRole('hotel')) {
-            $this->profile = $this->user->hotelProfile;
-            $this->bio = $this->profile->bio;
-            $this->address = $this->profile->address;
-            $this->district_id = $this->profile->district_id;
-            $this->capacity = $this->profile->capacity;
-            $this->has_transport = $this->profile->has_transport;
-            $this->cage_free = $this->profile->cage_free;
-            $this->check_in_time = $this->profile->check_in_time;
-            $this->check_out_time = $this->profile->check_out_time;
-        } elseif ($this->user->hasRole('shelter')) {
-            $this->profile = $this->user->shelterProfile;
-            $this->bio = $this->profile->bio;
-            $this->address = $this->profile->address;
-            $this->district_id = $this->profile->district_id;
-            $this->capacity = $this->profile->capacity;
-            $this->accepting_adoptions = $this->profile->accepting_adoptions;
-            $this->accepting_volunteers = $this->profile->accepting_volunteers;
-            $this->accepting_donations = $this->profile->accepting_donations;
-            $this->donation_info = $this->profile->donation_info;
-        } elseif ($this->user->hasRole('trainer')) {
-            $this->profile = $this->user->trainerProfile;
-            $this->bio = $this->profile->bio;
-            $this->district_id = $this->profile->district_id;
-            $this->allows_home_visits = $this->profile->allows_home_visits;
-            $this->methodology = $this->profile->methodology;
-            $this->certification = $this->profile->certification;
-        } elseif ($this->user->hasRole('pet_sitter')) {
-            $this->profile = $this->user->petSitterProfile;
-            $this->bio = $this->profile->bio;
-            $this->district_id = $this->profile->district_id;
-            $this->allows_home_visits = $this->profile->allows_home_visits;
-            $this->housing_type = $this->profile->housing_type;
-            $this->has_yard = $this->profile->has_yard;
-        } elseif ($this->user->hasRole('pet_taxi')) {
-            $this->profile = $this->user->petTaxiProfile;
-            $this->bio = $this->profile->bio;
-            $this->district_id = $this->profile->district_id;
-            $this->vehicle_type = $this->profile->vehicle_type;
-            $this->has_ac = $this->profile->has_ac;
-            $this->provides_crate = $this->profile->provides_crate;
-        } elseif ($this->user->hasRole('pet_photographer')) {
-            $this->profile = $this->user->petPhotographerProfile;
-            $this->bio = $this->profile->bio;
-            $this->district_id = $this->profile->district_id;
-            $this->specialty = $this->profile->specialty;
-            $this->has_studio = $this->profile->has_studio;
-        } else {
+        $userProviderRoles = array_values(array_intersect(
+            $this->user->roles->pluck('name')->toArray(),
+            array_keys($this->providerRoles)
+        ));
+
+        if (empty($userProviderRoles)) {
             return redirect()->route('dashboard');
         }
-        
-        // Cargar estado de visualización
-        $this->verification_status = $this->profile->is_verified;
 
-        // Cargar precio base (común a todos los roles con precio)
-        $this->price_from = $this->profile->price_from ?? null;
+        if (!$this->selectedRole || !in_array($this->selectedRole, $userProviderRoles)) {
+            $this->selectedRole = $userProviderRoles[0];
+        }
 
-        // Cargar redes sociales (comunes)
-        $this->website_url = $this->profile->website_url;
-        $this->facebook_url = $this->profile->facebook_url;
-        $this->instagram_url = $this->profile->instagram_url;
-        $this->tiktok_url = $this->profile->tiktok_url;
-        $this->whatsapp_number = $this->profile->whatsapp_number;
-        
-        // Cargar o inicializar horarios
-        $this->availability = $this->profile->availability ?? $this->getDefaultAvailability();
+        $role = $this->selectedRole;
+
+        if ($role === 'veterinarian') {
+            $this->profile = $this->user->veterinarianProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->bio;
+                $this->address = $this->profile->address;
+                $this->allows_home_visits = $this->profile->allows_home_visits;
+                $this->license_number = $this->profile->license_number;
+                $this->emergency_24h = $this->profile->emergency_24h;
+                $this->district_id = $this->profile->district_id;
+            }
+        } elseif ($role === 'walker') {
+            $this->profile = $this->user->walkerProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->experience;
+                $this->hourly_rate = $this->profile->hourly_rate;
+                $this->district_id = $this->profile->district_id;
+            }
+        } elseif ($role === 'groomer') {
+            $this->profile = $this->user->groomerProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->bio;
+                $this->address = $this->profile->address;
+                $this->allows_home_visits = $this->profile->allows_home_visits;
+                $this->district_id = $this->profile->district_id;
+            }
+        } elseif ($role === 'hotel') {
+            $this->profile = $this->user->hotelProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->bio;
+                $this->address = $this->profile->address;
+                $this->district_id = $this->profile->district_id;
+                $this->capacity = $this->profile->capacity;
+                $this->has_transport = $this->profile->has_transport;
+                $this->cage_free = $this->profile->cage_free;
+                $this->check_in_time = $this->profile->check_in_time;
+                $this->check_out_time = $this->profile->check_out_time;
+            }
+        } elseif ($role === 'shelter') {
+            $this->profile = $this->user->shelterProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->bio;
+                $this->address = $this->profile->address;
+                $this->district_id = $this->profile->district_id;
+                $this->capacity = $this->profile->capacity;
+                $this->accepting_adoptions = $this->profile->accepting_adoptions;
+                $this->accepting_volunteers = $this->profile->accepting_volunteers;
+                $this->accepting_donations = $this->profile->accepting_donations;
+                $this->donation_info = $this->profile->donation_info;
+            }
+        } elseif ($role === 'trainer') {
+            $this->profile = $this->user->trainerProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->bio;
+                $this->district_id = $this->profile->district_id;
+                $this->allows_home_visits = $this->profile->allows_home_visits;
+                $this->methodology = $this->profile->methodology;
+                $this->certification = $this->profile->certification;
+            }
+        } elseif ($role === 'pet_sitter') {
+            $this->profile = $this->user->petSitterProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->bio;
+                $this->district_id = $this->profile->district_id;
+                $this->allows_home_visits = $this->profile->allows_home_visits;
+                $this->housing_type = $this->profile->housing_type;
+                $this->has_yard = $this->profile->has_yard;
+            }
+        } elseif ($role === 'pet_taxi') {
+            $this->profile = $this->user->petTaxiProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->bio;
+                $this->district_id = $this->profile->district_id;
+                $this->vehicle_type = $this->profile->vehicle_type;
+                $this->has_ac = $this->profile->has_ac;
+                $this->provides_crate = $this->profile->provides_crate;
+            }
+        } elseif ($role === 'pet_photographer') {
+            $this->profile = $this->user->petPhotographerProfile;
+            if ($this->profile) {
+                $this->bio = $this->profile->bio;
+                $this->district_id = $this->profile->district_id;
+                $this->specialty = $this->profile->specialty;
+                $this->has_studio = $this->profile->has_studio;
+            }
+        }
+
+        if (!$this->profile) {
+            $this->createProfileForRole($role);
+        }
+
+        if ($this->profile) {
+            // Cargar estado de visualización
+            $this->verification_status = $this->profile->is_verified;
+
+            // Cargar coordenadas (si existen)
+            $this->latitude = $this->profile->latitude ?? null;
+            $this->longitude = $this->profile->longitude ?? null;
+
+            // Cargar precio base (común a todos los roles con precio)
+            $this->price_from = $this->profile->price_from ?? null;
+
+            // Cargar redes sociales (comunes)
+            $this->website_url = $this->profile->website_url;
+            $this->facebook_url = $this->profile->facebook_url;
+            $this->instagram_url = $this->profile->instagram_url;
+            $this->tiktok_url = $this->profile->tiktok_url;
+            $this->whatsapp_number = $this->profile->whatsapp_number;
+            
+            // Cargar o inicializar horarios
+            $this->availability = $this->profile->availability ?? $this->getDefaultAvailability();
+        }
+
+        // Cargar datos de Yape/Plin (de la tabla users)
+        $this->yape_number = $this->user->yape_number;
+        $this->plin_number = $this->user->plin_number;
+        $this->existingYapeQr = $this->user->yape_qr_path;
+        $this->existingPlinQr = $this->user->plin_qr_path;
+    }
+
+    public function createProfileForRole($role)
+    {
+        $modelMap = [
+            'veterinarian' => \App\Models\Veterinarian::class,
+            'walker' => \App\Models\Walker::class,
+            'groomer' => \App\Models\Groomer::class,
+            'hotel' => \App\Models\PetHotel::class,
+            'shelter' => \App\Models\Shelter::class,
+            'trainer' => \App\Models\Trainer::class,
+            'pet_sitter' => \App\Models\PetSitter::class,
+            'pet_taxi' => \App\Models\PetTaxi::class,
+            'pet_photographer' => \App\Models\PetPhotographer::class,
+        ];
+
+        $modelClass = $modelMap[$role] ?? null;
+        if ($modelClass) {
+            $profile = $modelClass::where('user_id', $this->user->id)->first();
+            if (!$profile) {
+                $profile = $modelClass::create([
+                    'user_id' => $this->user->id,
+                    'is_verified' => false,
+                    'district_id' => $this->findExistingDistrictId() ?: 1,
+                ]);
+            }
+            $this->profile = $profile;
+        }
+    }
+
+    private function findExistingDistrictId()
+    {
+        foreach (['veterinarianProfile', 'walkerProfile', 'groomerProfile', 'hotelProfile', 'shelterProfile', 'trainerProfile', 'petSitterProfile', 'petTaxiProfile', 'petPhotographerProfile'] as $rel) {
+            if ($this->user->$rel && $this->user->$rel->district_id) {
+                return $this->user->$rel->district_id;
+            }
+        }
+        return null;
+    }
+
+    public function selectRole($role)
+    {
+        $this->selectedRole = $role;
+        $this->loadProfile();
+        $this->loadUbigeo();
+        $this->calculateCompleteness();
+        // Disparar evento para reinicializar mapa en la vista si cambia de rol
+        $this->dispatch('role-changed', latitude: $this->latitude, longitude: $this->longitude);
+    }
+
+    public function activateRole($role)
+    {
+        if (!array_key_exists($role, $this->providerRoles)) {
+            return;
+        }
+
+        // Asignar el rol al usuario
+        $this->user->assignRole($role);
+
+        // Crear el perfil correspondiente
+        $this->createProfileForRole($role);
+
+        // Cambiar la selección al rol recién activado
+        $this->selectedRole = $role;
+
+        // Recargar perfil, ubigeo, checklist, etc.
+        $this->loadProfile();
+        $this->loadUbigeo();
+        $this->calculateCompleteness();
+
+        session()->flash('message', 'Nuevo rol/servicio "' . $this->providerRoles[$role] . '" activado con éxito.');
     }
 
     public function loadUbigeo()
@@ -296,9 +480,11 @@ class ProviderDashboard extends Component
             'availability' => $this->availability,
             'district_id' => $this->district_id,
             'price_from' => $this->price_from ?: null,
+            'latitude' => $this->latitude ?: null,
+            'longitude' => $this->longitude ?: null,
         ];
 
-        if ($this->user->hasRole('veterinarian')) {
+        if ($this->selectedRole === 'veterinarian') {
             $this->profile->update(array_merge($data, [
                 'bio' => $this->bio,
                 'address' => $this->address,
@@ -306,18 +492,18 @@ class ProviderDashboard extends Component
                 'license_number' => $this->license_number,
                 'emergency_24h' => $this->emergency_24h,
             ]));
-        } elseif ($this->user->hasRole('walker')) {
+        } elseif ($this->selectedRole === 'walker') {
             $this->profile->update(array_merge($data, [
                 'experience' => $this->bio,
                 'hourly_rate' => $this->hourly_rate,
             ]));
-        } elseif ($this->user->hasRole('groomer')) {
+        } elseif ($this->selectedRole === 'groomer') {
              $this->profile->update(array_merge($data, [
                 'bio' => $this->bio,
                 'address' => $this->address,
                 'allows_home_visits' => $this->allows_home_visits,
             ]));
-        } elseif ($this->user->hasRole('hotel')) {
+        } elseif ($this->selectedRole === 'hotel') {
             $this->profile->update(array_merge($data, [
                 'bio' => $this->bio,
                 'address' => $this->address,
@@ -327,7 +513,7 @@ class ProviderDashboard extends Component
                 'check_in_time' => $this->check_in_time,
                 'check_out_time' => $this->check_out_time,
             ]));
-        } elseif ($this->user->hasRole('shelter')) {
+        } elseif ($this->selectedRole === 'shelter') {
             $this->profile->update(array_merge($data, [
                 'bio' => $this->bio,
                 'address' => $this->address,
@@ -337,28 +523,28 @@ class ProviderDashboard extends Component
                 'accepting_donations' => $this->accepting_donations,
                 'donation_info' => $this->donation_info,
             ]));
-        } elseif ($this->user->hasRole('trainer')) {
+        } elseif ($this->selectedRole === 'trainer') {
             $this->profile->update(array_merge($data, [
                 'bio' => $this->bio,
                 'allows_home_visits' => $this->allows_home_visits,
                 'methodology' => $this->methodology,
                 'certification' => $this->certification,
             ]));
-        } elseif ($this->user->hasRole('pet_sitter')) {
+        } elseif ($this->selectedRole === 'pet_sitter') {
             $this->profile->update(array_merge($data, [
                 'bio' => $this->bio,
                 'allows_home_visits' => $this->allows_home_visits,
                 'housing_type' => $this->housing_type,
                 'has_yard' => $this->has_yard,
             ]));
-        } elseif ($this->user->hasRole('pet_taxi')) {
+        } elseif ($this->selectedRole === 'pet_taxi') {
              $this->profile->update(array_merge($data, [
                 'bio' => $this->bio,
                 'vehicle_type' => $this->vehicle_type,
                 'has_ac' => $this->has_ac,
                 'provides_crate' => $this->provides_crate,
             ]));
-        } elseif ($this->user->hasRole('pet_photographer')) {
+        } elseif ($this->selectedRole === 'pet_photographer') {
              $this->profile->update(array_merge($data, [
                 'bio' => $this->bio,
                 'specialty' => $this->specialty,
@@ -373,11 +559,37 @@ class ProviderDashboard extends Component
             $this->profile_photo = null;
         }
 
+        // Guardar datos de Yape/Plin
+        $userData = [
+            'yape_number' => $this->yape_number ?: null,
+            'plin_number' => $this->plin_number ?: null,
+        ];
+
+        if ($this->yape_qr) {
+            $this->validate(['yape_qr' => 'image|max:5120']); // 5MB
+            $path = $this->yape_qr->store('qrs', config('filesystems.default'));
+            $userData['yape_qr_path'] = $path;
+            $this->existingYapeQr = $path;
+            $this->yape_qr = null;
+        }
+
+        if ($this->plin_qr) {
+            $this->validate(['plin_qr' => 'image|max:5120']); // 5MB
+            $path = $this->plin_qr->store('qrs', config('filesystems.default'));
+            $userData['plin_qr_path'] = $path;
+            $this->existingPlinQr = $path;
+            $this->plin_qr = null;
+        }
+
+        $this->user->update($userData);
+
         // La lógica de documento ahora se maneja principalmente en uploadVerificationDocument
         // pero lo mantenemos aquí por si acaso el usuario usa el botón general
         if ($this->verification_document) {
            $this->uploadVerificationDocument();
         }
+
+        $this->calculateCompleteness();
 
         session()->flash('message', 'Perfil actualizado correctamente.');
     }
@@ -413,6 +625,8 @@ class ProviderDashboard extends Component
         // Limpiar input
         $this->verification_document = null;
         
+        $this->calculateCompleteness();
+        
         session()->flash('message', 'Documento enviado correctamente para revisión.');
     }
 
@@ -431,6 +645,7 @@ class ProviderDashboard extends Component
 
         $this->reset(['newImage', 'imageTitle']);
         $this->loadPortfolio();
+        $this->calculateCompleteness();
         session()->flash('message', 'Imagen agregada al portafolio.');
     }
 
@@ -438,11 +653,217 @@ class ProviderDashboard extends Component
     {
         $image = $this->user->portfolio()->find($id);
         if ($image) {
-            // Eliminar archivo físico (opcional, recomendado)
-            // Storage::disk(env('FILESYSTEM_DISK', 'public'))->delete($image->image_path);
+            // Eliminar archivo físico
+            \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->delete($image->image_path);
             $image->delete();
             $this->loadPortfolio();
+            $this->calculateCompleteness();
         }
+    }
+
+    public function loadServices()
+    {
+        $this->providerServices = $this->user->services()->latest()->get();
+    }
+
+    public function saveService()
+    {
+        $this->validate([
+            'serviceName' => 'required|string|max:100',
+            'serviceDescription' => 'nullable|string|max:500',
+            'servicePrice' => 'required|numeric|min:0',
+            'serviceDuration' => 'nullable|integer|min:5|max:1440',
+        ], [
+            'serviceName.required' => 'El nombre del servicio es obligatorio.',
+            'servicePrice.required' => 'El precio es obligatorio.',
+            'servicePrice.numeric' => 'El precio debe ser un número.',
+        ]);
+
+        $data = [
+            'name' => $this->serviceName,
+            'description' => $this->serviceDescription,
+            'price' => $this->servicePrice,
+            'duration_minutes' => $this->serviceDuration ?: null,
+        ];
+
+        if ($this->isEditingService && $this->serviceId) {
+            $service = $this->user->services()->find($this->serviceId);
+            if ($service) {
+                $service->update($data);
+                session()->flash('message', 'Servicio actualizado en el catálogo.');
+            }
+        } else {
+            $this->user->services()->create($data);
+            session()->flash('message', 'Servicio agregado al catálogo.');
+        }
+
+        $this->resetServiceForm();
+        $this->loadServices();
+        $this->calculateCompleteness();
+    }
+
+    public function editService($id)
+    {
+        $service = $this->user->services()->find($id);
+        if ($service) {
+            $this->serviceId = $service->id;
+            $this->serviceName = $service->name;
+            $this->serviceDescription = $service->description;
+            $this->servicePrice = $service->price;
+            $this->serviceDuration = $service->duration_minutes;
+            $this->isEditingService = true;
+        }
+    }
+
+    public function deleteService($id)
+    {
+        $service = $this->user->services()->find($id);
+        if ($service) {
+            $service->delete();
+            $this->loadServices();
+            $this->calculateCompleteness();
+            session()->flash('message', 'Servicio eliminado del catálogo.');
+        }
+    }
+
+    public function resetServiceForm()
+    {
+        $this->reset(['serviceId', 'serviceName', 'serviceDescription', 'servicePrice', 'serviceDuration', 'isEditingService']);
+    }
+
+    public function loadStats()
+    {
+        $this->completedAppointmentsCount = \App\Models\Appointment::where('provider_id', $this->user->id)
+            ->where('status', 'completed')
+            ->count();
+
+        $this->activeAppointmentsCount = \App\Models\Appointment::where('provider_id', $this->user->id)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->count();
+
+        $this->totalEarnings = \App\Models\Payment::whereHas('appointment', function($q) {
+                $q->where('provider_id', $this->user->id);
+            })
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        $this->monthlyEarnings = \App\Models\Payment::whereHas('appointment', function($q) {
+                $q->where('provider_id', $this->user->id);
+            })
+            ->where('status', 'completed')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('amount');
+
+        $totalAppointments = \App\Models\Appointment::where('provider_id', $this->user->id)->count();
+        $acceptedAppointments = \App\Models\Appointment::where('provider_id', $this->user->id)
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->count();
+        $this->acceptanceRate = $totalAppointments > 0 ? round(($acceptedAppointments / $totalAppointments) * 100) : 100;
+
+        $this->todayAppointments = \App\Models\Appointment::where('provider_id', $this->user->id)
+            ->whereDate('scheduled_at', now()->toDateString())
+            ->with('client', 'pet')
+            ->orderBy('scheduled_at')
+            ->get();
+
+        $this->averageRating = round($this->user->reviewsReceived()->avg('rating') ?? 5.0, 1);
+
+        $this->recentPayments = \App\Models\Payment::whereHas('appointment', function($q) {
+                $q->where('provider_id', $this->user->id);
+            })
+            ->with('appointment.client')
+            ->latest()
+            ->take(5)
+            ->get();
+    }
+
+    public function loadReviews()
+    {
+        $this->receivedReviews = $this->user->reviewsReceived()->with('user')->latest()->get();
+        foreach ($this->receivedReviews as $review) {
+            $this->replyText[$review->id] = $review->provider_response ?? '';
+        }
+    }
+
+    public function submitReply($reviewId)
+    {
+        $this->validate([
+            'replyText.' . $reviewId => 'required|string|min:5|max:1000'
+        ], [
+            'replyText.*.required' => 'La respuesta es obligatoria.',
+            'replyText.*.min' => 'La respuesta debe tener al menos 5 caracteres.',
+            'replyText.*.max' => 'La respuesta no debe exceder los 1000 caracteres.',
+        ]);
+
+        $review = \App\Models\Review::where('provider_id', $this->user->id)->findOrFail($reviewId);
+        $review->update([
+            'provider_response' => $this->replyText[$reviewId],
+            'replied_at' => now(),
+        ]);
+
+        $this->loadReviews();
+        $this->calculateCompleteness();
+        session()->flash('message', 'Respuesta de reseña enviada con éxito.');
+    }
+
+    public function deleteReply($reviewId)
+    {
+        $review = \App\Models\Review::where('provider_id', $this->user->id)->findOrFail($reviewId);
+        $review->update([
+            'provider_response' => null,
+            'replied_at' => null,
+        ]);
+
+        $this->replyText[$reviewId] = '';
+        $this->loadReviews();
+        $this->calculateCompleteness();
+        session()->flash('message', 'Respuesta de reseña eliminada.');
+    }
+
+    public function calculateCompleteness()
+    {
+        $this->completenessScore = $this->user->getProfileCompleteness($this->profile);
+        $this->providerLevel = $this->user->getProfileLevel($this->profile);
+
+        $this->completenessChecklist = [
+            'photo' => [
+                'label' => 'Foto de Perfil',
+                'complete' => !empty($this->user->profile_photo_path),
+                'points' => 20,
+                'tab' => 'profile'
+            ],
+            'location' => [
+                'label' => 'Ubicación (Distrito)',
+                'complete' => !empty($this->district_id),
+                'points' => 20,
+                'tab' => 'profile'
+            ],
+            'verification' => [
+                'label' => 'Documento de Verificación',
+                'complete' => !empty($this->profile->verification_document_path),
+                'points' => 20,
+                'tab' => 'profile'
+            ],
+            'services' => [
+                'label' => 'Catálogo de Servicios',
+                'complete' => $this->user->services()->exists(),
+                'points' => 20,
+                'tab' => 'services'
+            ],
+            'payment' => [
+                'label' => 'Configuración Yape/Plin',
+                'complete' => !empty($this->user->yape_number) || !empty($this->user->plin_number),
+                'points' => 10,
+                'tab' => 'payments_config'
+            ],
+            'portfolio' => [
+                'label' => 'Imágenes en Portafolio',
+                'complete' => $this->user->portfolio()->exists(),
+                'points' => 10,
+                'tab' => 'portfolio'
+            ],
+        ];
     }
 
     public function render()

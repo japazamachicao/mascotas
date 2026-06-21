@@ -14,12 +14,67 @@
         <!-- Welcome Section -->
         <div class="mb-8">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                Panel Profesional - @if($user->hasRole('veterinarian')) Veterinario @elseif($user->hasRole('walker')) Paseador @elseif($user->hasRole('groomer')) Estilista @elseif($user->hasRole('hotel')) Hotel @elseif($user->hasRole('shelter')) Albergue @elseif($user->hasRole('trainer')) Adiestrador @elseif($user->hasRole('pet_sitter')) Cuidador @elseif($user->hasRole('pet_taxi')) Transporte @elseif($user->hasRole('pet_photographer')) Fotógrafo @endif
+                Panel Profesional - {{ $providerRoles[$selectedRole] ?? 'Profesional' }}
             </h2>
             <p class="mt-1 text-sm text-gray-500">
                 Gestiona tu disponibilidad, portafolio y perfil público.
             </p>
         </div>
+
+        <!-- Multi-Role Selector Bar -->
+        @php
+            $userActiveRoles = array_values(array_intersect(
+                $user->roles->pluck('name')->toArray(),
+                array_keys($providerRoles)
+            ));
+            $inactiveRoles = array_diff(array_keys($providerRoles), $userActiveRoles);
+        @endphp
+
+        @if(count($userActiveRoles) > 1 || count($inactiveRoles) > 0)
+        <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Mis Servicios:</span>
+                    @foreach($userActiveRoles as $role)
+                        <button wire:click="selectRole('{{ $role }}')"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold rounded-lg border transition-all duration-200
+                            {{ $selectedRole === $role 
+                                ? 'bg-primary-600 border-primary-600 text-white shadow-sm' 
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300' }}">
+                            @php
+                                $roleIcons = [
+                                    'veterinarian' => '🩺', 'walker' => '🐕', 'groomer' => '✂️',
+                                    'hotel' => '🏨', 'shelter' => '🏠', 'trainer' => '🎓',
+                                    'pet_sitter' => '🐾', 'pet_taxi' => '🚗', 'pet_photographer' => '📸',
+                                ];
+                            @endphp
+                            <span>{{ $roleIcons[$role] ?? '📋' }}</span>
+                            {{ $providerRoles[$role] }}
+                        </button>
+                    @endforeach
+                </div>
+
+                @if(count($inactiveRoles) > 0)
+                <div x-data="{ showAddRole: false }" class="relative">
+                    <button @click="showAddRole = !showAddRole" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold rounded-lg border border-dashed border-primary-300 text-primary-600 bg-primary-50 hover:bg-primary-100 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                        Agregar Servicio
+                    </button>
+                    <div x-show="showAddRole" @click.away="showAddRole = false" x-transition
+                         class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-2">
+                        @foreach($inactiveRoles as $role)
+                            <button wire:click="activateRole('{{ $role }}')" @click="showAddRole = false"
+                                class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center gap-2">
+                                <span>{{ $roleIcons[$role] ?? '📋' }}</span>
+                                {{ $providerRoles[$role] }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
 
     
 
@@ -69,10 +124,27 @@
                         @endif
                         <div class="mt-4">
                             <h3 class="text-lg font-medium text-gray-900">{{ $user->name }}</h3>
+                            @if(!empty($providerLevel))
+                                <div class="mt-1.5 flex items-center justify-center">
+                                    <x-level-badge level="{{ $providerLevel['name'] }}" size="sm" />
+                                </div>
+                            @endif
                             <a href="{{ route('profile.show', $user->id) }}" target="_blank" class="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center justify-center mt-1">
                                 Ver Perfil Público 
                                 <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                             </a>
+                            <div x-data="{ copied: false }" class="mt-4 w-full bg-primary-50/50 rounded-2xl p-3 border border-primary-100 flex flex-col gap-2 shadow-xs">
+                                <div class="text-left">
+                                    <p class="text-[9px] uppercase font-black tracking-widest text-primary-850">Comparte tu Perfil</p>
+                                    <p class="text-[10px] text-gray-500 truncate mt-0.5">{{ route('profile.show', $user->id) }}</p>
+                                </div>
+                                <button @click="navigator.clipboard.writeText('{{ route('profile.show', $user->id) }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                        type="button"
+                                        class="w-full py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1 shadow-sm">
+                                    <span x-show="!copied">📋 Copiar Enlace</span>
+                                    <span x-show="copied" style="display: none;" class="text-green-200">✓ Enlace Copiado</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
@@ -92,11 +164,46 @@
                             Horarios de Atención
                         </button>
 
+                        <button @click="activeTab = 'calendar'" 
+                            :class="activeTab === 'calendar' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
+                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
+                            <svg :class="activeTab === 'calendar' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Calendario y Bloqueos
+                        </button>
+
                         <button @click="activeTab = 'portfolio'"
                             :class="activeTab === 'portfolio' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
                             class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
                             <svg :class="activeTab === 'portfolio' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             Mi Portafolio
+                        </button>
+
+                        <button @click="activeTab = 'services'" 
+                            :class="activeTab === 'services' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
+                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
+                            <svg :class="activeTab === 'services' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            Catálogo de Servicios
+                        </button>
+
+                        <button @click="activeTab = 'payments_config'" 
+                            :class="activeTab === 'payments_config' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
+                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
+                            <svg :class="activeTab === 'payments_config' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Cobros Yape/Plin
+                        </button>
+
+                        <button @click="activeTab = 'stats'" 
+                            :class="activeTab === 'stats' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
+                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
+                            <svg :class="activeTab === 'stats' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2zm9 0v-9a2 2 0 00-2-2h-2a2 2 0 00-2 2v9a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
+                            Estadísticas
+                        </button>
+
+                        <button @click="activeTab = 'reviews'" 
+                            :class="activeTab === 'reviews' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
+                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
+                            <svg :class="activeTab === 'reviews' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                            Reseñas Recibidas
                         </button>
 
                         <a href="{{ route('dashboard.provider.appointments') }}"
@@ -147,13 +254,129 @@
                                 </ul>
                             </div>
                         </div>
+                        <!-- ONBOARDING CHECKLIST -->
+                @if($completenessScore < 100)
+                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100/70 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h4 class="text-base font-black text-indigo-955 flex items-center gap-2">
+                                    🚀 ¡Completa tu perfil profesional!
+                                </h4>
+                                <p class="text-xs text-indigo-700 mt-1">Completa los siguientes pasos para destacar y generar mayor confianza en los clientes.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                @if(!empty($providerLevel))
+                                    <x-level-badge level="{{ $providerLevel['name'] }}" size="sm" />
+                                @endif
+                                <span class="text-xs font-bold text-indigo-950">Progreso:</span>
+                                <span class="px-2.5 py-1 rounded-full text-xs font-black bg-indigo-600 text-white shadow-sm">{{ $completenessScore }}%</span>
+                            </div>
+                        </div>
+ 
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-indigo-200/50 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 h-2.5 rounded-full transition-all duration-500" style="width: {{ $completenessScore }}%"></div>
+                        </div>
+ 
+                        <!-- Checklist Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+                            @foreach($completenessChecklist as $key => $item)
+                                <button @click="activeTab = '{{ $item['tab'] }}'" class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-indigo-100/50 text-left hover:shadow-sm hover:border-indigo-200 transition">
+                                    @if($item['complete'])
+                                        <span class="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold shrink-0">✓</span>
+                                        <span class="text-xs font-bold text-gray-500 line-through">{{ $item['label'] }}</span>
+                                    @else
+                                        <span class="w-5 h-5 rounded-full bg-amber-50 text-amber-500 border border-amber-200 flex items-center justify-center text-xs font-bold shrink-0 font-black">•</span>
+                                        <span class="text-xs font-bold text-gray-700 hover:text-indigo-600 transition">{{ $item['label'] }} (+{{ $item['points'] }}%)</span>
+                                    @endif
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @else
+                    <div class="bg-gradient-to-r from-cyan-50 to-emerald-50 p-6 rounded-2xl border border-cyan-100/70 shadow-sm space-y-2">
+                        <h4 class="text-base font-black text-cyan-950 flex items-center gap-2">
+                            💎 ¡Felicidades! Perfil Completo al 100%
+                        </h4>
+                        <p class="text-xs text-cyan-800">
+                            Tu perfil tiene nivel <strong class="text-cyan-900">{{ $providerLevel['label'] ?? 'Diamante' }}</strong>. Estás destacando al máximo en las búsquedas de los clientes. ¡Sigue con el excelente trabajo!
+                            <div class="mt-2.5 flex">
+                                <x-level-badge level="{{ $providerLevel['name'] ?? 'diamante' }}" size="md" />
+                            </div>
+                        </p>
                     </div>
                 @endif
 
                 <!-- TAB: PERFIL -->
-                <div x-show="activeTab === 'profile'" class="bg-white shadow rounded-lg overflow-hidden">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Información Profesional</h3>
+                <div x-show="activeTab === 'profile'" class="space-y-6">
+                    <!-- Widget Hoy de un vistazo -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Citas de hoy -->
+                        <div class="bg-gradient-to-br from-indigo-950 to-slate-900 text-white rounded-3xl p-6 md:col-span-2 shadow-md flex flex-col justify-between min-h-[180px]">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/20 text-indigo-100 border border-white/10">
+                                        📅 HOY DE UN VISTAZO
+                                    </span>
+                                    <span class="text-xs font-bold text-indigo-200">
+                                        {{ now()->format('d M, Y') }}
+                                    </span>
+                                </div>
+                                <h3 class="text-lg font-black mt-3">Agenda del día</h3>
+                                
+                                <div class="mt-4 space-y-3 max-h-[120px] overflow-y-auto scrollbar-none pr-1">
+                                    @forelse($todayAppointments as $app)
+                                        <div class="flex items-center justify-between p-2.5 bg-white/10 rounded-xl border border-white/5">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-sm">🐾</span>
+                                                <div class="text-left">
+                                                    <p class="text-xs font-bold">{{ $app->client->name }}</p>
+                                                    <p class="text-[10px] text-indigo-200">{{ $app->pet->name ?? 'Mascota' }} • {{ $app->scheduled_at->format('H:i') }} hrs</p>
+                                                </div>
+                                            </div>
+                                            <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black border 
+                                                {{ $app->status === 'confirmed' ? 'bg-blue-500/20 text-blue-200 border-blue-400/20' : 'bg-emerald-500/20 text-emerald-200 border-emerald-400/20' }}">
+                                                {{ $app->status === 'confirmed' ? 'Confirmada' : 'Completada' }}
+                                            </span>
+                                        </div>
+                                    @empty
+                                        <p class="text-xs text-indigo-200 italic pt-2">No tienes citas agendadas para el día de hoy. ¡Buen día para captar nuevos clientes!</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-between items-center pt-3 border-t border-white/10">
+                                <a href="{{ route('dashboard.provider.appointments') }}" class="text-xs font-bold text-white hover:underline flex items-center gap-1">
+                                    Administrar todas mis citas <span>➔</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Ingresos mensuales y KPI de Aceptación -->
+                        <div class="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-xs flex flex-col justify-between min-h-[180px]">
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-gray-400">Ingresos del Mes</span>
+                                    <span class="text-xl">💰</span>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-black text-gray-950">S/ {{ number_format($monthlyEarnings, 2) }}</p>
+                                    <p class="text-[10px] font-bold text-emerald-650 mt-1 flex items-center gap-0.5">
+                                        <span>✓</span> Aceptación del {{ $acceptanceRate }}%
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-xs font-bold">
+                                <button @click="activeTab = 'stats'" class="text-primary-600 hover:text-primary-750 transition flex items-center gap-1">
+                                    Ver historial financiero <span>➔</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Información Profesional</h3>
                         
                         <form wire:submit.prevent="save">
                             <!-- Estado de Verificación (Solo Documento) -->
@@ -280,12 +503,28 @@
                                             @error('district_id') <span class="text-red-500 text-xs">Selecciona un distrito</span> @enderror
                                         </div>
                                     </div>
+
+                                    {{-- Map Coordinates Selector --}}
+                                    <div class="mt-6" x-data="{ map: null, marker: null, initMap() { this.$nextTick(() => { window.initLeafletMapForDashboard(this); }); } }" x-init="initMap()">
+                                        <label class="block text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Selecciona tu ubicación exacta en el mapa</label>
+                                        <div id="dashboard-map" class="h-64 rounded-xl border border-gray-200 shadow-sm z-10" wire:ignore></div>
+                                        <div class="grid grid-cols-2 gap-4 mt-2">
+                                            <div>
+                                                <label class="block text-[10px] text-gray-400 font-bold uppercase">Latitud</label>
+                                                <input type="text" wire:model="latitude" class="w-full text-xs bg-gray-50 border-gray-200 rounded-lg py-1.5 px-3" readonly placeholder="Ej: -12.0463">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] text-gray-400 font-bold uppercase">Longitud</label>
+                                                <input type="text" wire:model="longitude" class="w-full text-xs bg-gray-50 border-gray-200 rounded-lg py-1.5 px-3" readonly placeholder="Ej: -77.0427">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {{-- Bio / Experiencia --}}
                                 <div class="sm:col-span-6">
                                     <label class="block text-sm font-medium text-gray-700">
-                                        {{ $user->hasRole('veterinarian') ? 'Biografía y Especialidades' : 'Experiencia y Servicios' }}
+                                        {{ $selectedRole === 'veterinarian' ? 'Biografía y Especialidades' : 'Experiencia y Servicios' }}
                                     </label>
                                     <div class="mt-1">
                                         <textarea wire:model="bio" rows="4" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
@@ -294,7 +533,7 @@
                                 </div>
 
                                 {{-- Precio base (común) --}}
-                                @if(!$user->hasRole('shelter'))
+                                @if($selectedRole !== 'shelter')
                                 <div class="sm:col-span-3">
                                     <label class="block text-sm font-medium text-gray-700">
                                         Precio desde (S/)
@@ -310,7 +549,7 @@
                                 @endif
 
                                 {{-- Campos Específicos --}}
-                                @if($user->hasRole('veterinarian'))
+                                @if($selectedRole === 'veterinarian')
                                     <div class="sm:col-span-3">
                                         <label class="block text-sm font-medium text-gray-700">Número de Colegiatura (CMVP)</label>
                                         <div class="mt-1">
@@ -331,7 +570,7 @@
                                             <label for="home_visits" class="font-medium text-gray-700">Realizo Visitas a Domicilio</label>
                                         </div>
                                     </div>
-                                @elseif($user->hasRole('walker'))
+                                @elseif($selectedRole === 'walker')
                                     <div class="sm:col-span-3">
                                         <label class="block text-sm font-medium text-gray-700">Tarifa por Hora (S/)</label>
                                         <div class="mt-1 relative rounded-md shadow-sm">
@@ -341,7 +580,7 @@
                                             <input type="number" wire:model="hourly_rate" class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
                                         </div>
                                     </div>
-                                @elseif($user->hasRole('groomer'))
+                                @elseif($selectedRole === 'groomer')
                                     <div class="sm:col-span-3">
                                         <label class="block text-sm font-medium text-gray-700">Dirección del Salón/Spa</label>
                                         <div class="mt-1">
@@ -356,7 +595,7 @@
                                             <label for="home_visits" class="font-medium text-gray-700">Realizo Servicios a Domicilio</label>
                                         </div>
                                     </div>
-                                @elseif($user->hasRole('hotel'))
+                                @elseif($selectedRole === 'hotel')
                                     <div class="sm:col-span-3">
                                         <label class="block text-sm font-medium text-gray-700">Dirección del Hotel</label>
                                         <div class="mt-1">
@@ -385,7 +624,7 @@
                                             <label class="ml-2 text-sm text-gray-700">Servicio de Recojo</label>
                                         </div>
                                     </div>
-                                @elseif($user->hasRole('shelter'))
+                                @elseif($selectedRole === 'shelter')
                                     <div class="sm:col-span-6">
                                         <label class="block text-sm font-medium text-gray-700">Dirección del Albergue</label>
                                         <input type="text" wire:model="address" class="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
@@ -408,7 +647,7 @@
                                             <label class="ml-2 text-sm text-gray-700">Acepto Donaciones</label>
                                         </div>
                                     </div>
-                                @elseif($user->hasRole('trainer'))
+                                @elseif($selectedRole === 'trainer')
                                     <div class="sm:col-span-6">
                                         <label class="block text-sm font-medium text-gray-700">Metodología/Enfoque</label>
                                         <input type="text" wire:model="methodology" class="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="e.g., Refuerzo Positivo">
@@ -425,7 +664,7 @@
                                             <label for="home_visits" class="font-medium text-gray-700">Realizo Adiestramiento a Domicilio</label>
                                         </div>
                                     </div>
-                                @elseif($user->hasRole('pet_sitter'))
+                                @elseif($selectedRole === 'pet_sitter')
                                     <div class="sm:col-span-3">
                                         <label class="block text-sm font-medium text-gray-700">Tipo de Vivienda</label>
                                         <select wire:model="housing_type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
@@ -445,7 +684,7 @@
                                             <label class="ml-2 text-sm text-gray-700">Cuido en casa del dueño</label>
                                         </div>
                                     </div>
-                                @elseif($user->hasRole('pet_taxi'))
+                                @elseif($selectedRole === 'pet_taxi')
                                     <div class="sm:col-span-3">
                                         <label class="block text-sm font-medium text-gray-700">Tipo de Vehículo</label>
                                         <select wire:model="vehicle_type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
@@ -465,7 +704,7 @@
                                             <label class="ml-2 text-sm text-gray-700">Incluyo Jaula de Transporte</label>
                                         </div>
                                     </div>
-                                @elseif($user->hasRole('pet_photographer'))
+                                @elseif($selectedRole === 'pet_photographer')
                                     <div class="sm:col-span-6">
                                         <label class="block text-sm font-medium text-gray-700">Especialidad</label>
                                         <input type="text" wire:model="specialty" class="mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="e.g., Retratos, Exteriores, Eventos">
@@ -520,7 +759,7 @@
                         <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Horarios de Atención</h3>
                         
                         <form wire:submit.prevent="save">
-                            @if($user->hasRole('veterinarian'))
+                            @if($selectedRole === 'veterinarian')
                                 <div class="mb-6 bg-red-50 border border-red-200 rounded-md p-4 flex items-center justify-between">
                                     <div class="flex items-center">
                                         <div class="shrink-0 text-red-500">
@@ -566,6 +805,13 @@
                     </div>
                 </div>
 
+                <!-- TAB: CALENDARIO -->
+                <div x-show="activeTab === 'calendar'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 sm:p-6">
+                        <livewire:dashboard.visual-calendar />
+                    </div>
+                </div>
+
                 <!-- TAB: PORTAFOLIO -->
                 <div x-show="activeTab === 'portfolio'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
                     <div class="px-4 py-5 sm:p-6">
@@ -603,7 +849,471 @@
                     </div>
                 </div>
 
+                <!-- TAB: SERVICIOS -->
+                <div x-show="activeTab === 'services'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Catálogo de Servicios</h3>
+                        
+                        <!-- Formulario de Servicio -->
+                        <form wire:submit.prevent="saveService" class="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
+                            <h4 class="text-sm font-bold text-gray-900 mb-4">{{ $isEditingService ? 'Editar Servicio' : 'Agregar Nuevo Servicio' }}</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-semibold text-gray-700">Nombre del Servicio *</label>
+                                    <input type="text" wire:model="serviceName" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-2 px-3" placeholder="Ej: Baño y corte de pelo mediano">
+                                    @error('serviceName') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-semibold text-gray-700">Descripción</label>
+                                    <textarea wire:model="serviceDescription" rows="2" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-2 px-3" placeholder="Detalle qué incluye el servicio (shampoo medicado, corte de uñas, etc.)"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700">Precio (S/) *</label>
+                                    <div class="mt-1 relative rounded-md shadow-sm">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">S/</span>
+                                        </div>
+                                        <input type="number" step="0.01" min="0" wire:model="servicePrice" class="block w-full pl-8 rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-2 px-3" placeholder="0.00">
+                                    </div>
+                                    @error('servicePrice') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700">Duración Aproximada (minutos)</label>
+                                    <input type="number" wire:model="serviceDuration" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-2 px-3" placeholder="Ej: 60">
+                                    @error('serviceDuration') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="mt-4 flex justify-end gap-2">
+                                @if($isEditingService)
+                                    <button type="button" wire:click="resetServiceForm" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium">Cancelar</button>
+                                @endif
+                                <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-bold shadow-sm">{{ $isEditingService ? 'Actualizar' : 'Agregar al Catálogo' }}</button>
+                            </div>
+                        </form>
+
+                        <!-- Tabla de Servicios -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Servicio</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Duración</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Precio</th>
+                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @forelse($providerServices as $service)
+                                        <tr>
+                                            <td class="px-6 py-4">
+                                                <div class="text-sm font-bold text-gray-900">{{ $service->name }}</div>
+                                                @if($service->description)
+                                                    <div class="text-xs text-gray-500 max-w-xs truncate">{{ $service->description }}</div>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500">
+                                                {{ $service->duration_minutes ? $service->duration_minutes . ' min' : '--' }}
+                                            </td>
+                                            <td class="px-6 py-4 text-sm font-extrabold text-gray-900">
+                                                S/ {{ number_format($service->price, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                                <button wire:click="editService({{ $service->id }})" class="text-indigo-600 hover:text-indigo-900 font-bold">Editar</button>
+                                                <button wire:click="deleteService({{ $service->id }})" class="text-red-600 hover:text-red-900 font-bold">Eliminar</button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="px-6 py-12 text-center text-gray-500 italic">No tienes servicios registrados en tu catálogo. Agrega uno arriba.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: CONFIGURACIÓN PAGO -->
+                <div x-show="activeTab === 'payments_config'" style="display: none;" class="bg-white shadow-xl rounded-3xl overflow-hidden border border-gray-150">
+                    <div class="px-6 py-8">
+                        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                            <span class="text-3xl">💳</span>
+                            <div>
+                                <h3 class="text-xl font-black text-gray-900">Métodos de Cobro Directo</h3>
+                                <p class="text-xs text-gray-550 mt-1">Configura tus cuentas de Yape y Plin para que los clientes puedan transferirte al instante.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Guía rápida de ayuda -->
+                        <div class="mb-8 bg-gradient-to-r from-primary-50 to-indigo-50/50 p-5 rounded-2xl border border-primary-100/60 flex flex-col md:flex-row gap-4 items-start md:items-center">
+                            <div class="p-3 bg-white rounded-xl shadow-xs text-xl">💡</div>
+                            <div class="flex-1 space-y-1">
+                                <h4 class="text-sm font-bold text-gray-900">¿Cómo descargar tus códigos QR?</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 text-xs text-gray-600">
+                                    <div class="flex gap-2">
+                                        <span class="font-black text-purple-600">Yape:</span>
+                                        <p>Entra a Yape, ve al menú superior ☰, selecciona <strong class="text-gray-900">Código QR</strong> y pulsa <strong class="text-gray-900">Compartir o Descargar</strong>.</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <span class="font-black text-teal-600">Plin:</span>
+                                        <p>Abre tu app móvil de Interbank, BBVA, Banbif o Scotiabank, busca la sección <strong class="text-gray-900">Plin</strong>, entra a <strong class="text-gray-900">Mi QR</strong> y descárgalo.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form wire:submit.prevent="save" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Yape -->
+                                <div class="bg-purple-50/40 p-6 rounded-3xl border border-purple-100/60 space-y-4 hover:shadow-xs transition duration-300">
+                                    <div class="flex items-center justify-between pb-3 border-b border-purple-100/40">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-8 h-8 rounded-xl bg-purple-600/10 text-purple-700 flex items-center justify-center font-bold">Y</span>
+                                            <h4 class="font-black text-purple-950">Cobros con Yape</h4>
+                                        </div>
+                                        <span class="text-xs bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">Yapear</span>
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <label class="block text-xs font-black uppercase tracking-wider text-purple-900">Número de celular asociado</label>
+                                        <input type="text" wire:model="yape_number" class="w-full rounded-xl border-purple-200/80 bg-white/70 shadow-xs focus:border-purple-500 focus:ring-purple-500 text-sm py-2.5 px-4" placeholder="Ej: 999 888 777">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-black uppercase tracking-wider text-purple-900">Código QR de Yape</label>
+                                        @if($existingYapeQr)
+                                            <div class="relative group my-2 h-44 w-44 mx-auto rounded-2xl border border-purple-200 bg-white p-2 shadow-sm overflow-hidden">
+                                                <img src="{{ \Illuminate\Support\Facades\Storage::url($existingYapeQr) }}" class="h-full w-full object-contain rounded-xl">
+                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200">
+                                                    <span class="text-[10px] text-white font-bold bg-purple-600 px-3 py-1.5 rounded-full shadow-md">QR Registrado</span>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="h-44 w-44 mx-auto border-2 border-dashed border-purple-200 bg-white/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-purple-400 p-4">
+                                                <span class="text-3xl">📷</span>
+                                                <span class="text-[10px] font-bold text-center">Sube tu imagen QR de Yape</span>
+                                            </div>
+                                        @endif
+                                        <div class="flex items-center justify-center mt-3">
+                                            <label class="cursor-pointer bg-white py-2 px-4 border border-purple-200 rounded-xl shadow-xs text-xs font-bold text-purple-700 hover:bg-purple-50 transition">
+                                                <span>Seleccionar imagen QR</span>
+                                                <input type="file" wire:model.live="yape_qr" class="hidden" accept="image/*">
+                                            </label>
+                                        </div>
+                                        @error('yape_qr') <span class="text-red-500 text-xs text-center block mt-1">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
+                                <!-- Plin -->
+                                <div class="bg-teal-50/40 p-6 rounded-3xl border border-teal-100/60 space-y-4 hover:shadow-xs transition duration-300">
+                                    <div class="flex items-center justify-between pb-3 border-b border-teal-100/40">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-8 h-8 rounded-xl bg-teal-600/10 text-teal-700 flex items-center justify-center font-bold">P</span>
+                                            <h4 class="font-black text-teal-955">Cobros con Plin</h4>
+                                        </div>
+                                        <span class="text-xs bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Plinear</span>
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <label class="block text-xs font-black uppercase tracking-wider text-teal-900">Número de celular asociado</label>
+                                        <input type="text" wire:model="plin_number" class="w-full rounded-xl border-teal-200/80 bg-white/70 shadow-xs focus:border-teal-500 focus:ring-teal-500 text-sm py-2.5 px-4" placeholder="Ej: 999 888 777">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-black uppercase tracking-wider text-teal-900">Código QR de Plin</label>
+                                        @if($existingPlinQr)
+                                            <div class="relative group my-2 h-44 w-44 mx-auto rounded-2xl border border-teal-200 bg-white p-2 shadow-sm overflow-hidden">
+                                                <img src="{{ \Illuminate\Support\Facades\Storage::url($existingPlinQr) }}" class="h-full w-full object-contain rounded-xl">
+                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200">
+                                                    <span class="text-[10px] text-white font-bold bg-teal-600 px-3 py-1.5 rounded-full shadow-md">QR Registrado</span>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="h-44 w-44 mx-auto border-2 border-dashed border-teal-200 bg-white/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-teal-400 p-4">
+                                                <span class="text-3xl">📷</span>
+                                                <span class="text-[10px] font-bold text-center">Sube tu imagen QR de Plin</span>
+                                            </div>
+                                        @endif
+                                        <div class="flex items-center justify-center mt-3">
+                                            <label class="cursor-pointer bg-white py-2 px-4 border border-teal-200 rounded-xl shadow-xs text-xs font-bold text-teal-700 hover:bg-teal-50 transition">
+                                                <span>Seleccionar imagen QR</span>
+                                                <input type="file" wire:model.live="plin_qr" class="hidden" accept="image/*">
+                                            </label>
+                                        </div>
+                                        @error('plin_qr') <span class="text-red-500 text-xs text-center block mt-1">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end pt-5 border-t border-gray-100">
+                                <button type="submit" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold shadow-md transition duration-200">
+                                    Guardar Configuración
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- TAB: ESTADÍSTICAS -->
+                <div x-show="activeTab === 'stats'" style="display: none;" class="space-y-8" x-transition>
+                    <!-- Cards Grid Premium -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Ingresos Totales -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md transition">
+                            <span class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 font-extrabold text-2xl flex items-center justify-center">💵</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Histórico de Ingresos</p>
+                                <p class="text-2xl font-black text-gray-900 mt-1">S/ {{ number_format($totalEarnings, 2) }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Ingresos Mes -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md transition">
+                            <span class="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 font-extrabold text-2xl flex items-center justify-center">📈</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Ingresos de este Mes</p>
+                                <p class="text-2xl font-black text-gray-900 mt-1">S/ {{ number_format($monthlyEarnings, 2) }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Citas Completadas -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md transition">
+                            <span class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 font-extrabold text-2xl flex items-center justify-center">✓</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Servicios Completados</p>
+                                <p class="text-2xl font-black text-gray-900 mt-1">{{ $completedAppointmentsCount }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Valoración -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md transition">
+                            <span class="w-12 h-12 rounded-2xl bg-yellow-50 text-yellow-500 font-extrabold text-2xl flex items-center justify-center">★</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Calificación Promedio</p>
+                                <p class="text-2xl font-black text-gray-900 mt-1">{{ $averageRating }} / 5.0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficos Interactivos de Rendimiento (CSS) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Tasa de aceptación y rendimiento de citas -->
+                        <div class="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-xs flex flex-col justify-between">
+                            <div>
+                                <h4 class="text-sm font-black text-gray-900 uppercase tracking-wider mb-4">Eficiencia del Servicio</h4>
+                                <div class="space-y-5">
+                                    <!-- Aceptación -->
+                                    <div>
+                                        <div class="flex justify-between items-center text-xs font-bold text-gray-600 mb-1">
+                                            <span>Tasa de Confirmación</span>
+                                            <span>{{ $acceptanceRate }}%</span>
+                                        </div>
+                                        <div class="w-full bg-gray-100 rounded-full h-2">
+                                            <div class="bg-primary-600 h-2 rounded-full transition-all" style="width: {{ $acceptanceRate }}%"></div>
+                                        </div>
+                                        <p class="text-[10px] text-gray-400 mt-1">Porcentaje de citas aprobadas frente al total de solicitudes recibidas.</p>
+                                    </div>
+
+                                    <!-- Completado -->
+                                    @php
+                                        $totalApts = $completedAppointmentsCount + $activeAppointmentsCount;
+                                        $completionRate = $totalApts > 0 ? round(($completedAppointmentsCount / $totalApts) * 100) : 100;
+                                    @endphp
+                                    <div>
+                                        <div class="flex justify-between items-center text-xs font-bold text-gray-600 mb-1">
+                                            <span>Tasa de Finalización</span>
+                                            <span>{{ $completionRate }}%</span>
+                                        </div>
+                                        <div class="w-full bg-gray-100 rounded-full h-2">
+                                            <div class="bg-emerald-500 h-2 rounded-full transition-all" style="width: {{ $completionRate }}%"></div>
+                                        </div>
+                                        <p class="text-[10px] text-gray-400 mt-1">Porcentaje de citas finalizadas con éxito del total de citas agendadas.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Historial Financiero Desglose -->
+                        <div class="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-xs lg:col-span-2">
+                            <h4 class="text-sm font-black text-gray-900 uppercase tracking-wider mb-4">Balance General</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <span class="text-xs font-bold text-gray-600">Ingresos del Mes de {{ now()->translatedFormat('F') }}</span>
+                                    <span class="text-sm font-black text-gray-900">S/ {{ number_format($monthlyEarnings, 2) }}</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <span class="text-xs font-bold text-gray-600">Transacciones Completadas</span>
+                                    <span class="text-sm font-black text-gray-900">{{ $recentPayments->where('status', 'completed')->count() }} trans.</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <span class="text-xs font-bold text-gray-600">Promedio por Servicio</span>
+                                    @php
+                                        $avgPrice = $completedAppointmentsCount > 0 ? ($totalEarnings / $completedAppointmentsCount) : 0;
+                                    @endphp
+                                    <span class="text-sm font-black text-gray-900">S/ {{ number_format($avgPrice, 2) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Payments -->
+                    <div class="bg-white border border-gray-200/80 shadow-xs rounded-3xl overflow-hidden">
+                        <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                            <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Historial de Cobros Recientes</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50/50">
+                                    <tr>
+                                        <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cliente</th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Método de Pago</th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
+                                        <th class="px-6 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    @forelse($recentPayments as $payment)
+                                        <tr class="hover:bg-gray-50/30 transition">
+                                            <td class="px-6 py-4 text-sm font-bold text-gray-955">
+                                                {{ $payment->appointment->client->name ?? 'Cliente' }}
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500 uppercase font-mono">
+                                                {{ $payment->payment_method }}
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                                    {{ $payment->status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : ($payment->status === 'under_review' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-red-50 text-red-700 border border-red-100') }}">
+                                                    {{ $payment->status === 'completed' ? 'Completado' : ($payment->status === 'under_review' ? 'En Revisión' : 'Fallido') }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500">
+                                                {{ $payment->created_at->format('d/m/Y H:i') }}
+                                            </td>
+                                            <td class="px-6 py-4 text-right text-sm font-black text-gray-900">
+                                                S/ {{ number_format($payment->amount, 2) }}
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-12 text-center text-gray-550 bg-white">No se registran transacciones aún.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: RESEÑAS RECIBIDAS -->
+                <div x-show="activeTab === 'reviews'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Reseñas Recibidas</h3>
+                        <p class="text-sm text-gray-500 mb-6">Aquí puedes leer las opiniones de tus clientes y responder a sus comentarios de manera pública.</p>
+
+                        <div class="space-y-6 divide-y divide-gray-100">
+                            @forelse($receivedReviews as $review)
+                                <div class="pt-6 first:pt-0 space-y-4">
+                                    <div class="flex items-start gap-4">
+                                        <div class="shrink-0">
+                                            <img class="h-10 w-10 rounded-full bg-gray-200" src="https://ui-avatars.com/api/?name={{ urlencode($review->user->name) }}&color=7F9CF5&background=EBF4FF" alt="">
+                                        </div>
+                                        <div class="flex-1 space-y-1">
+                                            <div class="flex items-center justify-between">
+                                                <h5 class="text-sm font-bold text-gray-900">{{ $review->user->name }}</h5>
+                                                <span class="text-xs text-gray-400 font-semibold">{{ $review->created_at->diffForHumans() }}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                @for($i=1; $i<=5; $i++)
+                                                    <svg class="w-4 h-4 {{ $review->rating >= $i ? 'text-yellow-400' : 'text-gray-200' }}" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                    </svg>
+                                                @endfor
+                                            </div>
+                                            <p class="text-sm text-gray-600 font-medium italic">"{{ $review->comment }}"</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Formulario / Visualización de Respuesta -->
+                                    <div class="ml-14 bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                                        @if($review->provider_response)
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div class="space-y-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xs font-bold text-gray-900">Tu respuesta</span>
+                                                        <span class="text-[10px] text-gray-400 font-medium">{{ \Carbon\Carbon::parse($review->replied_at)->diffForHumans() }}</span>
+                                                    </div>
+                                                    <p class="text-xs text-gray-600 font-medium">{{ $review->provider_response }}</p>
+                                                </div>
+                                                <button wire:click="deleteReply({{ $review->id }})" class="text-xs text-red-500 hover:text-red-700 font-bold transition shrink-0">
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                        @else
+                                            <div class="space-y-2">
+                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Responder comentario</label>
+                                                <div class="flex gap-2">
+                                                    <input type="text" wire:model="replyText.{{ $review->id }}" placeholder="Escribe tu respuesta..." class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs py-2 px-3">
+                                                    <button wire:click="submitReply({{ $review->id }})" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold transition">
+                                                        Responder
+                                                    </button>
+                                                </div>
+                                                @error('replyText.' . $review->id) <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-12 text-gray-500 italic">No has recibido reseñas todavía.</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    window.initLeafletMapForDashboard = function(alpineComponent) {
+        let lat = @this.get('latitude') || -12.046374;
+        let lng = @this.get('longitude') || -77.042793;
+        let zoom = @this.get('latitude') ? 16 : 12;
+
+        const container = L.DomUtil.get('dashboard-map');
+        if (container != null) {
+            container._leaflet_id = null;
+        }
+
+        alpineComponent.map = L.map('dashboard-map').setView([lat, lng], zoom);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(alpineComponent.map);
+
+        let providerIcon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        alpineComponent.marker = L.marker([lat, lng], {icon: providerIcon, draggable: true}).addTo(alpineComponent.map);
+
+        alpineComponent.marker.on('dragend', (e) => {
+            let position = alpineComponent.marker.getLatLng();
+            @this.set('latitude', position.lat.toFixed(8));
+            @this.set('longitude', position.lng.toFixed(8));
+        });
+
+        alpineComponent.map.on('click', (e) => {
+            let clickedLat = e.latlng.lat;
+            let clickedLng = e.latlng.lng;
+            alpineComponent.marker.setLatLng([clickedLat, clickedLng]);
+            @this.set('latitude', clickedLat.toFixed(8));
+            @this.set('longitude', clickedLng.toFixed(8));
+        });
+    }
+</script>
+@endpush

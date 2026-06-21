@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Auth;
 
 class ClientDashboard extends Component
 {
+    public $showQrModal = false;
+    public $selectedPet = null;
+
     public function mount()
     {
         // Si es veterinario o paseador, redirigir a su dashboard específico
@@ -15,6 +18,18 @@ class ClientDashboard extends Component
         if (Auth::user()->hasRole(['veterinarian', 'walker'])) {
             return redirect()->route('dashboard.provider');
         }
+    }
+
+    public function openQrModal($petId)
+    {
+        $this->selectedPet = Pet::where('user_id', Auth::id())->findOrFail($petId);
+        $this->showQrModal = true;
+    }
+
+    public function closeQrModal()
+    {
+        $this->showQrModal = false;
+        $this->selectedPet = null;
     }
 
     public function render()

@@ -14,6 +14,8 @@ class Review extends Model
         'provider_id',
         'rating',
         'comment',
+        'provider_response',
+        'replied_at',
     ];
 
     public function user()

@@ -25,6 +25,8 @@ class Trainer extends Model
         'tiktok_url',
         'whatsapp_number',
         'availability',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [

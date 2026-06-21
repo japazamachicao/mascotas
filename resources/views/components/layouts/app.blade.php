@@ -3,6 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0ea5e9">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <title>{{ $title ?? config('app.name') }}</title>
     
     <!-- Fonts -->
@@ -16,7 +21,73 @@
     <!-- Alpine.js -->
     <!-- <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script> -->
     
+    <!-- Leaflet.js for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     @livewireStyles
+    @stack('meta')
+
+    <!-- Custom CSS Overrides for Premium Navigation & Spacing Resets -->
+    <style>
+        /* Pills Navigation Style */
+        .nav-link {
+            color: #4b5563 !important; /* text-gray-600 */
+            font-size: 0.825rem !important; /* text-xs */
+            font-weight: 600 !important; /* font-semibold */
+            padding: 0.375rem 0.625rem !important; /* py-1.5 px-2.5 */
+            border-radius: 0.5rem !important; /* rounded-lg */
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            border-bottom: none !important;
+            margin-bottom: 0 !important;
+            text-decoration: none !important;
+            white-space: nowrap !important;
+        }
+        
+        @media (min-width: 1280px) {
+            .nav-link {
+                font-size: 0.875rem !important; /* text-sm */
+                padding: 0.45rem 0.875rem !important; /* py-2 px-3.5 */
+            }
+        }
+
+        .nav-link:hover {
+            color: #0284c7 !important; /* primary-600 */
+            background-color: #f0f9ff !important; /* primary-50 */
+        }
+
+        .nav-link.active {
+            color: #0284c7 !important; /* primary-600 */
+            background-color: #e0f2fe !important; /* primary-100 */
+        }
+        
+        /* Desktop vs Mobile Menu Controls */
+        @media (min-width: 768px) {
+            .desktop-nav-links {
+                display: flex !important;
+            }
+            .desktop-auth-container {
+                display: flex !important;
+            }
+            .mobile-menu-btn {
+                display: none !important;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .desktop-nav-links {
+                display: none !important;
+            }
+            .desktop-auth-container {
+                display: none !important;
+            }
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col" x-data="{ mobileMenuOpen: false }">
     
@@ -24,54 +95,64 @@
     <!-- Navbar -->
     <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm backdrop-blur-md bg-white/90">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <!-- Logo & Desktop Nav -->
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.location.href='/'">
-                        <div class="bg-primary-600 p-2 rounded-xl">
-                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
-                                <path d="M5 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
-                                <path d="M19 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
-                                <path d="M12 21a5 5 0 0 0 5-5H7a5 5 0 0 0 5 5Z"/>
-                            </svg>
-                        </div>
-                        <span class="font-bold text-xl tracking-tight">
-                            <span class="text-primary-600">TodoPeludos</span>
-                            <span class="text-gray-400 text-sm">.com</span>
-                        </span>
+            <div class="flex justify-between h-16 items-center">
+                <!-- Left: Logo -->
+                <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.location.href='/'">
+                    <div class="bg-primary-600 p-2 rounded-xl">
+                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                            <path d="M5 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                            <path d="M19 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                            <path d="M12 21a5 5 0 0 0 5-5H7a5 5 0 0 0 5 5Z"/>
+                        </svg>
                     </div>
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="{{ route('home') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('home') ? 'border-primary-500 text-gray-900' : '' }}">Inicio</a>
-                        <a href="{{ route('search') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200">Buscar Servicios</a>
+                    <span class="font-bold text-xl tracking-tight">
+                        <span class="text-primary-600">TodoPeludos</span>
+                    </span>
+                </div>
+
+                <!-- Center: Desktop Nav Links Distributed -->
+                <div class="desktop-nav-links hidden md:flex flex-1 justify-center px-4">
+                    <div class="flex items-center space-x-1 lg:space-x-1.5 xl:space-x-3">
+                        <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">Inicio</a>
+                        <a href="{{ route('search') }}" class="nav-link {{ request()->routeIs('search') ? 'active' : '' }}">Servicios</a>
 
                         @auth
                             @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
                                 <!-- Links para Proveedores -->
-                                <a href="{{ route('dashboard.provider') }}" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200">
-                                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                    Mi Agenda
+                                <a href="{{ route('dashboard.provider') }}" class="nav-link {{ request()->routeIs('dashboard.provider') ? 'active' : '' }}">
+                                    <svg class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    Agenda
                                 </a>
-                                <a href="#" class="border-transparent text-gray-400 hover:text-gray-500 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 cursor-not-allowed" title="Próximamente">
-                                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    Mis Finanzas
+                                <a href="{{ route('dashboard.messages') }}" class="nav-link {{ request()->routeIs('dashboard.messages') ? 'active' : '' }}">
+                                    <svg class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                    Mensajes
+                                </a>
+                                <a href="#" class="nav-link text-gray-400 cursor-not-allowed opacity-50" title="Próximamente">
+                                    <svg class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Finanzas
                                 </a>
                             @else
                                 <!-- Links para Dueños (Clientes) -->
-                                <a href="{{ route('dashboard') }}" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('dashboard') ? 'border-primary-500 text-gray-900' : '' }}">
-                                    Mis Mascotas
+                                <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                                    Mascotas
                                 </a>
-                                
-                                <a href="{{ route('dashboard.addresses') }}" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('dashboard.addresses') ? 'border-primary-500 text-gray-900' : '' }}">
-                                    Mis Direcciones
+                                <a href="{{ route('dashboard.messages') }}" class="nav-link {{ request()->routeIs('dashboard.messages') ? 'active' : '' }}">
+                                    Mensajes
                                 </a>
-                                <a href="{{ route('dashboard.favorites') }}" class="border-transparent text-gray-500 hover:border-primary-500 hover:text-primary-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('dashboard.favorites') ? 'border-primary-500 text-gray-900' : '' }}">
+                                <a href="{{ route('dashboard.appointments') }}" class="nav-link {{ request()->routeIs('dashboard.appointments') ? 'active' : '' }}">
+                                    Citas
+                                </a>
+                                <a href="{{ route('dashboard.addresses') }}" class="nav-link {{ request()->routeIs('dashboard.addresses') ? 'active' : '' }}">
+                                    Direcciones
+                                </a>
+                                <a href="{{ route('dashboard.favorites') }}" class="nav-link {{ request()->routeIs('dashboard.favorites') ? 'active' : '' }}">
                                     Favoritos
                                 </a>
                             @endif
                         @else
                             <!-- Links para Visitantes -->
-                            <a href="{{ route('register') }}" class="border-transparent text-primary-600 hover:text-primary-700 font-bold inline-flex items-center px-1 pt-1 border-b-2 text-sm transition-colors duration-200">
+                            <a href="{{ route('register') }}" class="nav-link text-primary-600 font-extrabold hover:text-primary-700 bg-primary-50">
                                 ¿Eres Profesional? Únete
                             </a>
                         @endauth
@@ -80,8 +161,12 @@
 
                 <!-- Right Side: User Menu & Mobile Button -->
                 <div class="flex items-center space-x-4">
+                    @auth
+                        <livewire:dashboard.notification-bell />
+                    @endauth
+                    
                     <!-- Desktop Auth -->
-                    <div class="hidden sm:flex sm:items-center sm:ml-6">
+                    <div class="hidden md:flex md:items-center md:ml-6 desktop-auth-container">
                         @auth
                             <div class="relative ml-3" x-data="{ open: false }">
                                 <div>
@@ -107,7 +192,7 @@
                                      style="display: none;">
                                     
                                     <div class="px-4 py-2 border-b border-gray-100">
-                                        <p class="text-xs text-gray-500">Conectado como</p>
+                                        <p class="text-xs text-gray-400">Conectado como</p>
                                         <p class="text-sm font-medium text-gray-900 truncate">{{ Auth::user()->name }}</p>
                                     </div>
 
@@ -116,6 +201,10 @@
                                         <a href="{{ route('profile.show', Auth::id()) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Ver Mi Perfil Público</a>
                                     @else
                                         <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mis Mascotas</a>
+                                        <a href="{{ route('dashboard.appointments') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mis Citas</a>
+                                        <a href="{{ route('dashboard.addresses') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mis Direcciones</a>
+                                        <a href="{{ route('dashboard.favorites') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mis Favoritos</a>
+                                        <a href="{{ route('dashboard.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mi Perfil</a>
                                     @endif
 
                                     <form method="POST" action="{{ route('logout') }}">
@@ -131,7 +220,7 @@
                     </div>
 
                     <!-- Mobile Menu Button -->
-                    <div class="-mr-2 flex items-center sm:hidden">
+                    <div class="-mr-2 flex items-center md:hidden mobile-menu-btn">
                         <button @click="mobileMenuOpen = !mobileMenuOpen" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500" aria-controls="mobile-menu" aria-expanded="false">
                             <span class="sr-only">Abrir menú</span>
                             <!-- Icono menú -->
@@ -149,7 +238,7 @@
         </div>
 
         <!-- Mobile Menu (Alpine) -->
-        <div class="sm:hidden" id="mobile-menu" x-show="mobileMenuOpen" x-collapse style="display: none;">
+        <div class="md:hidden" id="mobile-menu" x-show="mobileMenuOpen" x-collapse style="display: none;">
             <div class="pt-2 pb-3 space-y-1">
                 <a href="{{ route('home') }}" class="bg-primary-50 border-primary-500 text-primary-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Inicio</a>
                 <a href="{{ route('search') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Buscar Servicios</a>
@@ -157,8 +246,13 @@
                 @auth
                     @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
                         <a href="{{ route('dashboard.provider') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mi Agenda</a>
+                        <a href="{{ route('dashboard.messages') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mensajes</a>
                     @else
                         <a href="{{ route('dashboard') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mis Mascotas</a>
+                        <a href="{{ route('dashboard.messages') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mensajes</a>
+                        <a href="{{ route('dashboard.appointments') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mis Citas</a>
+                        <a href="{{ route('dashboard.addresses') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mis Direcciones</a>
+                        <a href="{{ route('dashboard.favorites') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Favoritos</a>
                     @endif
                 @else
                     <a href="{{ route('register') }}" class="border-transparent text-primary-600 hover:bg-gray-50 hover:border-primary-300 hover:text-primary-800 block pl-3 pr-4 py-2 border-l-4 text-base font-bold">¿Eres Profesional? Únete</a>
@@ -182,6 +276,7 @@
                              <a href="{{ route('profile.show', Auth::id()) }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Perfil Público</a>
                         @else
                              <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mis Mascotas</a>
+                             <a href="{{ route('dashboard.profile') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Perfil</a>
                         @endif
                         
                         <form method="POST" action="{{ route('logout') }}">
@@ -210,23 +305,83 @@
 
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 mt-auto">
-        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
-            <div class="mt-8 md:mt-0 md:order-1">
-                <p class="text-center text-sm text-gray-400">&copy; 2026 TodoPeludos.com. Todos los derechos reservados. Desarrollado con ❤️ para las mascotas.</p>
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Col 1: Brand -->
+                <div class="md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="bg-primary-600 p-2 rounded-xl">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                                <path d="M5 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                                <path d="M19 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                                <path d="M12 21a5 5 0 0 0 5-5H7a5 5 0 0 0 5 5Z"/>
+                            </svg>
+                        </div>
+                        <span class="font-bold text-xl tracking-tight">
+                            <span class="text-primary-600">TodoPeludos</span>
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500 max-w-sm">
+                        La plataforma líder en el cuidado de mascotas en el Perú. Conectando a dueños con los mejores veterinarios, paseadores y cuidadores.
+                    </p>
+                </div>
+                <!-- Col 2: Legal -->
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Legal</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li>
+                            <a href="#" class="text-sm text-gray-500 hover:text-gray-900 transition">Términos de Servicio</a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-sm text-gray-500 hover:text-gray-900 transition">Política de Privacidad</a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-sm text-gray-500 hover:text-gray-900 transition">Política de Cookies</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Col 3: Soporte y Social -->
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Contacto y Ayuda</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li>
+                            <a href="#" class="text-sm text-gray-500 hover:text-gray-900 transition">Centro de Ayuda</a>
+                        </li>
+                        <li>
+                            <a href="mailto:soporte@todopeludos.com" class="text-sm text-gray-500 hover:text-gray-900 transition">soporte@todopeludos.com</a>
+                        </li>
+                        <li class="flex space-x-4">
+                            <a href="https://facebook.com/todopeludos" target="_blank" class="text-gray-400 hover:text-gray-500">
+                                <span class="sr-only">Facebook</span>
+                                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/></svg>
+                            </a>
+                            <a href="https://instagram.com/todopeludos" target="_blank" class="text-gray-400 hover:text-gray-500">
+                                <span class="sr-only">Instagram</span>
+                                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772 4.902 4.902 0 011.772-1.153c.636-.247 1.363-.416 2.427-.465C9.673 2.013 10.03 2 12.315 2zm-2.008 3.326c-2.378 0-4.305 1.927-4.305 4.305s1.927 4.305 4.305 4.305 4.305-1.927 4.305-4.305-1.927-4.305-4.305-4.305zm0 2.155a2.15 2.15 0 110 4.3 2.15 2.15 0 010-4.3zm6.626-2.61a1.44 1.44 0 110 2.88 1.44 1.44 0 010-2.88z" clip-rule="evenodd"/></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="flex justify-center space-x-6 md:order-2">
-                <a href="#" class="text-gray-400 hover:text-gray-500">
-                    <span class="sr-only">Facebook</span>
-                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/></svg>
-                </a>
-                <a href="#" class="text-gray-400 hover:text-gray-500">
-                    <span class="sr-only">Instagram</span>
-                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772 4.902 4.902 0 011.772-1.153c.636-.247 1.363-.416 2.427-.465C9.673 2.013 10.03 2 12.315 2zm-2.008 3.326c-2.378 0-4.305 1.927-4.305 4.305s1.927 4.305 4.305 4.305 4.305-1.927 4.305-4.305-1.927-4.305-4.305-4.305zm0 2.155a2.15 2.15 0 110 4.3 2.15 2.15 0 010-4.3zm6.626-2.61a1.44 1.44 0 110 2.88 1.44 1.44 0 010-2.88z" clip-rule="evenodd"/></svg>
-                </a>
+            <div class="mt-8 border-t border-gray-200 pt-8 flex items-center justify-between">
+                <p class="text-xs text-gray-400">&copy; 2026 TodoPeludos. Todos los derechos reservados. Desarrollado con ❤️ para las mascotas.</p>
             </div>
         </div>
     </footer>
 
     @livewireScripts
+    @stack('scripts')
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
+                    .catch(err => console.warn('[PWA] SW registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>

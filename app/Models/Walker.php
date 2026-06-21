@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Walker extends Model
 {
-    protected $fillable = ['user_id', 'district_id', 'verification_document_path', 'is_verified', 'verification_attempts', 'experience', 'hourly_rate', 'website_url', 'facebook_url', 'instagram_url', 'tiktok_url', 'whatsapp_number', 'availability'];
+    protected $fillable = ['user_id', 'district_id', 'verification_document_path', 'is_verified', 'verification_attempts', 'experience', 'hourly_rate', 'website_url', 'facebook_url', 'instagram_url', 'tiktok_url', 'whatsapp_number', 'availability', 'latitude', 'longitude'];
 
     protected $casts = [
         'is_verified' => 'boolean',

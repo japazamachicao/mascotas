@@ -18,6 +18,10 @@ class ProviderAppointments extends Component
     {
         $appointment = Appointment::where('provider_id', Auth::id())->findOrFail($appointmentId);
         $appointment->update(['status' => 'confirmed']);
+        
+        // Notificar al cliente
+        $appointment->client->notify(new \App\Notifications\AppointmentStatusChanged($appointment));
+        
         session()->flash('message', 'Cita confirmada.');
     }
 
@@ -26,6 +30,10 @@ class ProviderAppointments extends Component
         $appointment = Appointment::where('provider_id', Auth::id())->findOrFail($appointmentId);
         $appointment->update(['status' => 'cancelled']);
         $this->confirmingCancel = null;
+
+        // Notificar al cliente
+        $appointment->client->notify(new \App\Notifications\AppointmentStatusChanged($appointment));
+
         session()->flash('message', 'Cita cancelada.');
     }
 
@@ -33,12 +41,27 @@ class ProviderAppointments extends Component
     {
         $appointment = Appointment::where('provider_id', Auth::id())->findOrFail($appointmentId);
         $appointment->update(['status' => 'completed']);
+
+        // Notificar al cliente
+        $appointment->client->notify(new \App\Notifications\AppointmentStatusChanged($appointment));
+
         session()->flash('message', 'Cita marcada como completada.');
+    }
+
+    public function approvePayment($appointmentId)
+    {
+        $appointment = Appointment::where('provider_id', Auth::id())->findOrFail($appointmentId);
+        if ($appointment->payment && $appointment->payment->status === 'under_review') {
+            $appointment->payment->update(['status' => 'completed']);
+            session()->flash('message', 'El pago ha sido verificado y aprobado con éxito.');
+        } else {
+            session()->flash('error', 'No se puede aprobar el pago para esta cita o ya está aprobado.');
+        }
     }
 
     public function render()
     {
-        $appointments = Appointment::with(['client', 'pet'])
+        $appointments = Appointment::with(['client', 'pet', 'payment'])
             ->where('provider_id', Auth::id())
             ->when($this->filterStatus !== 'all', fn($q) => $q->where('status', $this->filterStatus))
             ->orderByDesc('scheduled_at')

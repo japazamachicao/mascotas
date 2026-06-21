@@ -63,8 +63,38 @@ class Home extends Component
         ->take(3)
         ->get();
 
+        // Calcular calificación promedio real (opiniones)
+        $avgRating = round(\App\Models\Review::avg('rating') ?? 4.9, 1);
+
+        // Clases de proveedores para calcular porcentaje verificado
+        $classes = [
+            \App\Models\Veterinarian::class,
+            \App\Models\Walker::class,
+            \App\Models\Groomer::class,
+            \App\Models\PetHotel::class,
+            \App\Models\Shelter::class,
+            \App\Models\Trainer::class,
+            \App\Models\PetSitter::class,
+            \App\Models\PetTaxi::class,
+            \App\Models\PetPhotographer::class,
+        ];
+        
+        $totalProviders = 0;
+        $verifiedProviders = 0;
+        
+        foreach ($classes as $class) {
+            $totalProviders += $class::count();
+            $verifiedProviders += $class::where('is_verified', true)->count();
+        }
+
+        $verifiedPercentage = $totalProviders > 0 
+            ? round(($verifiedProviders / $totalProviders) * 100) 
+            : 100;
+
         return view('livewire.pages.home', [
-            'featuredProviders' => $featuredProviders
+            'featuredProviders' => $featuredProviders,
+            'avgRating' => $avgRating,
+            'verifiedPercentage' => $verifiedPercentage,
         ]);
     }
 }

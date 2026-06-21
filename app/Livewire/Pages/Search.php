@@ -40,6 +40,7 @@ class Search extends Component
     // Filtros Generales
     public $search = '';
     public $sortBy = 'best_rated';
+    public $showMap = false;
 
     // Colecciones para los selects
     public $departments;
@@ -50,12 +51,29 @@ class Search extends Component
     protected $queryString = [
         'serviceType', 'search', 'department_id', 'province_id', 'district_id', 'sortBy',
         'filterHomeVisits', 'filterHasTransport', 'filterCageFree', 'filterHasYard', 'filterHasAc',
-        'filterVerified', 'filter24h'
+        'filterVerified', 'filter24h', 'showMap'
     ];
 
-    public function mount()
+    public function mount($serviceType = null, $districtName = null)
     {
         $this->departments = Department::orderBy('name')->get();
+ 
+        if ($serviceType) {
+            $validServices = ['veterinarian', 'walker', 'trainer', 'pet_sitter', 'groomer', 'pet_photographer', 'pet_taxi', 'pet_hotel'];
+            if (in_array(strtolower($serviceType), $validServices)) {
+                $this->serviceType = strtolower($serviceType);
+            }
+        }
+ 
+        if ($districtName) {
+            $normalizedName = str_replace('-', ' ', urldecode($districtName));
+            $district = District::where('name', 'like', '%' . $normalizedName . '%')->first();
+            if ($district) {
+                $this->district_id = $district->id;
+                $this->province_id = $district->province_id;
+                $this->department_id = $district->department_id;
+            }
+        }
         
         if ($this->department_id) {
             $this->provinces = Province::where('department_id', $this->department_id)->orderBy('name')->get();
@@ -217,8 +235,50 @@ class Search extends Component
 
         $results = $query->paginate(12);
 
+        $mapMarkers = collect($results->items())
+            ->filter(function ($item) {
+                return !empty($item->latitude) && !empty($item->longitude);
+            })
+            ->map(function ($item) {
+                $serviceLabels = [
+                    'veterinarian' => 'Veterinario',
+                    'walker' => 'Paseador',
+                    'trainer' => 'Adiestrador',
+                    'pet_sitter' => 'Cuidador',
+                    'groomer' => 'Estilista',
+                    'pet_photographer' => 'Fotógrafo',
+                    'pet_taxi' => 'Pet Taxi',
+                    'pet_hotel' => 'Hospedaje',
+                ];
+                $rating = round($item->user->reviewsReceived()->avg('rating') ?? 0, 1);
+                $ratingCount = $item->user->reviewsReceived()->count();
+                $price = $item->price_from ?? $item->hourly_rate ?? 0;
+                $imageUrl = $item->user->profile_photo_path 
+                    ? \Illuminate\Support\Facades\Storage::url($item->user->profile_photo_path) 
+                    : 'https://ui-avatars.com/api/?name=' . urlencode($item->user->name) . '&background=0ea5e9&color=fff';
+                $lvl = $item->user->getProfileLevel($item);
+
+                return [
+                    'id' => $item->id,
+                    'name' => $item->user->name,
+                    'lat' => (float)$item->latitude,
+                    'lng' => (float)$item->longitude,
+                    'service' => $serviceLabels[$this->serviceType] ?? 'Profesional',
+                    'rating' => $rating,
+                    'reviews_count' => $ratingCount,
+                    'price' => $price > 0 ? 'S/ ' . number_format($price, 0) : 'A convenir',
+                    'image' => $imageUrl,
+                    'url' => route('profile.show', ['id' => $item->user->id, 'role' => $this->serviceType]),
+                    'level_badge' => !empty($lvl) ? $lvl['badge'] . ' ' . $lvl['label'] : null
+                ];
+            })
+            ->values();
+
+        $this->dispatch('markers-updated', markers: $mapMarkers);
+
         return view('livewire.pages.search', [
-            'results' => $results
+            'results' => $results,
+            'mapMarkers' => $mapMarkers
         ]);
     }
 }

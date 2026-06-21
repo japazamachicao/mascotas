@@ -36,4 +36,16 @@ class Appointment extends Model
     {
         return $this->belongsTo(Pet::class);
     }
+
+    public function services()
+    {
+        return $this->belongsToMany(ProviderService::class, 'appointment_services')
+            ->withPivot('price_at_booking')
+            ->withTimestamps();
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
 }

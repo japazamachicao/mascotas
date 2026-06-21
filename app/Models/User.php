@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles; // Importamos Spatie
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable, HasRoles; // Usamos el trait HasRoles
 
@@ -17,6 +17,10 @@ class User extends Authenticatable
         'email',
         'password',
         'profile_photo_path',
+        'yape_number',
+        'plin_number',
+        'yape_qr_path',
+        'plin_qr_path',
     ];
 
     protected $hidden = [
@@ -33,6 +37,11 @@ class User extends Authenticatable
     public function pets()
     {
         return $this->hasMany(Pet::class);
+    }
+
+    public function services()
+    {
+        return $this->hasMany(ProviderService::class);
     }
 
     public function veterinarianProfile()
@@ -106,6 +115,35 @@ class User extends Authenticatable
         return $this->hasRole('client');
     }
 
+    public function getActiveProviderProfiles()
+    {
+        $profiles = [];
+        $providerRoles = [
+            'veterinarian' => 'veterinarianProfile',
+            'walker' => 'walkerProfile',
+            'groomer' => 'groomerProfile',
+            'hotel' => 'hotelProfile',
+            'shelter' => 'shelterProfile',
+            'trainer' => 'trainerProfile',
+            'pet_sitter' => 'petSitterProfile',
+            'pet_taxi' => 'petTaxiProfile',
+            'pet_photographer' => 'petPhotographerProfile',
+        ];
+
+        foreach ($providerRoles as $role => $relation) {
+            if ($this->hasRole($role) && $this->$relation) {
+                $profiles[$role] = $this->$relation;
+            }
+        }
+        return $profiles;
+    }
+
+    public function getProviderProfileAttribute()
+    {
+        $active = $this->getActiveProviderProfiles();
+        return !empty($active) ? reset($active) : null;
+    }
+
     // Relaciones de Favoritos
     public function favoriteProviders()
     {
@@ -131,5 +169,103 @@ class User extends Authenticatable
     public function appointmentsAsProvider()
     {
         return $this->hasMany(Appointment::class, 'provider_id');
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function conversationsAsClient()
+    {
+        return $this->hasMany(Conversation::class, 'client_id');
+    }
+
+    public function conversationsAsProvider()
+    {
+        return $this->hasMany(Conversation::class, 'provider_id');
+    }
+
+    public function blockedDates()
+    {
+        return $this->hasMany(BlockedDate::class, 'provider_id');
+    }
+
+    public function getProfileCompleteness($profile = null): int
+    {
+        if (!$profile) {
+            $active = $this->getActiveProviderProfiles();
+            $profile = !empty($active) ? reset($active) : null;
+        }
+
+        if (!$profile) {
+            return 0;
+        }
+
+        $checklist = [
+            'photo' => !empty($this->profile_photo_path),
+            'location' => !empty($profile->district_id),
+            'verification' => !empty($profile->verification_document_path),
+            'services' => $this->services()->exists(),
+            'payment' => !empty($this->yape_number) || !empty($this->plin_number),
+            'portfolio' => $this->portfolio()->exists(),
+        ];
+
+        $points = [
+            'photo' => 20,
+            'location' => 20,
+            'verification' => 20,
+            'services' => 20,
+            'payment' => 10,
+            'portfolio' => 10,
+        ];
+
+        $score = 0;
+        foreach ($checklist as $key => $complete) {
+            if ($complete) {
+                $score += $points[$key];
+            }
+        }
+
+        return $score;
+    }
+
+    public function getProfileLevel($profile = null): array
+    {
+        $score = $this->getProfileCompleteness($profile);
+
+        if ($score < 50) {
+            return [
+                'name' => 'bronce',
+                'label' => 'Bronce',
+                'badge' => '🥉',
+                'class' => 'bg-amber-50 text-amber-700 border-amber-200',
+                'score' => $score,
+            ];
+        } elseif ($score < 80) {
+            return [
+                'name' => 'plata',
+                'label' => 'Plata',
+                'badge' => '🥈',
+                'class' => 'bg-slate-50 text-slate-700 border-slate-200',
+                'score' => $score,
+            ];
+        } elseif ($score < 100) {
+            return [
+                'name' => 'oro',
+                'label' => 'Oro',
+                'badge' => '🥇',
+                'class' => 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                'score' => $score,
+            ];
+        } else {
+            return [
+                'name' => 'diamante',
+                'label' => 'Diamante',
+                'badge' => '💎',
+                'class' => 'bg-cyan-50 text-cyan-700 border-cyan-200',
+                'score' => $score,
+            ];
+        }
     }
 }

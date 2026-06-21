@@ -108,7 +108,7 @@
 
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div x-show="open" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
+                <div x-show="open" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
                     <div class="bg-white px-6 py-6 sm:p-8">
                         <div class="text-left w-full">
                             <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
@@ -120,7 +120,7 @@
                                         {{ $addressId ? 'Actualiza los datos de tu ubicación.' : 'Añade una nueva ubicación para tus servicios.' }}
                                     </p>
                                 </div>
-                                <button @click="open = false" class="text-gray-400 hover:text-gray-500">
+                                <button @click="open = false" type="button" class="text-gray-400 hover:text-gray-500">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
                             </div>
@@ -139,41 +139,56 @@
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <!-- Departamento -->
                                             <div class="group">
-                                                <label class="block text-xs font-semibold text-gray-400 mb-1 ml-1">Departamento</label>
+                                                <label class="block text-xs font-semibold text-gray-400 mb-1.5 ml-1">Departamento</label>
                                                 <div class="relative">
-                                                    <select wire:model.live="selectedDepartment" class="block w-full py-2.5 px-4 bg-gray-50 border-transparent text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 focus:bg-white focus:border-transparent transition-all hover:bg-white border-2 hover:border-gray-100">
+                                                    <select wire:model.live="selectedDepartment" class="block w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 focus:bg-white transition-all hover:bg-white hover:border-gray-300 cursor-pointer appearance-none">
                                                         <option value="">Seleccionar...</option>
                                                         @foreach($departments as $dep)
                                                             <option value="{{ $dep->id }}">{{ $dep->name }}</option>
                                                         @endforeach
                                                     </select>
+                                                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                                                        <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
                                                 </div>
-                                                @error('selectedDepartment') <span class="text-red-500 text-xs ml-1">{{ $message }}</span> @enderror
+                                                @error('selectedDepartment') <span class="text-red-500 text-xs ml-1 mt-1 block">{{ $message }}</span> @enderror
                                             </div>
-
+ 
                                             <!-- Provincia -->
                                             <div class="group {{ empty($provinces) ? 'opacity-50' : '' }}">
-                                                <label class="block text-xs font-semibold text-gray-400 mb-1 ml-1">Provincia</label>
+                                                <label class="block text-xs font-semibold text-gray-400 mb-1.5 ml-1">Provincia</label>
                                                 <div class="relative">
-                                                    <select wire:model.live="selectedProvince" class="block w-full py-2.5 px-4 bg-gray-50 border-transparent text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 focus:bg-white focus:border-transparent transition-all hover:bg-white border-2 hover:border-gray-100 cursor-{{ empty($provinces) ? 'not-allowed' : 'pointer' }}" {{ empty($provinces) ? 'disabled' : '' }}>
+                                                    <select wire:model.live="selectedProvince" class="block w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 focus:bg-white transition-all hover:bg-white hover:border-gray-300 appearance-none cursor-{{ empty($provinces) ? 'not-allowed' : 'pointer' }}" {{ empty($provinces) ? 'disabled' : '' }}>
                                                         <option value="">{{ empty($provinces) ? 'Esperando...' : 'Seleccionar...' }}</option>
                                                         @foreach($provinces as $prov)
                                                             <option value="{{ $prov->id }}">{{ $prov->name }}</option>
                                                         @endforeach
                                                     </select>
+                                                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                                                        <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
                                                 </div>
                                             </div>
-
+ 
                                             <!-- Distrito -->
                                             <div class="group {{ empty($districts) ? 'opacity-50' : '' }}">
-                                                <label class="block text-xs font-semibold text-gray-400 mb-1 ml-1">Distrito</label>
+                                                <label class="block text-xs font-semibold text-gray-400 mb-1.5 ml-1">Distrito</label>
                                                 <div class="relative">
-                                                    <select wire:model="district_id" class="block w-full py-2.5 px-4 bg-gray-50 border-transparent text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-500 focus:bg-white focus:border-transparent transition-all hover:bg-white border-2 hover:border-gray-100 cursor-{{ empty($districts) ? 'not-allowed' : 'pointer' }}" {{ empty($districts) ? 'disabled' : '' }}>
-                                                        <option value="">{{ empty($districts) ? 'Esperando...' : 'Seleccionar Distrito' }}</option>
+                                                    <select wire:model="district_id" class="block w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 focus:bg-white transition-all hover:bg-white hover:border-gray-300 appearance-none cursor-{{ empty($districts) ? 'not-allowed' : 'pointer' }}" {{ empty($districts) ? 'disabled' : '' }}>
+                                                        <option value="">{{ empty($districts) ? 'Esperando...' : 'Seleccionar...' }}</option>
                                                         @foreach($districts as $dist)
                                                             <option value="{{ $dist->id }}">{{ $dist->name }}</option>
                                                         @endforeach
                                                     </select>
+                                                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                                                        <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
                                                 </div>
                                                 @error('district_id') <span class="text-red-500 text-xs ml-1 mt-1 block">Requerido</span> @enderror
                                             </div>

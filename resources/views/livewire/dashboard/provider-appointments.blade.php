@@ -55,6 +55,33 @@
                                 @if($apt->notes)
                                     <p class="text-sm text-gray-600 mt-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 italic">"{{ $apt->notes }}"</p>
                                 @endif
+
+                                @if($apt->payment && $apt->payment->status === 'under_review')
+                                    <div class="mt-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div class="space-y-1">
+                                            <p class="text-xs font-bold text-indigo-900 uppercase tracking-wider">Verificación de Pago ({{ strtoupper($apt->payment->payment_method) }})</p>
+                                            @if($apt->payment->transaction_reference)
+                                                <p class="text-xs text-gray-600">Código de operación: <span class="font-bold text-gray-900">{{ $apt->payment->transaction_reference }}</span></p>
+                                            @endif
+                                            <p class="text-xs text-gray-600">Monto: <span class="font-bold text-gray-900">S/ {{ number_format($apt->payment->amount, 2) }}</span></p>
+                                            @if($apt->payment->receipt_photo_path)
+                                                <a href="{{ \Illuminate\Support\Facades\Storage::url($apt->payment->receipt_photo_path) }}" target="_blank" class="inline-flex items-center text-xs font-bold text-primary-600 hover:text-primary-700 underline mt-1">
+                                                    🔎 Ver imagen del comprobante
+                                                </a>
+                                            @endif
+                                        </div>
+                                        <button wire:click="approvePayment({{ $apt->id }})" class="self-start md:self-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition shadow-sm">
+                                            Aprobar Pago
+                                        </button>
+                                    </div>
+                                @elseif($apt->payment && $apt->payment->status === 'completed')
+                                    <div class="mt-2 text-xs text-emerald-700 flex items-center gap-1 font-semibold">
+                                        <span>✓ Pagado S/ {{ number_format($apt->payment->amount, 2) }} vía {{ strtoupper($apt->payment->payment_method) }}</span>
+                                        @if($apt->payment->transaction_reference)
+                                            <span class="text-gray-400 font-normal">(Ref: {{ $apt->payment->transaction_reference }})</span>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -82,6 +109,26 @@
                             <span class="text-xs font-bold px-2.5 py-1 rounded-full border {{ $statusStyles[$apt->status] ?? '' }}">
                                 {{ $statusLabels[$apt->status] ?? $apt->status }}
                             </span>
+
+                            @if($apt->payment)
+                                @php
+                                    $payStatusStyles = [
+                                        'pending'      => 'bg-amber-50 text-amber-700 border-amber-200',
+                                        'under_review' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                                        'completed'    => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                        'failed'       => 'bg-rose-50 text-rose-700 border-rose-200',
+                                    ];
+                                    $payStatusLabels = [
+                                        'pending'      => 'Pago Pendiente',
+                                        'under_review' => 'Pago En Revisión',
+                                        'completed'    => 'Pago Aprobado',
+                                        'failed'       => 'Pago Fallido',
+                                    ];
+                                @endphp
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-full border {{ $payStatusStyles[$apt->payment->status] ?? 'bg-gray-50 text-gray-700 border-gray-200' }}">
+                                    💳 {{ $payStatusLabels[$apt->payment->status] ?? $apt->payment->status }}
+                                </span>
+                            @endif
 
                             <!-- Acciones -->
                             <div class="flex gap-2">
