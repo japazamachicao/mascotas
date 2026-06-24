@@ -120,17 +120,28 @@
                         @auth
                             @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
                                 <!-- Links para Proveedores -->
-                                <a href="{{ route('dashboard.provider') }}" class="nav-link {{ request()->routeIs('dashboard.provider') ? 'active' : '' }}">
-                                    <svg class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                    Agenda
+                                <a href="{{ route('dashboard.provider', ['section' => 'panel']) }}" class="nav-link {{ request()->routeIs('dashboard.provider') && request()->query('section', 'panel') === 'panel' ? 'active' : '' }}">
+                                    Mi Panel
+                                </a>
+                                <a href="{{ route('dashboard.provider', ['section' => 'calendar']) }}" class="nav-link {{ request()->routeIs('dashboard.provider') && request()->query('section') === 'calendar' ? 'active' : '' }}">
+                                    Calendario
+                                </a>
+                                <a href="{{ route('dashboard.provider', ['section' => 'appointments']) }}" class="nav-link {{ request()->routeIs('dashboard.provider') && request()->query('section') === 'appointments' ? 'active' : '' }} relative">
+                                    Mis citas
+                                    @php
+                                        $pendingCount = \App\Models\Appointment::where('provider_id', Auth::id())->where('status', 'pending')->count();
+                                    @endphp
+                                    @if($pendingCount > 0)
+                                        <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-500 text-white shadow-xs">
+                                            {{ $pendingCount }}
+                                        </span>
+                                    @endif
+                                </a>
+                                <a href="{{ route('dashboard.provider', ['section' => 'reviews']) }}" class="nav-link {{ request()->routeIs('dashboard.provider') && request()->query('section') === 'reviews' ? 'active' : '' }}">
+                                    Reseñas
                                 </a>
                                 <a href="{{ route('dashboard.messages') }}" class="nav-link {{ request()->routeIs('dashboard.messages') ? 'active' : '' }}">
-                                    <svg class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                                     Mensajes
-                                </a>
-                                <a href="#" class="nav-link text-gray-400 cursor-not-allowed opacity-50" title="Próximamente">
-                                    <svg class="h-4 w-4 mr-1.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    Finanzas
                                 </a>
                             @else
                                 <!-- Links para Dueños (Clientes) -->
@@ -197,7 +208,7 @@
                                     </div>
 
                                     @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
-                                        <a href="{{ route('dashboard.provider') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mi Panel</a>
+                                        <a href="{{ route('dashboard.provider', ['section' => 'panel']) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mi Panel</a>
                                         <a href="{{ route('profile.show', Auth::id()) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Ver Mi Perfil Público</a>
                                     @else
                                         <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mis Mascotas</a>
@@ -245,7 +256,10 @@
                 
                 @auth
                     @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
-                        <a href="{{ route('dashboard.provider') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mi Agenda</a>
+                        <a href="{{ route('dashboard.provider', ['section' => 'panel']) }}" class="{{ request()->routeIs('dashboard.provider') && request()->query('section', 'panel') === 'panel' ? 'bg-primary-50 border-primary-500 text-primary-750 font-bold' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800' }} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mi Panel</a>
+                        <a href="{{ route('dashboard.provider', ['section' => 'calendar']) }}" class="{{ request()->routeIs('dashboard.provider') && request()->query('section') === 'calendar' ? 'bg-primary-50 border-primary-500 text-primary-750 font-bold' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800' }} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Calendario</a>
+                        <a href="{{ route('dashboard.provider', ['section' => 'appointments']) }}" class="{{ request()->routeIs('dashboard.provider') && request()->query('section') === 'appointments' ? 'bg-primary-50 border-primary-500 text-primary-750 font-bold' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800' }} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mis Citas</a>
+                        <a href="{{ route('dashboard.provider', ['section' => 'reviews']) }}" class="{{ request()->routeIs('dashboard.provider') && request()->query('section') === 'reviews' ? 'bg-primary-50 border-primary-500 text-primary-750 font-bold' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800' }} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Reseñas</a>
                         <a href="{{ route('dashboard.messages') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mensajes</a>
                     @else
                         <a href="{{ route('dashboard') }}" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Mis Mascotas</a>
@@ -272,7 +286,7 @@
                     </div>
                     <div class="mt-3 space-y-1">
                         @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
-                             <a href="{{ route('dashboard.provider') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Panel</a>
+                             <a href="{{ route('dashboard.provider', ['section' => 'panel']) }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Panel</a>
                              <a href="{{ route('profile.show', Auth::id()) }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Perfil Público</a>
                         @else
                              <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mis Mascotas</a>

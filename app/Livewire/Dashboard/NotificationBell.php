@@ -39,14 +39,14 @@ class NotificationBell extends Component
             }
 
             if ($type === 'appointment_booked') {
-                return redirect()->route('dashboard.provider.appointments');
+                return redirect()->route('dashboard.provider', ['section' => 'appointments']);
             }
 
             if ($type === 'appointment_status_changed') {
                 // Si el usuario es proveedor, redirige a citas del proveedor, si no, a citas de cliente
                 $user = Auth::user();
                 if ($user->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer'])) {
-                    return redirect()->route('dashboard.provider.appointments');
+                    return redirect()->route('dashboard.provider', ['section' => 'appointments']);
                 }
                 return redirect()->route('dashboard.appointments');
             }

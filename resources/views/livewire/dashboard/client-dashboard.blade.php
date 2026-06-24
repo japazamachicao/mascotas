@@ -124,7 +124,15 @@
                                         <div class="absolute -bottom-6 -left-6 w-20 h-20 bg-purple-100 rounded-full opacity-50 blur-xl"></div>
 
                                         <div class="flex items-center gap-2 mb-4">
-                                            <span class="text-xl">🐾</span>
+                                            <span class="text-indigo-600 shrink-0" title="Mascota">
+                                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <circle cx="4.5" cy="10.5" r="2.5"/>
+                                                    <circle cx="9" cy="6" r="2.5"/>
+                                                    <circle cx="15" cy="6" r="2.5"/>
+                                                    <circle cx="19.5" cy="10.5" r="2.5"/>
+                                                    <path d="M12 10.5c-2.485 0-4.5 2.015-4.5 4.5 0 2.22 1.455 4.103 3.456 4.757l.006.002.5.5.5-.5c2.001-.654 3.456-2.537 3.456-4.759 0-2.485-2.015-4.5-4.5-4.5z"/>
+                                                </svg>
+                                            </span>
                                             <span class="text-xs font-black uppercase tracking-widest text-indigo-700">TodoPeludos Placa QR</span>
                                         </div>
 

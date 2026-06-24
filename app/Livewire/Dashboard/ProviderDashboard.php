@@ -3,11 +3,14 @@
 namespace App\Livewire\Dashboard;
 
 use Livewire\Component;
+use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\Auth;
+use Livewire\WithPagination;
 
 class ProviderDashboard extends Component
 {
     use \Livewire\WithFileUploads;
+    use WithPagination;
 
     public $user;
     public $profile;
@@ -105,6 +108,23 @@ class ProviderDashboard extends Component
     public $existingYapeQr;
     public $existingPlinQr;
 
+    // Sección principal de navegación (top nav)
+    #[Url(as: 'section')]
+    public string $mainSection = 'panel'; // panel | appointments | calendar | reviews
+
+    // Tab activo (sidebar navigation - solo en sección 'panel')
+    public string $activeTab = 'profile';
+
+    // Citas (gestionadas inline en la sección 'appointments')
+    public string $filterStatus = 'pending';
+    public string $searchQuery = '';
+    public string $dateFilter = 'all'; // all | today | tomorrow | this_week | custom
+    public ?string $startDate = null;
+    public ?string $endDate = null;
+    public $confirmingCancel = null;
+    public $showAppointmentModal = false;
+    public $selectedAppointmentData = null;
+
     // Reseñas Recibidas y Respuestas
     public $receivedReviews = [];
     public $replyText = [];
@@ -123,6 +143,30 @@ class ProviderDashboard extends Component
     public $averageRating = 0.0;
     public $recentPayments = [];
     public $todayAppointments = [];
+    public $pendingAppointmentsCount = 0;
+    public $totalReviewsCount = 0;
+
+    public function switchTab(string $tab): void
+    {
+        $allowed = ['profile', 'schedule', 'portfolio', 'services', 'payments_config', 'stats'];
+        if (in_array($tab, $allowed)) {
+            $this->activeTab = $tab;
+            $this->mainSection = 'panel';
+        }
+    }
+
+    public function switchSection(string $section): void
+    {
+        $allowed = ['panel', 'appointments', 'calendar', 'reviews'];
+        if (in_array($section, $allowed)) {
+            $this->mainSection = $section;
+            if ($section === 'appointments') {
+                $this->loadAppointments();
+            } elseif ($section === 'reviews') {
+                $this->loadReviews();
+            }
+        }
+    }
 
     protected function rules()
     {
@@ -200,13 +244,22 @@ class ProviderDashboard extends Component
             $this->selectedRole = $userProviderRoles[0];
         }
 
-        $this->loadProfile(); // Carga datos del perfil
-        $this->loadUbigeo(); // Carga lógica de departamentos/provincias
+        $this->loadProfile();
+        $this->loadUbigeo();
         $this->loadPortfolio();
         $this->loadServices();
         $this->loadStats();
         $this->loadReviews();
+        $this->loadAppointments();
         $this->calculateCompleteness();
+
+        $section = request()->query('section', 'panel');
+        $this->switchSection($section);
+
+        $tab = request()->query('tab');
+        if ($tab) {
+            $this->switchTab($tab);
+        }
     }
 
     public function loadProfile()
@@ -366,7 +419,7 @@ class ProviderDashboard extends Component
                 $profile = $modelClass::create([
                     'user_id' => $this->user->id,
                     'is_verified' => false,
-                    'district_id' => $this->findExistingDistrictId() ?: 1,
+                    'district_id' => $this->findExistingDistrictId() ?: (\App\Models\District::first()?->id ?? null),
                 ]);
             }
             $this->profile = $profile;
@@ -414,6 +467,57 @@ class ProviderDashboard extends Component
         $this->calculateCompleteness();
 
         session()->flash('message', 'Nuevo rol/servicio "' . $this->providerRoles[$role] . '" activado con éxito.');
+    }
+
+    public function deactivateRole($role)
+    {
+        $userProviderRoles = array_values(array_intersect(
+            $this->user->roles->pluck('name')->toArray(),
+            array_keys($this->providerRoles)
+        ));
+
+        if (count($userProviderRoles) <= 1) {
+            session()->flash('error', 'Debes tener al menos un servicio activo.');
+            return;
+        }
+
+        if (!in_array($role, $userProviderRoles)) {
+            return;
+        }
+
+        // Remueve el rol del usuario en la base de datos
+        $this->user->removeRole($role);
+
+        // Elimina el perfil específico del proveedor
+        $modelMap = [
+            'veterinarian' => \App\Models\Veterinarian::class,
+            'walker' => \App\Models\Walker::class,
+            'groomer' => \App\Models\Groomer::class,
+            'hotel' => \App\Models\PetHotel::class,
+            'shelter' => \App\Models\Shelter::class,
+            'trainer' => \App\Models\Trainer::class,
+            'pet_sitter' => \App\Models\PetSitter::class,
+            'pet_taxi' => \App\Models\PetTaxi::class,
+            'pet_photographer' => \App\Models\PetPhotographer::class,
+        ];
+
+        $modelClass = $modelMap[$role] ?? null;
+        if ($modelClass) {
+            $modelClass::where('user_id', $this->user->id)->delete();
+        }
+
+        // Si el rol desactivado era el seleccionado actualmente, cambiamos a otro activo
+        if ($this->selectedRole === $role) {
+            $remainingRoles = array_values(array_diff($userProviderRoles, [$role]));
+            $this->selectedRole = $remainingRoles[0];
+        }
+
+        // Recargar perfil, ubigeo, checklist, etc.
+        $this->loadProfile();
+        $this->loadUbigeo();
+        $this->calculateCompleteness();
+
+        session()->flash('message', 'Servicio de "' . $this->providerRoles[$role] . '" desactivado con éxito.');
     }
 
     public function loadUbigeo()
@@ -465,6 +569,113 @@ class ProviderDashboard extends Component
     public function loadPortfolio()
     {
         $this->portfolioImages = $this->user->portfolio()->latest()->get();
+    }
+
+    // =========================================================
+    // GESTIÓN DE CITAS (Inline, sin salir del dashboard)
+    // =========================================================
+
+    public function loadAppointments(): void
+    {
+        // El listado de citas ahora se carga de forma dinámica y paginada en render().
+        // Solo mantenemos la actualización del contador de citas pendientes aquí.
+        $this->pendingAppointmentsCount = \App\Models\Appointment::where('provider_id', $this->user->id)
+            ->where('status', 'pending')
+            ->count();
+    }
+
+    public function updatedFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSearchQuery(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStartDate(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingEndDate(): void
+    {
+        $this->resetPage();
+    }
+
+    public function openAppointmentModal(int $id): void
+    {
+        $appointment = \App\Models\Appointment::with(['client', 'pet', 'services', 'payment'])
+            ->where('provider_id', $this->user->id)
+            ->find($id);
+
+        if ($appointment) {
+            $this->selectedAppointmentData = $appointment;
+            $this->showAppointmentModal = true;
+        }
+    }
+
+    public function closeAppointmentModal(): void
+    {
+        $this->showAppointmentModal = false;
+        $this->selectedAppointmentData = null;
+    }
+
+    public function confirmAppointment(int $id): void
+    {
+        $appointment = \App\Models\Appointment::where('provider_id', $this->user->id)->findOrFail($id);
+        $appointment->update(['status' => 'confirmed']);
+        $appointment->client->notify(new \App\Notifications\AppointmentStatusChanged($appointment));
+        $this->loadAppointments();
+        // Actualizar el modal si está abierto
+        if ($this->showAppointmentModal && $this->selectedAppointmentData?->id === $id) {
+            $this->openAppointmentModal($id);
+        }
+        $this->dispatch('notify', message: '¡Cita confirmada! El cliente fue notificado. ✓', type: 'success');
+    }
+
+    public function cancelAppointment(int $id): void
+    {
+        $appointment = \App\Models\Appointment::where('provider_id', $this->user->id)->findOrFail($id);
+        $appointment->update(['status' => 'cancelled']);
+        $appointment->client->notify(new \App\Notifications\AppointmentStatusChanged($appointment));
+        $this->confirmingCancel = null;
+        $this->loadAppointments();
+        if ($this->showAppointmentModal && $this->selectedAppointmentData?->id === $id) {
+            $this->closeAppointmentModal();
+        }
+        $this->dispatch('notify', message: 'Cita cancelada. El cliente fue notificado.', type: 'info');
+    }
+
+    public function completeAppointment(int $id): void
+    {
+        $appointment = \App\Models\Appointment::where('provider_id', $this->user->id)->findOrFail($id);
+        $appointment->update(['status' => 'completed']);
+        $appointment->client->notify(new \App\Notifications\AppointmentStatusChanged($appointment));
+        $this->loadAppointments();
+        if ($this->showAppointmentModal && $this->selectedAppointmentData?->id === $id) {
+            $this->openAppointmentModal($id);
+        }
+        $this->dispatch('notify', message: '¡Cita completada exitosamente! ✓', type: 'success');
+    }
+
+    public function approveAppointmentPayment(int $id): void
+    {
+        $appointment = \App\Models\Appointment::where('provider_id', $this->user->id)->findOrFail($id);
+        if ($appointment->payment && $appointment->payment->status === 'under_review') {
+            $appointment->payment->update(['status' => 'completed']);
+            $this->loadAppointments();
+            if ($this->showAppointmentModal && $this->selectedAppointmentData?->id === $id) {
+                $this->openAppointmentModal($id);
+            }
+            $this->dispatch('notify', message: '¡Pago aprobado correctamente! ✓', type: 'success');
+        }
     }
 
     public function save()
@@ -591,7 +802,7 @@ class ProviderDashboard extends Component
 
         $this->calculateCompleteness();
 
-        session()->flash('message', 'Perfil actualizado correctamente.');
+        $this->dispatch('notify', message: '¡Perfil actualizado correctamente! ✓', type: 'success');
     }
 
     public function uploadVerificationDocument()
@@ -627,7 +838,7 @@ class ProviderDashboard extends Component
         
         $this->calculateCompleteness();
         
-        session()->flash('message', 'Documento enviado correctamente para revisión.');
+        $this->dispatch('notify', message: 'Documento enviado para revisión. ¡Te avisaremos pronto! ✓', type: 'success');
     }
 
     public function uploadImage()
@@ -646,7 +857,7 @@ class ProviderDashboard extends Component
         $this->reset(['newImage', 'imageTitle']);
         $this->loadPortfolio();
         $this->calculateCompleteness();
-        session()->flash('message', 'Imagen agregada al portafolio.');
+        $this->dispatch('notify', message: 'Imagen agregada al portafolio correctamente. ✓', type: 'success');
     }
 
     public function deleteImage($id)
@@ -690,11 +901,11 @@ class ProviderDashboard extends Component
             $service = $this->user->services()->find($this->serviceId);
             if ($service) {
                 $service->update($data);
-                session()->flash('message', 'Servicio actualizado en el catálogo.');
+                $this->dispatch('notify', message: 'Servicio actualizado en el catálogo. ✓', type: 'success');
             }
         } else {
             $this->user->services()->create($data);
-            session()->flash('message', 'Servicio agregado al catálogo.');
+            $this->dispatch('notify', message: 'Servicio agregado al catálogo. ✓', type: 'success');
         }
 
         $this->resetServiceForm();
@@ -722,7 +933,7 @@ class ProviderDashboard extends Component
             $service->delete();
             $this->loadServices();
             $this->calculateCompleteness();
-            session()->flash('message', 'Servicio eliminado del catálogo.');
+            $this->dispatch('notify', message: 'Servicio eliminado del catálogo.', type: 'info');
         }
     }
 
@@ -804,7 +1015,7 @@ class ProviderDashboard extends Component
 
         $this->loadReviews();
         $this->calculateCompleteness();
-        session()->flash('message', 'Respuesta de reseña enviada con éxito.');
+        $this->dispatch('notify', message: 'Respuesta de reseña enviada con éxito. ✓', type: 'success');
     }
 
     public function deleteReply($reviewId)
@@ -818,7 +1029,7 @@ class ProviderDashboard extends Component
         $this->replyText[$reviewId] = '';
         $this->loadReviews();
         $this->calculateCompleteness();
-        session()->flash('message', 'Respuesta de reseña eliminada.');
+        $this->dispatch('notify', message: 'Respuesta de reseña eliminada.', type: 'info');
     }
 
     public function calculateCompleteness()
@@ -868,6 +1079,51 @@ class ProviderDashboard extends Component
 
     public function render()
     {
-        return view('livewire.dashboard.provider-dashboard')->layout('components.layouts.app');
+        // Ensure pending appointments count is always fresh for nav badges
+        $this->pendingAppointmentsCount = \App\Models\Appointment::where('provider_id', $this->user->id)
+            ->where('status', 'pending')
+            ->count();
+
+        // Dynamically load list data based on the active section to prevent serialization issues
+        $appointmentsList = collect([]);
+        if ($this->mainSection === 'appointments') {
+            $appointmentsList = \App\Models\Appointment::with(['client', 'pet', 'services', 'payment'])
+                ->where('provider_id', $this->user->id)
+                ->when($this->filterStatus !== 'all', fn($q) => $q->where('status', $this->filterStatus))
+                ->when($this->searchQuery !== '', function($q) {
+                    $q->where(fn($sub) => $sub
+                        ->whereHas('client', fn($c) => $c->where('name', 'like', '%' . $this->searchQuery . '%')
+                            ->orWhere('email', 'like', '%' . $this->searchQuery . '%'))
+                        ->orWhereHas('pet', fn($p) => $p->where('name', 'like', '%' . $this->searchQuery . '%'))
+                    );
+                })
+                ->when($this->dateFilter !== 'all', function($q) {
+                    $today = \Carbon\Carbon::today();
+                    if ($this->dateFilter === 'today') {
+                        $q->whereDate('scheduled_at', $today);
+                    } elseif ($this->dateFilter === 'tomorrow') {
+                        $q->whereDate('scheduled_at', \Carbon\Carbon::tomorrow());
+                    } elseif ($this->dateFilter === 'this_week') {
+                        $q->whereBetween('scheduled_at', [$today->copy()->startOfWeek(), $today->copy()->endOfWeek()]);
+                    } elseif ($this->dateFilter === 'custom' && !empty($this->startDate) && !empty($this->endDate)) {
+                        try {
+                            $q->whereBetween('scheduled_at', [
+                                \Carbon\Carbon::parse($this->startDate)->startOfDay(),
+                                \Carbon\Carbon::parse($this->endDate)->endOfDay()
+                            ]);
+                        } catch (\Exception $e) {
+                            // Ignorar errores de parseo de fecha
+                        }
+                    }
+                })
+                ->orderBy('scheduled_at', 'asc')
+                ->paginate(10);
+        } elseif ($this->mainSection === 'reviews') {
+            $this->loadReviews();
+        }
+
+        return view('livewire.dashboard.provider-dashboard', [
+            'appointmentsList' => $appointmentsList
+        ])->layout('components.layouts.app');
     }
 }

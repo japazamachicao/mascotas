@@ -1,4 +1,39 @@
-<div class="py-12">
+<div class="py-12"
+    x-data="{
+        toastShow: false,
+        toastMsg: '',
+        toastType: 'success',
+        showToast(msg, type = 'success') {
+            this.toastMsg = msg;
+            this.toastType = type;
+            this.toastShow = true;
+            setTimeout(() => this.toastShow = false, 3500);
+        }
+    }"
+    @notify.window="showToast($event.detail.message, $event.detail.type ?? 'success')"
+    x-on:livewire:navigated.window="toastShow = false"
+>
+    <!-- Toast Notificación Global -->
+    <div x-show="toastShow" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4"
+        class="fixed bottom-6 right-6 z-[9999] max-w-sm w-full pointer-events-none"
+        style="display: none;">
+        <div :class="toastType === 'success' ? 'bg-emerald-600 border-emerald-500' : (toastType === 'error' ? 'bg-red-600 border-red-500' : 'bg-sky-600 border-sky-500')"
+            class="flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border text-white">
+            <template x-if="toastType === 'success'">
+                <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            </template>
+            <template x-if="toastType === 'error'">
+                <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </template>
+            <template x-if="toastType === 'info'">
+                <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </template>
+            <p class="text-sm font-bold flex-1" x-text="toastMsg"></p>
+            <button @click="toastShow = false" class="text-white/70 hover:text-white transition pointer-events-auto">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+    </div>
     <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
 
         @if(session('onboarding'))
@@ -11,6 +46,7 @@
             </div>
         @endif
 
+        @if($mainSection === 'panel')
         <!-- Welcome Section -->
         <div class="mb-8">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
@@ -28,6 +64,11 @@
                 array_keys($providerRoles)
             ));
             $inactiveRoles = array_diff(array_keys($providerRoles), $userActiveRoles);
+            $roleIcons = [
+                'veterinarian' => '🩺', 'walker' => '🐕', 'groomer' => '✂️',
+                'hotel' => '🏨', 'shelter' => '🏠', 'trainer' => '🎓',
+                'pet_sitter' => '🐾', 'pet_taxi' => '🚗', 'pet_photographer' => '📸',
+            ];
         @endphp
 
         @if(count($userActiveRoles) > 1 || count($inactiveRoles) > 0)
@@ -36,21 +77,35 @@
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Mis Servicios:</span>
                     @foreach($userActiveRoles as $role)
-                        <button wire:click="selectRole('{{ $role }}')"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold rounded-lg border transition-all duration-200
+                        <div class="inline-flex items-center rounded-lg border shadow-sm overflow-hidden shrink-0 transition-all duration-200
                             {{ $selectedRole === $role 
-                                ? 'bg-primary-600 border-primary-600 text-white shadow-sm' 
-                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300' }}">
-                            @php
-                                $roleIcons = [
-                                    'veterinarian' => '🩺', 'walker' => '🐕', 'groomer' => '✂️',
-                                    'hotel' => '🏨', 'shelter' => '🏠', 'trainer' => '🎓',
-                                    'pet_sitter' => '🐾', 'pet_taxi' => '🚗', 'pet_photographer' => '📸',
-                                ];
-                            @endphp
-                            <span>{{ $roleIcons[$role] ?? '📋' }}</span>
-                            {{ $providerRoles[$role] }}
-                        </button>
+                                ? 'border-primary-600 bg-primary-600' 
+                                : 'border-gray-200 bg-white hover:border-gray-300' }}">
+                            <!-- Botón de seleccionar -->
+                            <button wire:click="selectRole('{{ $role }}')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold transition-all duration-200 focus:outline-none cursor-pointer
+                                {{ $selectedRole === $role 
+                                    ? 'bg-primary-600 text-white hover:bg-primary-700' 
+                                    : 'bg-white text-gray-600 hover:bg-gray-50' }}">
+                                <span>{{ $roleIcons[$role] ?? '📋' }}</span>
+                                <span>{{ $providerRoles[$role] }}</span>
+                            </button>
+                            
+                            <!-- Botón de eliminar (solo si hay más de 1) -->
+                            @if(count($userActiveRoles) > 1)
+                                <button onclick="confirm('¿Estás seguro de que deseas desactivar el servicio de {{ $providerRoles[$role] }}? Se eliminarán los datos asociados a este perfil.') || event.stopImmediatePropagation()"
+                                    wire:click="deactivateRole('{{ $role }}')"
+                                    class="px-2 py-1.5 border-l text-sm font-bold transition-all duration-200 focus:outline-none cursor-pointer
+                                    {{ $selectedRole === $role 
+                                        ? 'border-primary-700/30 bg-primary-600 text-primary-200 hover:bg-primary-700 hover:text-white' 
+                                        : 'border-gray-200 bg-white text-red-500 hover:bg-red-50' }}"
+                                    title="Desactivar {{ $providerRoles[$role] }}">
+                                    <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            @endif
+                        </div>
                     @endforeach
                 </div>
 
@@ -75,10 +130,12 @@
             </div>
         </div>
         @endif
+        @endif
 
-    
 
-        <div x-data="{ activeTab: 'profile' }" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        @if($mainSection === 'panel')
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <!-- Menú Lateral -->
             <div class="lg:col-span-1 space-y-6">
                 <!-- Perfil Card -->
@@ -149,72 +206,64 @@
                     </div>
                     
                     <!-- Navegación Vertical -->
-                    <nav class="mt-8 space-y-1">
-                        <button @click="activeTab = 'profile'" 
-                            :class="activeTab === 'profile' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
-                            <svg :class="activeTab === 'profile' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            Perfil y Contacto
-                        </button>
-                        
-                        <button @click="activeTab = 'schedule'" 
-                            :class="activeTab === 'schedule' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
-                            <svg :class="activeTab === 'schedule' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            Horarios de Atención
+                    <nav class="mt-6 space-y-0.5">
+
+                        <!-- Perfil y Contacto -->
+                        <button wire:click="switchTab('profile')"
+                            class="group w-full flex items-center gap-3 px-3 py-2.5 text-sm border-l-4 rounded-r-lg transition-all duration-150 text-left {{ $activeTab === 'profile' ? 'bg-primary-50 text-primary-700 border-primary-500 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border-transparent' }}">
+                            <svg class="shrink-0 w-5 h-5 {{ $activeTab === 'profile' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>Perfil y Contacto</span>
                         </button>
 
-                        <button @click="activeTab = 'calendar'" 
-                            :class="activeTab === 'calendar' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
-                            <svg :class="activeTab === 'calendar' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            Calendario y Bloqueos
+                        <!-- Horarios -->
+                        <button wire:click="switchTab('schedule')"
+                            class="group w-full flex items-center gap-3 px-3 py-2.5 text-sm border-l-4 rounded-r-lg transition-all duration-150 text-left {{ $activeTab === 'schedule' ? 'bg-primary-50 text-primary-700 border-primary-500 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border-transparent' }}">
+                            <svg class="shrink-0 w-5 h-5 {{ $activeTab === 'schedule' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>Horarios de Atención</span>
                         </button>
 
-                        <button @click="activeTab = 'portfolio'"
-                            :class="activeTab === 'portfolio' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
-                            <svg :class="activeTab === 'portfolio' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            Mi Portafolio
+
+                        <!-- Portafolio -->
+                        <button wire:click="switchTab('portfolio')"
+                            class="group w-full flex items-center gap-3 px-3 py-2.5 text-sm border-l-4 rounded-r-lg transition-all duration-150 text-left {{ $activeTab === 'portfolio' ? 'bg-primary-50 text-primary-700 border-primary-500 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border-transparent' }}">
+                            <svg class="shrink-0 w-5 h-5 {{ $activeTab === 'portfolio' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            <span>Mi Portafolio</span>
                         </button>
 
-                        <button @click="activeTab = 'services'" 
-                            :class="activeTab === 'services' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
-                            <svg :class="activeTab === 'services' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                            Catálogo de Servicios
+                        <!-- Catálogo de Servicios -->
+                        <button wire:click="switchTab('services')"
+                            class="group w-full flex items-center gap-3 px-3 py-2.5 text-sm border-l-4 rounded-r-lg transition-all duration-150 text-left {{ $activeTab === 'services' ? 'bg-primary-50 text-primary-700 border-primary-500 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border-transparent' }}">
+                            <svg class="shrink-0 w-5 h-5 {{ $activeTab === 'services' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                            </svg>
+                            <span>Catálogo de Servicios</span>
                         </button>
 
-                        <button @click="activeTab = 'payments_config'" 
-                            :class="activeTab === 'payments_config' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
-                            <svg :class="activeTab === 'payments_config' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Cobros Yape/Plin
+                        <!-- Cobros -->
+                        <button wire:click="switchTab('payments_config')"
+                            class="group w-full flex items-center gap-3 px-3 py-2.5 text-sm border-l-4 rounded-r-lg transition-all duration-150 text-left {{ $activeTab === 'payments_config' ? 'bg-primary-50 text-primary-700 border-primary-500 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border-transparent' }}">
+                            <svg class="shrink-0 w-5 h-5 {{ $activeTab === 'payments_config' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            <span>Cobros Yape/Plin</span>
                         </button>
 
-                        <button @click="activeTab = 'stats'" 
-                            :class="activeTab === 'stats' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
-                            <svg :class="activeTab === 'stats' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2zm9 0v-9a2 2 0 00-2-2h-2a2 2 0 00-2 2v9a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
-                            Estadísticas
+                        <!-- Estadísticas -->
+                        <button wire:click="switchTab('stats')"
+                            class="group w-full flex items-center gap-3 px-3 py-2.5 text-sm border-l-4 rounded-r-lg transition-all duration-150 text-left {{ $activeTab === 'stats' ? 'bg-primary-50 text-primary-700 border-primary-500 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 border-transparent' }}">
+                            <svg class="shrink-0 w-5 h-5 {{ $activeTab === 'stats' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span>Estadísticas</span>
                         </button>
 
-                        <button @click="activeTab = 'reviews'" 
-                            :class="activeTab === 'reviews' ? 'bg-primary-50 text-primary-700 border-primary-500' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4">
-                            <svg :class="activeTab === 'reviews' ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'" class="shrink-0 -ml-1 mr-3 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                            Reseñas Recibidas
-                        </button>
 
-                        <a href="{{ route('dashboard.provider.appointments') }}"
-                            class="group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4 text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent">
-                            <svg class="shrink-0 -ml-1 mr-3 h-6 w-6 text-gray-400 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                            Mis Citas
-                            @php $pendingCount = \App\Models\Appointment::where('provider_id', auth()->id())->where('status', 'pending')->count(); @endphp
-                            @if($pendingCount > 0)
-                                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $pendingCount }}</span>
-                            @endif
-                        </a>
                     </nav>
                 </div>
             </div>
@@ -237,6 +286,21 @@
                     </div>
                 @endif
 
+                @if (session()->has('error'))
+                    <div class="rounded-md bg-red-50 p-4 border border-red-200 mb-4">
+                        <div class="flex">
+                            <div class="shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 @if ($errors->any())
                     <div class="rounded-md bg-red-50 p-4 border border-red-200 mb-4">
                         <div class="flex">
@@ -252,15 +316,20 @@
                                         <li>{{ $error }}</li>
                                     @endforeach
                                 </ul>
-                            </div>
                         </div>
-                        <!-- ONBOARDING CHECKLIST -->
+                    </div>
+                @endif
+
+                <!-- ONBOARDING CHECKLIST -->
                 @if($completenessScore < 100)
                     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100/70 shadow-sm space-y-4">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <h4 class="text-base font-black text-indigo-955 flex items-center gap-2">
-                                    🚀 ¡Completa tu perfil profesional!
+                                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-indigo-600 shadow-sm">
+                                        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    </span>
+                                    ¡Completa tu perfil profesional!
                                 </h4>
                                 <p class="text-xs text-indigo-700 mt-1">Completa los siguientes pasos para destacar y generar mayor confianza en los clientes.</p>
                             </div>
@@ -281,7 +350,7 @@
                         <!-- Checklist Grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
                             @foreach($completenessChecklist as $key => $item)
-                                <button @click="activeTab = '{{ $item['tab'] }}'" class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-indigo-100/50 text-left hover:shadow-sm hover:border-indigo-200 transition">
+                                <button wire:click="switchTab('{{ $item['tab'] }}')" class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-indigo-100/50 text-left hover:shadow-sm hover:border-indigo-200 transition">
                                     @if($item['complete'])
                                         <span class="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold shrink-0">✓</span>
                                         <span class="text-xs font-bold text-gray-500 line-through">{{ $item['label'] }}</span>
@@ -308,15 +377,17 @@
                 @endif
 
                 <!-- TAB: PERFIL -->
-                <div x-show="activeTab === 'profile'" class="space-y-6">
+                @if($activeTab === 'profile')
+                <div class="space-y-6">
                     <!-- Widget Hoy de un vistazo -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- Citas de hoy -->
                         <div class="bg-gradient-to-br from-indigo-950 to-slate-900 text-white rounded-3xl p-6 md:col-span-2 shadow-md flex flex-col justify-between min-h-[180px]">
                             <div>
                                 <div class="flex justify-between items-start">
-                                    <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/20 text-indigo-100 border border-white/10">
-                                        📅 HOY DE UN VISTAZO
+                                    <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/20 text-indigo-100 border border-white/10 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        HOY DE UN VISTAZO
                                     </span>
                                     <span class="text-xs font-bold text-indigo-200">
                                         {{ now()->format('d M, Y') }}
@@ -328,7 +399,15 @@
                                     @forelse($todayAppointments as $app)
                                         <div class="flex items-center justify-between p-2.5 bg-white/10 rounded-xl border border-white/5">
                                             <div class="flex items-center gap-2">
-                                                <span class="text-sm">🐾</span>
+                                                <span class="text-primary-400 shrink-0" title="Mascota">
+                                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <circle cx="4.5" cy="10.5" r="2.5"/>
+                                                        <circle cx="9" cy="6" r="2.5"/>
+                                                        <circle cx="15" cy="6" r="2.5"/>
+                                                        <circle cx="19.5" cy="10.5" r="2.5"/>
+                                                        <path d="M12 10.5c-2.485 0-4.5 2.015-4.5 4.5 0 2.22 1.455 4.103 3.456 4.757l.006.002.5.5.5-.5c2.001-.654 3.456-2.537 3.456-4.759 0-2.485-2.015-4.5-4.5-4.5z"/>
+                                                    </svg>
+                                                </span>
                                                 <div class="text-left">
                                                     <p class="text-xs font-bold">{{ $app->client->name }}</p>
                                                     <p class="text-[10px] text-indigo-200">{{ $app->pet->name ?? 'Mascota' }} • {{ $app->scheduled_at->format('H:i') }} hrs</p>
@@ -346,7 +425,7 @@
                             </div>
                             
                             <div class="mt-4 flex justify-between items-center pt-3 border-t border-white/10">
-                                <a href="{{ route('dashboard.provider.appointments') }}" class="text-xs font-bold text-white hover:underline flex items-center gap-1">
+                                <a href="{{ route('dashboard.provider', ['section' => 'appointments']) }}" class="text-xs font-bold text-white hover:underline flex items-center gap-1">
                                     Administrar todas mis citas <span>➔</span>
                                 </a>
                             </div>
@@ -357,7 +436,9 @@
                             <div class="space-y-4">
                                 <div class="flex justify-between items-center">
                                     <span class="text-[10px] font-black uppercase tracking-wider text-gray-400">Ingresos del Mes</span>
-                                    <span class="text-xl">💰</span>
+                                    <div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
                                 </div>
                                 <div>
                                     <p class="text-2xl font-black text-gray-950">S/ {{ number_format($monthlyEarnings, 2) }}</p>
@@ -754,105 +835,228 @@
                 </div>
 
                 <!-- TAB: HORARIOS -->
-                <div x-show="activeTab === 'schedule'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Horarios de Atención</h3>
-                        
-                        <form wire:submit.prevent="save">
-                            @if($selectedRole === 'veterinarian')
-                                <div class="mb-6 bg-red-50 border border-red-200 rounded-md p-4 flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="shrink-0 text-red-500">
-                                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                        </div>
-                                        <div class="ml-3">
-                                            <h3 class="text-sm font-medium text-red-800">¿Atiendes Emergencias 24 Horas?</h3>
-                                            <p class="text-xs text-red-700">Tu perfil tendrá un distintivo especial.</p>
-                                        </div>
+                @elseif($activeTab === 'schedule')
+                <div class="space-y-6">
+                    <!-- Header premium -->
+                    <div class="bg-gradient-to-r from-sky-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center shadow-inner">
+                                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-black">Horarios de Atención</h3>
+                                <p class="text-sky-100 text-xs mt-0.5">Define los días y horas en que recibes clientes. Los clientes verán esta información en tu perfil.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form wire:submit.prevent="save" class="space-y-4">
+                        @if($selectedRole === 'veterinarian')
+                            <div class="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                                        <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                     </div>
                                     <div>
-                                        <input wire:model="emergency_24h" type="checkbox" class="h-5 w-5 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                        <h4 class="text-sm font-bold text-red-900">¿Atiendes Emergencias 24 Horas?</h4>
+                                        <p class="text-xs text-red-700">Tu perfil tendrá un distintivo especial visible para todos los clientes.</p>
                                     </div>
                                 </div>
-                            @endif
-
-                            <div class="space-y-4">
-                                @foreach(['monday' => 'Lunes', 'tuesday' => 'Martes', 'wednesday' => 'Miércoles', 'thursday' => 'Jueves', 'friday' => 'Viernes', 'saturday' => 'Sábado', 'sunday' => 'Domingo'] as $key => $label)
-                                    <div class="flex items-center justify-between border-b pb-2 last:border-0 hover:bg-gray-50 p-2 rounded">
-                                        <div class="flex items-center w-1/4">
-                                            <input type="checkbox" wire:model.live="availability.{{ $key }}.active" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                                            <label class="ml-2 block text-sm font-medium text-gray-900">{{ $label }}</label>
-                                        </div>
-                                        <div class="flex items-center space-x-2 w-3/4 justify-end">
-                                            @if($availability[$key]['active'] ?? false)
-                                                <input type="time" wire:model="availability.{{ $key }}.start" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block sm:text-sm border-gray-300 rounded-md">
-                                                <span class="text-gray-500 text-sm">a</span>
-                                                <input type="time" wire:model="availability.{{ $key }}.end" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block sm:text-sm border-gray-300 rounded-md">
-                                            @else
-                                                <span class="text-sm text-gray-400 italic">Cerrado</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endforeach
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input wire:model="emergency_24h" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                                </label>
                             </div>
+                        @endif
 
-                            <div class="mt-6 flex justify-end">
-                                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none">
-                                    Guardar Horarios
+                        @php
+                            $dayIcons = [
+                                'monday'    => ['letter' => 'L', 'color' => 'indigo'],
+                                'tuesday'   => ['letter' => 'M', 'color' => 'violet'],
+                                'wednesday' => ['letter' => 'X', 'color' => 'purple'],
+                                'thursday'  => ['letter' => 'J', 'color' => 'sky'],
+                                'friday'    => ['letter' => 'V', 'color' => 'blue'],
+                                'saturday'  => ['letter' => 'S', 'color' => 'emerald'],
+                                'sunday'    => ['letter' => 'D', 'color' => 'rose'],
+                            ];
+                        @endphp
+
+                        <div class="grid grid-cols-1 gap-3">
+                            @foreach(['monday' => 'Lunes', 'tuesday' => 'Martes', 'wednesday' => 'Miércoles', 'thursday' => 'Jueves', 'friday' => 'Viernes', 'saturday' => 'Sábado', 'sunday' => 'Domingo'] as $key => $label)
+                                @php $isActive = $availability[$key]['active'] ?? false; @endphp
+                                <div class="flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200
+                                    {{ $isActive ? 'bg-sky-50/60 border-sky-200 shadow-sm' : 'bg-white border-gray-100 hover:border-gray-200' }}">
+
+                                    <!-- Día letra -->
+                                    <div class="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center font-black text-sm
+                                        {{ $isActive ? 'bg-sky-600 text-white shadow-sm' : 'bg-gray-100 text-gray-400' }}">
+                                        {{ $dayIcons[$key]['letter'] }}
+                                    </div>
+
+                                    <!-- Nombre día + toggle -->
+                                    <div class="flex items-center gap-2 w-28 shrink-0">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" wire:model.live="availability.{{ $key }}.active" class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-600"></div>
+                                        </label>
+                                        <span class="text-sm font-bold {{ $isActive ? 'text-sky-900' : 'text-gray-400' }}">{{ $label }}</span>
+                                    </div>
+
+                                    <!-- Horas -->
+                                    <div class="flex-1 flex items-center gap-3 justify-end">
+                                        @if($isActive)
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-sky-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                <input type="time" wire:model="availability.{{ $key }}.start"
+                                                    class="text-sm font-bold border-sky-200 rounded-xl bg-white shadow-xs focus:border-sky-500 focus:ring-sky-500 py-1.5 px-3">
+                                                <span class="text-gray-400 text-xs font-bold">—</span>
+                                                <input type="time" wire:model="availability.{{ $key }}.end"
+                                                    class="text-sm font-bold border-sky-200 rounded-xl bg-white shadow-xs focus:border-sky-500 focus:ring-sky-500 py-1.5 px-3">
+                                            </div>
+                                        @else
+                                            <span class="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">Cerrado</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-sm font-bold shadow-md transition duration-200">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Guardar Horarios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+
+                <!-- TAB: PORTAFOLIO -->
+                @elseif($activeTab === 'portfolio')
+                <div class="space-y-6">
+                    <!-- Header premium -->
+                    <div class="bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl p-6 text-white shadow-lg">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center shadow-inner shrink-0">
+                                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="text-xl font-black">Mi Portafolio</h3>
+                                <p class="text-pink-100 text-xs mt-0.5">Muestra tus mejores trabajos. Las fotos generan hasta 3x más confianza en los clientes.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zona de upload -->
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+                            <h4 class="text-sm font-black text-gray-900 uppercase tracking-wider">Subir Nueva Foto</h4>
+                        </div>
+                        <form wire:submit.prevent="uploadImage" class="p-6"
+                            x-data="{ previewUrl: null, previewName: null }"
+                            x-on:livewire-upload-finish="if($wire.newImage) { previewName = 'Imagen lista para subir'; }">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-gray-600 mb-1.5">Título de la Foto</label>
+                                    <input type="text" wire:model="imageTitle"
+                                        class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 text-sm py-2.5 px-4"
+                                        placeholder="Ej: Corte de raza schnauzer">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-gray-600 mb-1.5">Imagen</label>
+                                    <label class="relative flex flex-col items-center justify-center w-full rounded-xl border-2 border-dashed border-pink-200 bg-pink-50/40 cursor-pointer hover:bg-pink-50 transition overflow-hidden"
+                                        :class="previewUrl ? 'h-32 border-pink-400 border-solid bg-pink-50' : 'h-24'">
+                                        <!-- Preview -->
+                                        <template x-if="previewUrl">
+                                            <div class="absolute inset-0">
+                                                <img :src="previewUrl" class="w-full h-full object-cover rounded-xl opacity-80">
+                                                <div class="absolute inset-0 flex items-center justify-center bg-black/30 rounded-xl">
+                                                    <div class="text-center text-white">
+                                                        <svg class="w-6 h-6 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                        <span class="text-xs font-black">Imagen seleccionada</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template x-if="!previewUrl">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <svg class="w-8 h-8 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                <span class="text-xs font-bold text-pink-600">Seleccionar imagen</span>
+                                                <span class="text-[10px] text-gray-400">JPG, PNG, WEBP hasta 5MB</span>
+                                            </div>
+                                        </template>
+                                        <input type="file" wire:model="newImage" class="hidden" accept="image/*"
+                                            @change="const f = $event.target.files[0]; if(f){ previewUrl = URL.createObjectURL(f); previewName = f.name; }">
+                                    </label>
+                                    <!-- Estado de carga -->
+                                    <div wire:loading wire:target="newImage" class="mt-2 flex items-center gap-2 text-xs text-pink-600 font-bold">
+                                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        Cargando imagen...
+                                    </div>
+                                    <!-- Nombre del archivo seleccionado -->
+                                    <div wire:loading.remove wire:target="newImage" x-show="previewName" class="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        <span x-text="previewName"></span>
+                                        <span class="text-emerald-600 font-normal">— Presiona "Subir al Portafolio"</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-5 flex justify-end">
+                                <button type="submit" wire:loading.attr="disabled"
+                                    class="inline-flex items-center gap-2 px-6 py-2.5 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-sm font-bold shadow-md transition">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                    Subir al Portafolio
                                 </button>
                             </div>
                         </form>
                     </div>
-                </div>
 
-                <!-- TAB: CALENDARIO -->
-                <div x-show="activeTab === 'calendar'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
-                    <div class="px-4 py-5 sm:p-6">
-                        <livewire:dashboard.visual-calendar />
-                    </div>
-                </div>
-
-                <!-- TAB: PORTAFOLIO -->
-                <div x-show="activeTab === 'portfolio'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Mi Portafolio</h3>
-                        
-                        <form wire:submit.prevent="uploadImage" class="mb-8 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Título</label>
-                                    <input type="text" wire:model="imageTitle" class="mt-1 block w-full sm:text-sm border-gray-300 rounded-md">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Imagen</label>
-                                    <input type="file" wire:model="newImage" class="mt-1 block w-full text-sm">
+                    <!-- Grid de fotos -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        @forelse($portfolioImages as $image)
+                            <div class="relative group rounded-2xl overflow-hidden bg-gray-100 shadow-sm border border-gray-200 aspect-square">
+                                <img src="{{ \Illuminate\Support\Facades\Storage::url($image->image_path) }}" class="object-cover w-full h-full transition duration-300 group-hover:scale-105">
+                                <!-- Overlay -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-200">
+                                    <div class="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
+                                        @if($image->title)
+                                            <span class="text-white text-xs font-bold truncate mr-2">{{ $image->title }}</span>
+                                        @endif
+                                        <button wire:click="deleteImage({{ $image->id }})" class="shrink-0 w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-md transition ml-auto">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mt-4 flex justify-end">
-                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700" wire:loading.attr="disabled">Subir Foto</button>
+                        @empty
+                            <div class="col-span-full py-16 flex flex-col items-center gap-3 text-gray-400">
+                                <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <p class="text-sm font-bold">Aún no tienes fotos en tu portafolio</p>
+                                <p class="text-xs">Sube tus mejores trabajos para destacar frente a otros proveedores</p>
                             </div>
-                        </form>
-
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            @forelse($portfolioImages as $image)
-                                <div class="relative group aspect-w-10 aspect-h-7 bg-gray-200 rounded-lg overflow-hidden">
-                                     <img src="{{ \Illuminate\Support\Facades\Storage::url($image->image_path) }}" class="object-cover w-full h-full">
-                                     <button wire:click="deleteImage({{ $image->id }})" class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition">
-                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                     </button>
-                                     @if($image->title) <div class="absolute bottom-0 w-full bg-black bg-opacity-50 text-white text-xs p-1 truncate">{{ $image->title }}</div> @endif
-                                </div>
-                            @empty
-                                <div class="col-span-full py-12 text-center text-gray-500">Sin fotos aún.</div>
-                            @endforelse
-                        </div>
+                        @endforelse
                     </div>
                 </div>
 
                 <!-- TAB: SERVICIOS -->
-                <div x-show="activeTab === 'services'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Catálogo de Servicios</h3>
+                @elseif($activeTab === 'services')
+                <div class="space-y-6">
+                    <!-- Header premium -->
+                    <div class="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white shadow-lg">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center shadow-inner shrink-0">
+                                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="text-xl font-black">Catálogo de Servicios</h3>
+                                <p class="text-emerald-100 text-xs mt-0.5">Define los servicios que ofreces, sus precios y duración para que los clientes puedan elegir.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                <div class="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-5 sm:p-6">
+                        <h3 class="sr-only">Catálogo de Servicios</h3>
                         
                         <!-- Formulario de Servicio -->
                         <form wire:submit.prevent="saveService" class="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
@@ -883,70 +1087,103 @@
                                     @error('serviceDuration') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="mt-4 flex justify-end gap-2">
+                            <div class="mt-4 flex justify-start gap-2">
                                 @if($isEditingService)
-                                    <button type="button" wire:click="resetServiceForm" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium">Cancelar</button>
+                                    <button type="button" wire:click="resetServiceForm" class="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-xl text-gray-700 bg-white hover:bg-gray-50 text-sm font-bold">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        Cancelar
+                                    </button>
                                 @endif
-                                <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-bold shadow-sm">{{ $isEditingService ? 'Actualizar' : 'Agregar al Catálogo' }}</button>
+                                <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-sm transition">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    {{ $isEditingService ? 'Actualizar Servicio' : 'Agregar al Catálogo' }}
+                                </button>
                             </div>
                         </form>
 
-                        <!-- Tabla de Servicios -->
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Servicio</th>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Duración</th>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Precio</th>
-                                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    @forelse($providerServices as $service)
-                                        <tr>
-                                            <td class="px-6 py-4">
-                                                <div class="text-sm font-bold text-gray-900">{{ $service->name }}</div>
-                                                @if($service->description)
-                                                    <div class="text-xs text-gray-500 max-w-xs truncate">{{ $service->description }}</div>
-                                                @endif
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-gray-500">
-                                                {{ $service->duration_minutes ? $service->duration_minutes . ' min' : '--' }}
-                                            </td>
-                                            <td class="px-6 py-4 text-sm font-extrabold text-gray-900">
-                                                S/ {{ number_format($service->price, 2) }}
-                                            </td>
-                                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
-                                                <button wire:click="editService({{ $service->id }})" class="text-indigo-600 hover:text-indigo-900 font-bold">Editar</button>
-                                                <button wire:click="deleteService({{ $service->id }})" class="text-red-600 hover:text-red-900 font-bold">Eliminar</button>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="4" class="px-6 py-12 text-center text-gray-500 italic">No tienes servicios registrados en tu catálogo. Agrega uno arriba.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+                        <!-- Lista de Servicios -->
+                        <div class="mt-6">
+                            @forelse($providerServices as $service)
+                                <div class="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-emerald-100 hover:bg-emerald-50/20 transition-all mb-3 last:mb-0 group">
+                                    <!-- Icono servicio -->
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                                        <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                    </div>
+                                    <!-- Info -->
+                                    <div class="flex-1 min-w-0 text-left">
+                                        <p class="text-sm font-bold text-gray-900 truncate">{{ $service->name }}</p>
+                                        @if($service->description)
+                                            <p class="text-xs text-gray-500 truncate mt-0.5">{{ $service->description }}</p>
+                                        @endif
+                                    </div>
+                                    <!-- Duración -->
+                                    @if($service->duration_minutes)
+                                        <div class="flex items-center gap-1 text-xs text-gray-500 font-bold shrink-0">
+                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            {{ $service->duration_minutes }} min
+                                        </div>
+                                    @endif
+                                    <!-- Precio -->
+                                    <div class="text-sm font-black text-gray-900 shrink-0 bg-gray-100 px-3 py-1 rounded-full">
+                                        S/ {{ number_format($service->price, 2) }}
+                                    </div>
+                                    <!-- Acciones -->
+                                    <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
+                                        <button wire:click="editService({{ $service->id }})" title="Editar"
+                                            class="w-8 h-8 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        </button>
+                                        <button wire:click="deleteService({{ $service->id }})" title="Eliminar"
+                                            class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-14 flex flex-col items-center gap-3 text-gray-400">
+                                    <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                    <p class="text-sm font-bold">No tienes servicios en tu catálogo</p>
+                                    <p class="text-xs">Agrega tu primer servicio usando el formulario de arriba</p>
+                                </div>
+                            @endforelse
                         </div>
                     </div>
                 </div>
+                </div>
 
                 <!-- TAB: CONFIGURACIÓN PAGO -->
-                <div x-show="activeTab === 'payments_config'" style="display: none;" class="bg-white shadow-xl rounded-3xl overflow-hidden border border-gray-150">
+                @elseif($activeTab === 'payments_config')
+                <div class="space-y-6">
+                    <!-- Header premium -->
+                    <div class="bg-gradient-to-r from-purple-600 to-violet-700 rounded-2xl p-6 text-white shadow-lg">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center shadow-inner shrink-0">
+                                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="text-xl font-black">Cobros Yape / Plin</h3>
+                                <p class="text-violet-200 text-xs mt-0.5">Configura tus cuentas para que los clientes puedan transferirte al instante.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                <div class="bg-white shadow-xl rounded-3xl overflow-hidden border border-gray-100">
                     <div class="px-6 py-8">
                         <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                            <span class="text-3xl">💳</span>
+                            <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            </div>
                             <div>
-                                <h3 class="text-xl font-black text-gray-900">Métodos de Cobro Directo</h3>
-                                <p class="text-xs text-gray-550 mt-1">Configura tus cuentas de Yape y Plin para que los clientes puedan transferirte al instante.</p>
+                                <h3 class="text-lg font-black text-gray-900">Métodos de Cobro Directo</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">Configura tus cuentas de Yape y Plin para cobros rápidos.</p>
                             </div>
                         </div>
                         
                         <!-- Guía rápida de ayuda -->
                         <div class="mb-8 bg-gradient-to-r from-primary-50 to-indigo-50/50 p-5 rounded-2xl border border-primary-100/60 flex flex-col md:flex-row gap-4 items-start md:items-center">
-                            <div class="p-3 bg-white rounded-xl shadow-xs text-xl">💡</div>
+                            <div class="p-3 bg-white rounded-xl shadow-xs">
+                                <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
                             <div class="flex-1 space-y-1">
                                 <h4 class="text-sm font-bold text-gray-900">¿Cómo descargar tus códigos QR?</h4>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 text-xs text-gray-600">
@@ -965,10 +1202,10 @@
                         <form wire:submit.prevent="save" class="space-y-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Yape -->
-                                <div class="bg-purple-50/40 p-6 rounded-3xl border border-purple-100/60 space-y-4 hover:shadow-xs transition duration-300">
+                                <div class="bg-purple-50/40 p-6 rounded-3xl border border-purple-100/60 space-y-4 hover:shadow-xs transition duration-300" x-data="{ yapePreview: null }">
                                     <div class="flex items-center justify-between pb-3 border-b border-purple-100/40">
                                         <div class="flex items-center gap-2.5">
-                                            <span class="w-8 h-8 rounded-xl bg-purple-600/10 text-purple-700 flex items-center justify-center font-bold">Y</span>
+                                            <span class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-sm">Y</span>
                                             <h4 class="font-black text-purple-950">Cobros con Yape</h4>
                                         </div>
                                         <span class="text-xs bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">Yapear</span>
@@ -983,30 +1220,43 @@
                                             <div class="relative group my-2 h-44 w-44 mx-auto rounded-2xl border border-purple-200 bg-white p-2 shadow-sm overflow-hidden">
                                                 <img src="{{ \Illuminate\Support\Facades\Storage::url($existingYapeQr) }}" class="h-full w-full object-contain rounded-xl">
                                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200">
-                                                    <span class="text-[10px] text-white font-bold bg-purple-600 px-3 py-1.5 rounded-full shadow-md">QR Registrado</span>
+                                                    <span class="text-[10px] text-white font-bold bg-purple-600 px-3 py-1.5 rounded-full shadow-md">QR Registrado ✓</span>
                                                 </div>
                                             </div>
                                         @else
-                                            <div class="h-44 w-44 mx-auto border-2 border-dashed border-purple-200 bg-white/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-purple-400 p-4">
-                                                <span class="text-3xl">📷</span>
-                                                <span class="text-[10px] font-bold text-center">Sube tu imagen QR de Yape</span>
+                                            <!-- Preview antes de subir -->
+                                            <div class="my-2 mx-auto" x-show="yapePreview" style="display:none">
+                                                <div class="relative h-44 w-44 mx-auto rounded-2xl border-2 border-purple-400 bg-white p-2 shadow-md overflow-hidden">
+                                                    <img :src="yapePreview" class="h-full w-full object-contain rounded-xl">
+                                                    <div class="absolute top-1 right-1 bg-purple-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">Lista ✓</div>
+                                                </div>
+                                            </div>
+                                            <div x-show="!yapePreview" class="h-44 w-44 mx-auto border-2 border-dashed border-purple-200 bg-white/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-purple-400 p-4">
+                                                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 3.5a.5.5 0 11-1 0 .5.5 0 011 0z"/></svg>
+                                                <span class="text-[10px] font-bold text-center">Sube tu código QR de Yape</span>
                                             </div>
                                         @endif
                                         <div class="flex items-center justify-center mt-3">
-                                            <label class="cursor-pointer bg-white py-2 px-4 border border-purple-200 rounded-xl shadow-xs text-xs font-bold text-purple-700 hover:bg-purple-50 transition">
+                                            <label class="cursor-pointer bg-white py-2 px-4 border border-purple-200 rounded-xl shadow-xs text-xs font-bold text-purple-700 hover:bg-purple-50 transition flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                                                 <span>Seleccionar imagen QR</span>
-                                                <input type="file" wire:model.live="yape_qr" class="hidden" accept="image/*">
+                                                <input type="file" wire:model.live="yape_qr" class="hidden" accept="image/*"
+                                                    @change="const f=$event.target.files[0]; if(f) yapePreview=URL.createObjectURL(f)">
                                             </label>
+                                        </div>
+                                        <div wire:loading wire:target="yape_qr" class="flex items-center justify-center gap-2 text-xs text-purple-600 font-bold mt-1">
+                                            <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Cargando QR...
                                         </div>
                                         @error('yape_qr') <span class="text-red-500 text-xs text-center block mt-1">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
 
                                 <!-- Plin -->
-                                <div class="bg-teal-50/40 p-6 rounded-3xl border border-teal-100/60 space-y-4 hover:shadow-xs transition duration-300">
+                                <div class="bg-teal-50/40 p-6 rounded-3xl border border-teal-100/60 space-y-4 hover:shadow-xs transition duration-300" x-data="{ plinPreview: null }">
                                     <div class="flex items-center justify-between pb-3 border-b border-teal-100/40">
                                         <div class="flex items-center gap-2.5">
-                                            <span class="w-8 h-8 rounded-xl bg-teal-600/10 text-teal-700 flex items-center justify-center font-bold">P</span>
+                                            <span class="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center font-black text-sm shadow-sm">P</span>
                                             <h4 class="font-black text-teal-955">Cobros con Plin</h4>
                                         </div>
                                         <span class="text-xs bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Plinear</span>
@@ -1021,20 +1271,34 @@
                                             <div class="relative group my-2 h-44 w-44 mx-auto rounded-2xl border border-teal-200 bg-white p-2 shadow-sm overflow-hidden">
                                                 <img src="{{ \Illuminate\Support\Facades\Storage::url($existingPlinQr) }}" class="h-full w-full object-contain rounded-xl">
                                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200">
-                                                    <span class="text-[10px] text-white font-bold bg-teal-600 px-3 py-1.5 rounded-full shadow-md">QR Registrado</span>
+                                                    <span class="text-[10px] text-white font-bold bg-teal-600 px-3 py-1.5 rounded-full shadow-md">QR Registrado ✓</span>
                                                 </div>
                                             </div>
                                         @else
-                                            <div class="h-44 w-44 mx-auto border-2 border-dashed border-teal-200 bg-white/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-teal-400 p-4">
-                                                <span class="text-3xl">📷</span>
-                                                <span class="text-[10px] font-bold text-center">Sube tu imagen QR de Plin</span>
+                                            <!-- Preview antes de subir -->
+                                            <div class="my-2 mx-auto" x-show="plinPreview" style="display:none">
+                                                <div class="relative h-44 w-44 mx-auto rounded-2xl border-2 border-teal-400 bg-white p-2 shadow-md overflow-hidden">
+                                                    <img :src="plinPreview" class="h-full w-full object-contain rounded-xl">
+                                                    <div class="absolute top-1 right-1 bg-teal-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">Lista ✓</div>
+                                                </div>
+                                            </div>
+                                            <div x-show="!plinPreview" class="h-44 w-44 mx-auto border-2 border-dashed border-teal-200 bg-white/50 rounded-2xl flex flex-col items-center justify-center gap-2 text-teal-400 p-4">
+                                                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 3.5a.5.5 0 11-1 0 .5.5 0 011 0z"/></svg>
+                                                <span class="text-[10px] font-bold text-center">Sube tu código QR de Plin</span>
                                             </div>
                                         @endif
                                         <div class="flex items-center justify-center mt-3">
-                                            <label class="cursor-pointer bg-white py-2 px-4 border border-teal-200 rounded-xl shadow-xs text-xs font-bold text-teal-700 hover:bg-teal-50 transition">
+                                            <label class="cursor-pointer bg-white py-2 px-4 border border-teal-200 rounded-xl shadow-xs text-xs font-bold text-teal-700 hover:bg-teal-50 transition flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                                                 <span>Seleccionar imagen QR</span>
-                                                <input type="file" wire:model.live="plin_qr" class="hidden" accept="image/*">
+                                                <input type="file" wire:model.live="plin_qr" class="hidden" accept="image/*"
+                                                    @change="const f=$event.target.files[0]; if(f) plinPreview=URL.createObjectURL(f)">
                                             </label>
+                                        </div>
+                                        <div wire:loading wire:target="plin_qr" class="flex items-center justify-center gap-2 text-xs text-teal-600 font-bold mt-1">
+                                            <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Cargando QR...
+
                                         </div>
                                         @error('plin_qr') <span class="text-red-500 text-xs text-center block mt-1">{{ $message }}</span> @enderror
                                     </div>
@@ -1042,51 +1306,75 @@
                             </div>
 
                             <div class="flex justify-end pt-5 border-t border-gray-100">
-                                <button type="submit" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold shadow-md transition duration-200">
+                                <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold shadow-md transition duration-200">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                     Guardar Configuración
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
+                </div>
 
                 <!-- TAB: ESTADÍSTICAS -->
-                <div x-show="activeTab === 'stats'" style="display: none;" class="space-y-8" x-transition>
+                @elseif($activeTab === 'stats')
+                <div class="space-y-8">
+                    <!-- Header premium -->
+                    <div class="bg-gradient-to-r from-slate-800 to-gray-900 rounded-2xl p-6 text-white shadow-lg">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center shadow-inner shrink-0">
+                                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="text-xl font-black">Estadísticas</h3>
+                                <p class="text-gray-400 text-xs mt-0.5">Resumen de tu rendimiento profesional y métricas de negocio.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Cards Grid Premium -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         <!-- Ingresos Totales -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md transition">
-                            <span class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 font-extrabold text-2xl flex items-center justify-center">💵</span>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
                             <div>
-                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Histórico de Ingresos</p>
-                                <p class="text-2xl font-black text-gray-900 mt-1">S/ {{ number_format($totalEarnings, 2) }}</p>
+                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Ingresos Totales</p>
+                                <p class="text-xl font-black text-gray-900 mt-0.5">S/ {{ number_format($totalEarnings, 2) }}</p>
                             </div>
                         </div>
 
                         <!-- Ingresos Mes -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md transition">
-                            <span class="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 font-extrabold text-2xl flex items-center justify-center">📈</span>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                            <div class="w-12 h-12 rounded-2xl bg-sky-100 flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            </div>
                             <div>
-                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Ingresos de este Mes</p>
-                                <p class="text-2xl font-black text-gray-900 mt-1">S/ {{ number_format($monthlyEarnings, 2) }}</p>
+                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Ingresos del Mes</p>
+                                <p class="text-xl font-black text-gray-900 mt-0.5">S/ {{ number_format($monthlyEarnings, 2) }}</p>
                             </div>
                         </div>
 
                         <!-- Citas Completadas -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md transition">
-                            <span class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 font-extrabold text-2xl flex items-center justify-center">✓</span>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
                             <div>
                                 <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Servicios Completados</p>
-                                <p class="text-2xl font-black text-gray-900 mt-1">{{ $completedAppointmentsCount }}</p>
+                                <p class="text-xl font-black text-gray-900 mt-0.5">{{ $completedAppointmentsCount }}</p>
                             </div>
                         </div>
 
                         <!-- Valoración -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md transition">
-                            <span class="w-12 h-12 rounded-2xl bg-yellow-50 text-yellow-500 font-extrabold text-2xl flex items-center justify-center">★</span>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200/80 flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </div>
                             <div>
                                 <p class="text-[10px] text-gray-400 font-black uppercase tracking-wider">Calificación Promedio</p>
-                                <p class="text-2xl font-black text-gray-900 mt-1">{{ $averageRating }} / 5.0</p>
+                                <p class="text-xl font-black text-gray-900 mt-0.5">{{ $averageRating }} <span class="text-sm text-gray-400">/ 5.0</span></p>
                             </div>
                         </div>
                     </div>
@@ -1201,73 +1489,517 @@
                     </div>
                 </div>
 
-                <!-- TAB: RESEÑAS RECIBIDAS -->
-                <div x-show="activeTab === 'reviews'" style="display: none;" class="bg-white shadow rounded-lg overflow-hidden">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 pb-2 border-b">Reseñas Recibidas</h3>
-                        <p class="text-sm text-gray-500 mb-6">Aquí puedes leer las opiniones de tus clientes y responder a sus comentarios de manera pública.</p>
-
-                        <div class="space-y-6 divide-y divide-gray-100">
-                            @forelse($receivedReviews as $review)
-                                <div class="pt-6 first:pt-0 space-y-4">
-                                    <div class="flex items-start gap-4">
-                                        <div class="shrink-0">
-                                            <img class="h-10 w-10 rounded-full bg-gray-200" src="https://ui-avatars.com/api/?name={{ urlencode($review->user->name) }}&color=7F9CF5&background=EBF4FF" alt="">
-                                        </div>
-                                        <div class="flex-1 space-y-1">
-                                            <div class="flex items-center justify-between">
-                                                <h5 class="text-sm font-bold text-gray-900">{{ $review->user->name }}</h5>
-                                                <span class="text-xs text-gray-400 font-semibold">{{ $review->created_at->diffForHumans() }}</span>
-                                            </div>
-                                            <div class="flex items-center">
-                                                @for($i=1; $i<=5; $i++)
-                                                    <svg class="w-4 h-4 {{ $review->rating >= $i ? 'text-yellow-400' : 'text-gray-200' }}" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                    </svg>
-                                                @endfor
-                                            </div>
-                                            <p class="text-sm text-gray-600 font-medium italic">"{{ $review->comment }}"</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Formulario / Visualización de Respuesta -->
-                                    <div class="ml-14 bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
-                                        @if($review->provider_response)
-                                            <div class="flex items-start justify-between gap-4">
-                                                <div class="space-y-1">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="text-xs font-bold text-gray-900">Tu respuesta</span>
-                                                        <span class="text-[10px] text-gray-400 font-medium">{{ \Carbon\Carbon::parse($review->replied_at)->diffForHumans() }}</span>
-                                                    </div>
-                                                    <p class="text-xs text-gray-600 font-medium">{{ $review->provider_response }}</p>
-                                                </div>
-                                                <button wire:click="deleteReply({{ $review->id }})" class="text-xs text-red-500 hover:text-red-700 font-bold transition shrink-0">
-                                                    Eliminar
-                                                </button>
-                                            </div>
-                                        @else
-                                            <div class="space-y-2">
-                                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Responder comentario</label>
-                                                <div class="flex gap-2">
-                                                    <input type="text" wire:model="replyText.{{ $review->id }}" placeholder="Escribe tu respuesta..." class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs py-2 px-3">
-                                                    <button wire:click="submitReply({{ $review->id }})" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold transition">
-                                                        Responder
-                                                    </button>
-                                                </div>
-                                                @error('replyText.' . $review->id) <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="text-center py-12 text-gray-500 italic">No has recibido reseñas todavía.</div>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
+                @endif
 
             </div>
         </div>
+        @elseif($mainSection === 'calendar')
+            <!-- CALENDARIO FULL WIDTH -->
+            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6">
+                <livewire:dashboard.visual-calendar wire:key="provider-visual-calendar" />
+            </div>
+
+        @elseif($mainSection === 'reviews')
+            <!-- RESEÑAS FULL WIDTH -->
+            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6 space-y-6">
+                <div class="border-b border-gray-100 pb-4 text-left">
+                    <h3 class="text-xl font-black text-gray-900">Reseñas Recibidas</h3>
+                    <p class="text-xs text-gray-500 mt-1">Aquí puedes leer las opiniones de tus clientes y responder a sus comentarios de manera pública.</p>
+                </div>
+
+                <div class="space-y-6 divide-y divide-gray-100">
+                    @forelse($receivedReviews as $review)
+                        <div class="pt-6 first:pt-0 space-y-4">
+                            <div class="flex items-start gap-4">
+                                <div class="shrink-0">
+                                    <img class="h-10 w-10 rounded-full bg-gray-200 shadow-sm" src="https://ui-avatars.com/api/?name={{ urlencode($review->user->name) }}&color=7F9CF5&background=EBF4FF" alt="">
+                                </div>
+                                <div class="flex-1 space-y-1 text-left">
+                                    <div class="flex items-center justify-between">
+                                        <h5 class="text-sm font-bold text-gray-900">{{ $review->user->name }}</h5>
+                                        <span class="text-xs text-gray-400 font-semibold">{{ $review->created_at->diffForHumans() }}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        @for($i=1; $i<=5; $i++)
+                                            <svg class="w-4 h-4 {{ $review->rating >= $i ? 'text-yellow-400' : 'text-gray-200' }}" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                            </svg>
+                                        @endfor
+                                    </div>
+                                    <p class="text-sm text-gray-650 font-medium italic">"{{ $review->comment }}"</p>
+                                </div>
+                            </div>
+
+                            <!-- Formulario / Respuesta -->
+                            <div class="ml-14 bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3 text-left">
+                                @if($review->provider_response)
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs font-bold text-gray-900">Tu respuesta</span>
+                                                <span class="text-[10px] text-gray-400 font-medium">{{ \Carbon\Carbon::parse($review->replied_at)->diffForHumans() }}</span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 font-medium">{{ $review->provider_response }}</p>
+                                        </div>
+                                        <button wire:click="deleteReply({{ $review->id }})" class="text-xs text-red-500 hover:text-red-700 font-bold transition shrink-0">
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                @else
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Responder comentario</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" wire:model="replyText.{{ $review->id }}" placeholder="Escribe tu respuesta..." class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xs py-2 px-3">
+                                            <button wire:click="submitReply({{ $review->id }})" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold transition">
+                                                Responder
+                                            </button>
+                                        </div>
+                                        @error('replyText.' . $review->id) <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-16 text-gray-500 italic">No has recibido reseñas todavía.</div>
+                    @endforelse
+                </div>
+            </div>
+
+        @elseif($mainSection === 'appointments')
+            <!-- CITAS FULL WIDTH -->
+            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6 space-y-6">
+                <div class="border-b border-gray-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="text-left">
+                        <h3 class="text-xl font-black text-gray-900">Control de Citas</h3>
+                        <p class="text-xs text-gray-500 mt-1">Gestiona, filtra y confirma las citas agendadas por tus clientes.</p>
+                    </div>
+                    <div class="flex gap-1.5 flex-wrap">
+                        @foreach(['pending' => 'Pendientes', 'confirmed' => 'Confirmadas', 'completed' => 'Completadas', 'cancelled' => 'Canceladas', 'all' => 'Todas'] as $status => $label)
+                            <button wire:click="$set('filterStatus', '{{ $status }}')"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition duration-150 cursor-pointer
+                                    {{ $filterStatus === $status
+                                        ? 'bg-primary-600 text-white border-primary-600 shadow-xs'
+                                        : 'bg-white text-gray-650 border-gray-200 hover:bg-gray-50 hover:text-gray-900' }}">
+                                {{ $label }}
+                                @php
+                                    $cQuery = \App\Models\Appointment::where('provider_id', $user->id);
+                                    if ($status !== 'all') {
+                                        $cQuery->where('status', $status);
+                                    }
+                                    $statusCount = $cQuery->count();
+                                @endphp
+                                @if($statusCount > 0)
+                                    <span class="ml-1.5 {{ $filterStatus === $status ? 'bg-white/20 text-white' : 'bg-gray-150 text-gray-700' }} text-[9px] font-black px-1.5 py-0.5 rounded-full">{{ $statusCount }}</span>
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Panel de Búsqueda y Filtros de Fecha -->
+                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-150 flex flex-col md:flex-row md:items-end gap-4">
+                    <!-- Búsqueda por texto -->
+                    <div class="flex-1 space-y-1 text-left">
+                        <label for="searchQuery" class="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Buscar por cliente o mascota</label>
+                        <div class="relative">
+                            <input type="text" id="searchQuery" wire:model.live.debounce.300ms="searchQuery" placeholder="Nombre, email, mascota..." 
+                                class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white">
+                            <span class="absolute left-3 top-2.5 text-gray-400">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Filtro por rango / días -->
+                    <div class="w-full md:w-48 space-y-1 text-left shrink-0">
+                        <label for="dateFilter" class="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Filtrar por fecha</label>
+                        <select id="dateFilter" wire:model.live="dateFilter" 
+                            class="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white">
+                            <option value="all">Todas las fechas</option>
+                            <option value="today">Hoy</option>
+                            <option value="tomorrow">Mañana</option>
+                            <option value="this_week">Esta semana</option>
+                            <option value="custom">Rango personalizado</option>
+                        </select>
+                    </div>
+
+                    <!-- Campos de fecha personalizados -->
+                    @if($dateFilter === 'custom')
+                        <div class="w-full md:w-36 space-y-1 text-left shrink-0">
+                            <label for="startDate" class="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Desde</label>
+                            <input type="date" id="startDate" wire:model.live="startDate" 
+                                class="w-full px-3 py-1.5 text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white">
+                        </div>
+                        <div class="w-full md:w-36 space-y-1 text-left shrink-0">
+                            <label for="endDate" class="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Hasta</label>
+                            <input type="date" id="endDate" wire:model.live="endDate" 
+                                class="w-full px-3 py-1.5 text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white">
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Lista de citas -->
+                <div class="space-y-4">
+                    @forelse($appointmentsList as $apt)
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 hover:border-gray-200 transition duration-150">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                <div class="flex items-start gap-4 flex-1">
+                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($apt->client->name) }}&background=0ea5e9&color=fff&size=48"
+                                         class="w-12 h-12 rounded-2xl shrink-0 object-cover shadow-xs" alt="{{ $apt->client->name }}">
+                                    <div class="text-left">
+                                        <p class="font-bold text-gray-900 text-base leading-tight">{{ $apt->client->name }}</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">{{ $apt->client->email }}</p>
+                                        @if($apt->pet)
+                                            <p class="text-xs text-gray-600 mt-1.5 bg-gray-50 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-100">
+                                                <span class="text-primary-600 shrink-0" title="Mascota">
+                                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <circle cx="4.5" cy="10.5" r="2.5"/>
+                                                        <circle cx="9" cy="6" r="2.5"/>
+                                                        <circle cx="15" cy="6" r="2.5"/>
+                                                        <circle cx="19.5" cy="10.5" r="2.5"/>
+                                                        <path d="M12 10.5c-2.485 0-4.5 2.015-4.5 4.5 0 2.22 1.455 4.103 3.456 4.757l.006.002.5.5.5-.5c2.001-.654 3.456-2.537 3.456-4.759 0-2.485-2.015-4.5-4.5-4.5z"/>
+                                                    </svg>
+                                                </span>
+                                                <strong>{{ $apt->pet->name }}</strong>
+                                                <span class="text-gray-400">({{ $apt->pet->species }})</span>
+                                            </p>
+                                        @endif
+                                        @if($apt->notes)
+                                            <p class="text-xs text-gray-500 italic mt-3 bg-gray-50/50 p-2.5 rounded-xl border border-dashed border-gray-100">
+                                                "{{ $apt->notes }}"
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="shrink-0 flex flex-col items-end gap-3 text-right">
+                                    <div>
+                                        <p class="text-sm font-black text-gray-900">{{ $apt->scheduled_at->format('d M Y') }}</p>
+                                        <p class="text-xs font-bold text-gray-500 mt-0.5">{{ $apt->scheduled_at->format('H:i') }} hrs</p>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center justify-end gap-1.5">
+                                        @php
+                                            $statusStyles = [
+                                                'pending'   => 'bg-amber-50 text-amber-700 border-amber-200',
+                                                'confirmed' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                                                'completed' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                'cancelled' => 'bg-rose-50 text-rose-700 border-rose-200',
+                                            ];
+                                            $statusLabels = [
+                                                'pending'   => 'Pendiente',
+                                                'confirmed' => 'Confirmada',
+                                                'completed' => 'Completada',
+                                                'cancelled' => 'Cancelada',
+                                            ];
+                                        @endphp
+                                        <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full border {{ $statusStyles[$apt->status] ?? 'bg-gray-55 text-gray-655' }}">
+                                            {{ $statusLabels[$apt->status] ?? $apt->status }}
+                                        </span>
+
+                                        @if($apt->payment)
+                                            @php
+                                                $payStatusStyles = [
+                                                    'pending'      => 'bg-amber-50 text-amber-700 border-amber-200',
+                                                    'under_review' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                                                    'completed'    => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                    'failed'       => 'bg-rose-50 text-rose-700 border-rose-200',
+                                                ];
+                                                $payStatusLabels = [
+                                                    'pending'      => 'Pago Pendiente',
+                                                    'under_review' => 'En Revisión',
+                                                    'completed'    => 'Pago Aprobado',
+                                                    'failed'       => 'Pago Fallido',
+                                                ];
+                                            @endphp
+                                            <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full border flex items-center gap-1 {{ $payStatusStyles[$apt->payment->status] ?? 'bg-gray-50 text-gray-650' }}">
+                                                <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                    <rect width="20" height="14" x="2" y="5" rx="2" />
+                                                    <path d="M2 10h20" />
+                                                </svg>
+                                                {{ $payStatusLabels[$apt->payment->status] ?? $apt->payment->status }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5">
+                                        <button wire:click="openAppointmentModal({{ $apt->id }})"
+                                            class="px-3.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-xl border border-gray-200 transition flex items-center gap-1 cursor-pointer">
+                                            <span>Detalle</span> ➔
+                                        </button>
+                                        
+                                        @if($apt->client->whatsapp)
+                                            <a href="https://wa.me/51{{ preg_replace('/\D/','',$apt->client->whatsapp) }}"
+                                               target="_blank"
+                                               class="w-8 h-8 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition flex items-center justify-center shadow-xs"
+                                               title="Contactar por WhatsApp">
+                                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.464L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.451 5.403.002 9.803-4.386 9.805-9.794.002-2.618-1.01-5.078-2.854-6.924C16.379 2.043 13.93 1.02 11.312 1.02c-5.41 0-9.811 4.386-9.813 9.795-.001 2.052.541 4.054 1.571 5.827L2.099 21.99l5.466-1.433c1.72 1.037 3.475 1.585 4.693 1.587h-.001z"/>
+                                                </svg>
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-16 bg-white rounded-2xl border border-gray-100">
+                            <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="mt-4 text-gray-500 font-medium">No hay citas en este estado.</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- Paginación -->
+                @if(method_exists($appointmentsList, 'links'))
+                    <div class="mt-6">
+                        {{ $appointmentsList->links() }}
+                    </div>
+                @endif
+            </div>
+        @endif
+
+        <!-- MODAL DETALLE DE CITA GLOBAL (AMPLIO Y ENTENDIBLE) -->
+        @if($showAppointmentModal && $selectedAppointmentData)
+            @php
+                $aptModal = $selectedAppointmentData;
+                $statusModalStyles = [
+                    'pending'   => 'bg-amber-50 text-amber-700 border-amber-200',
+                    'confirmed' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                    'completed' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    'cancelled' => 'bg-rose-50 text-rose-700 border-rose-200',
+                ];
+                $statusModalLabels = [
+                    'pending'   => 'Pendiente de Aceptación',
+                    'confirmed' => 'Confirmada',
+                    'completed' => 'Completada',
+                    'cancelled' => 'Cancelada',
+                ];
+            @endphp
+            <div class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title-apt" role="dialog" aria-modal="true">
+                <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-950/70 backdrop-blur-sm transition-opacity" aria-hidden="true" wire:click="closeAppointmentModal"></div>
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                    <div class="relative z-10 inline-block align-middle bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 lg:max-w-3xl sm:max-w-xl w-full">
+                        <div class="bg-gradient-to-r from-indigo-900 to-slate-900 px-6 py-5 text-white flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-white/10 shadow-inner text-lg">
+                                    🤝
+                                </span>
+                                <div class="text-left">
+                                    <h3 class="text-base font-black text-white" id="modal-title-apt">Detalle de la Cita</h3>
+                                    <p class="text-[10px] text-indigo-200 mt-0.5">Programada para el {{ $aptModal->scheduled_at->translatedFormat('l, d \d\e F Y \a \l\a\s H:i') }} hrs</p>
+                                </div>
+                            </div>
+                            <button type="button" wire:click="closeAppointmentModal" class="text-white/70 hover:text-white transition focus:outline-none">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+
+                        <div class="bg-white p-6 grid grid-cols-1 md:grid-cols-2 gap-6 divide-y md:divide-y-0 md:divide-x divide-gray-150">
+                            <div class="space-y-5 text-left pr-0 md:pr-6">
+                                <div>
+                                    <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Información del Cliente</h4>
+                                    <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($aptModal->client->name) }}&background=6366f1&color=fff&size=40" class="w-10 h-10 rounded-xl" />
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-900">{{ $aptModal->client->name }}</p>
+                                            <p class="text-[11px] text-gray-500 truncate max-w-[200px]">{{ $aptModal->client->email }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if($aptModal->pet)
+                                    <div>
+                                        <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Mascota</h4>
+                                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-2">
+                                            <div class="flex justify-between items-center text-xs">
+                                                <span class="font-semibold text-gray-500">Nombre:</span>
+                                                <span class="font-bold text-gray-900 flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5 text-primary-600 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <circle cx="4.5" cy="10.5" r="2.5"/>
+                                                        <circle cx="9" cy="6" r="2.5"/>
+                                                        <circle cx="15" cy="6" r="2.5"/>
+                                                        <circle cx="19.5" cy="10.5" r="2.5"/>
+                                                        <path d="M12 10.5c-2.485 0-4.5 2.015-4.5 4.5 0 2.22 1.455 4.103 3.456 4.757l.006.002.5.5.5-.5c2.001-.654 3.456-2.537 3.456-4.759 0-2.485-2.015-4.5-4.5-4.5z"/>
+                                                    </svg>
+                                                    {{ $aptModal->pet->name }}
+                                                </span>
+                                            </div>
+                                            <div class="flex justify-between text-xs">
+                                                <span class="font-semibold text-gray-500">Especie:</span>
+                                                <span class="font-bold text-gray-900 capitalize">{{ $aptModal->pet->species }}</span>
+                                            </div>
+                                            @if($aptModal->pet->breed)
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="font-semibold text-gray-500">Raza:</span>
+                                                    <span class="font-bold text-gray-900">{{ $aptModal->pet->breed }}</span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if($aptModal->notes)
+                                    <div>
+                                        <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Notas Adicionales</h4>
+                                        <p class="text-xs text-gray-600 bg-amber-50/50 p-3 rounded-2xl border border-dashed border-amber-100 leading-relaxed">
+                                            "{{ $aptModal->notes }}"
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="space-y-5 text-left pt-5 md:pt-0 pl-0 md:pl-6">
+                                <div>
+                                    <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Detalle del Servicio</h4>
+                                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-2">
+                                        <div class="flex justify-between text-xs font-bold border-b border-gray-200/50 pb-2">
+                                            <span>Servicios Solicitados</span>
+                                            <span>Subtotal</span>
+                                        </div>
+                                        @forelse($aptModal->services as $service)
+                                            <div class="flex justify-between text-xs text-gray-700">
+                                                <span class="font-medium">{{ $service->name }}</span>
+                                                <span class="font-bold">S/ {{ number_format($service->pivot->price ?? $service->price, 2) }}</span>
+                                            </div>
+                                        @empty
+                                            <div class="text-xs text-gray-500 italic">Servicio general del perfil</div>
+                                        @endforelse
+                                        <div class="flex justify-between text-sm font-black text-gray-950 border-t border-gray-200/50 pt-2">
+                                            <span>Total</span>
+                                            <span>S/ {{ number_format($aptModal->services->sum(fn($s) => $s->pivot->price ?? $s->price), 2) ?: number_format($aptModal->price ?? 0, 2) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Estado y Pago</h4>
+                                    <div class="flex flex-wrap gap-2 mb-3">
+                                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border {{ $statusModalStyles[$aptModal->status] ?? 'bg-gray-55 text-gray-650' }}">
+                                            {{ $statusModalLabels[$aptModal->status] ?? $aptModal->status }}
+                                        </span>
+                                        @if($aptModal->payment)
+                                            @php
+                                                $payModalStyles = [
+                                                    'pending'      => 'bg-amber-50 text-amber-700 border-amber-200',
+                                                    'under_review' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                                                    'completed'    => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                    'failed'       => 'bg-rose-50 text-rose-700 border-rose-200',
+                                                ];
+                                                $payModalLabels = [
+                                                    'pending'      => 'Pago Pendiente',
+                                                    'under_review' => 'Pago En Revisión',
+                                                    'completed'    => 'Pago Aprobado',
+                                                    'failed'       => 'Pago Fallido',
+                                                ];
+                                            @endphp
+                                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 {{ $payModalStyles[$aptModal->payment->status] ?? 'bg-gray-55 text-gray-650' }}">
+                                                <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                    <rect width="20" height="14" x="2" y="5" rx="2" />
+                                                    <path d="M2 10h20" />
+                                                </svg>
+                                                {{ $payModalLabels[$aptModal->payment->status] ?? $aptModal->payment->status }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    @if($aptModal->payment && $aptModal->payment->status === 'under_review')
+                                        <div class="p-3 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-2">
+                                            <p class="text-[10px] font-black text-indigo-900 uppercase tracking-wider">Verificación de Comprobante</p>
+                                            <div class="text-[11px] text-gray-600 space-y-1">
+                                                @if($aptModal->payment->transaction_reference)
+                                                    <p>Código Operación: <strong class="text-gray-900">{{ $aptModal->payment->transaction_reference }}</strong></p>
+                                                @endif
+                                                <p>Medio de Pago: <strong class="text-gray-950 uppercase">{{ $aptModal->payment->payment_method }}</strong></p>
+                                                @if($aptModal->payment->receipt_photo_path)
+                                                    <a href="{{ \Illuminate\Support\Facades\Storage::url($aptModal->payment->receipt_photo_path) }}" target="_blank" class="inline-flex items-center text-xs font-black text-indigo-650 hover:text-indigo-800 underline mt-1">
+                                                        🔎 Ver imagen del comprobante
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @elseif($aptModal->payment && $aptModal->payment->status === 'completed')
+                                        <div class="text-xs text-emerald-700 font-semibold bg-emerald-50/50 border border-emerald-100 p-3 rounded-2xl">
+                                            <span>✓ Cobro aprobado por S/ {{ number_format($aptModal->payment->amount, 2) }} vía {{ strtoupper($aptModal->payment->payment_method) }}.</span>
+                                            @if($aptModal->payment->transaction_reference)
+                                                <div class="text-[10px] text-gray-500 font-normal mt-0.5">Operación Ref: {{ $aptModal->payment->transaction_reference }}</div>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-3">
+                            <div class="flex gap-2 w-full sm:w-auto">
+                                @if($aptModal->client->whatsapp)
+                                    <a href="https://wa.me/51{{ preg_replace('/\D/','',$aptModal->client->whatsapp) }}"
+                                       target="_blank"
+                                       class="w-full sm:w-auto inline-flex justify-center items-center gap-1.5 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl transition shadow-xs">
+                                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.464L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.451 5.403.002 9.803-4.386 9.805-9.794.002-2.618-1.01-5.078-2.854-6.924C16.379 2.043 13.93 1.02 11.312 1.02c-5.41 0-9.811 4.386-9.813 9.795-.001 2.052.541 4.054 1.571 5.827L2.099 21.99l5.466-1.433c1.72 1.037 3.475 1.585 4.693 1.587h-.001z"/></svg>
+                                        WhatsApp
+                                    </a>
+                                @endif
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                @if($aptModal->status === 'pending')
+                                    <button type="button" wire:click="confirmAppointment({{ $aptModal->id }})"
+                                        class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow-md cursor-pointer flex items-center justify-center">
+                                        Confirmar Cita
+                                    </button>
+                                    <button type="button" wire:click="$set('confirmingCancel', {{ $aptModal->id }})"
+                                        class="px-4 py-2.5 bg-white border border-red-200 hover:bg-red-50 text-red-650 text-red-650 text-red-600 text-sm font-bold rounded-xl transition cursor-pointer flex items-center justify-center">
+                                        Rechazar Cita
+                                    </button>
+                                @elseif($aptModal->status === 'confirmed')
+                                    <button type="button" wire:click="completeAppointment({{ $aptModal->id }})"
+                                        class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition shadow-md cursor-pointer flex items-center justify-center">
+                                        Completar Cita
+                                    </button>
+                                    <button type="button" wire:click="$set('confirmingCancel', {{ $aptModal->id }})"
+                                        class="px-4 py-2.5 bg-white border border-red-200 hover:bg-red-50 text-red-650 text-red-650 text-red-650 text-red-600 text-sm font-bold rounded-xl transition cursor-pointer flex items-center justify-center">
+                                        Cancelar Cita
+                                    </button>
+                                @endif
+
+                                @if($aptModal->payment && $aptModal->payment->status === 'under_review')
+                                    <button type="button" wire:click="approveAppointmentPayment({{ $aptModal->id }})"
+                                        class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition shadow-md cursor-pointer flex items-center justify-center">
+                                        Aprobar Pago
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+
+                        @if($confirmingCancel === $aptModal->id)
+                            <div class="bg-red-50 border-t border-red-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div class="text-left">
+                                    <p class="text-sm font-bold text-red-900">¿Estás seguro de que deseas rechazar/cancelar esta cita?</p>
+                                    <p class="text-xs text-red-700 mt-0.5">El cliente recibirá una notificación por correo.</p>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button type="button" wire:click="cancelAppointment({{ $aptModal->id }})"
+                                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition shadow-xs cursor-pointer">
+                                        Confirmar Cancelación
+                                    </button>
+                                    <button type="button" wire:click="$set('confirmingCancel', null)"
+                                        class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold rounded-lg transition hover:bg-gray-50 cursor-pointer">
+                                        Atrás
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 

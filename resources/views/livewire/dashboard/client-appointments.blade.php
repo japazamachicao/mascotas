@@ -87,7 +87,18 @@
                                 </div>
                                 <p class="text-sm text-gray-500">{{ $apt->provider->email }}</p>
                                 @if($apt->pet)
-                                    <p class="text-xs text-gray-400 mt-1">🐾 Mascota: <span class="font-semibold text-gray-600">{{ $apt->pet->name }}</span> ({{ $apt->pet->species }})</p>
+                                    <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                                        <span class="text-primary-600 shrink-0" title="Mascota">
+                                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="4.5" cy="10.5" r="2.5"/>
+                                                <circle cx="9" cy="6" r="2.5"/>
+                                                <circle cx="15" cy="6" r="2.5"/>
+                                                <circle cx="19.5" cy="10.5" r="2.5"/>
+                                                <path d="M12 10.5c-2.485 0-4.5 2.015-4.5 4.5 0 2.22 1.455 4.103 3.456 4.757l.006.002.5.5.5-.5c2.001-.654 3.456-2.537 3.456-4.759 0-2.485-2.015-4.5-4.5-4.5z"/>
+                                            </svg>
+                                        </span>
+                                        Mascota: <span class="font-semibold text-gray-600">{{ $apt->pet->name }}</span> ({{ $apt->pet->species }})
+                                    </p>
                                 @endif
                                 @if($apt->notes)
                                     <p class="text-sm text-gray-600 mt-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 italic font-medium">"{{ $apt->notes }}"</p>
@@ -135,8 +146,12 @@
                                         'failed'       => 'Pago Fallido',
                                     ];
                                 @endphp
-                                <span class="text-xs font-bold px-2.5 py-1 rounded-full border self-start sm:self-auto {{ $payStatusStyles[$apt->payment->status] ?? 'bg-gray-50 text-gray-700 border-gray-200' }}">
-                                    💳 {{ $payStatusLabels[$apt->payment->status] ?? $apt->payment->status }}
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-full border self-start sm:self-auto inline-flex items-center gap-1 {{ $payStatusStyles[$apt->payment->status] ?? 'bg-gray-50 text-gray-700 border-gray-200' }}">
+                                    <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <rect width="20" height="14" x="2" y="5" rx="2" />
+                                        <path d="M2 10h20" />
+                                    </svg>
+                                    {{ $payStatusLabels[$apt->payment->status] ?? $apt->payment->status }}
                                 </span>
                             @endif
 
@@ -232,7 +247,12 @@
                                         <label class="flex flex-col items-center justify-center p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition"
                                             :class="localPaymentMethod === 'culqi' ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200'">
                                             <input type="radio" name="payment_method_sel" wire:model.live="paymentMethod" value="culqi" class="sr-only">
-                                            <span class="text-xl mb-1">💳</span>
+                                            <span class="text-indigo-600 mb-1.5 shrink-0" title="Tarjeta">
+                                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <rect width="20" height="14" x="2" y="5" rx="2" />
+                                                    <path d="M2 10h20" />
+                                                </svg>
+                                            </span>
                                             <span class="text-xs font-bold text-gray-900">Tarjeta</span>
                                         </label>
 

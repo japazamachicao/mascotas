@@ -714,7 +714,7 @@
                                 <span class="text-gray-400 text-[9px]">(${markerData.reviews_count})</span>
                             </div>
                         </div>
-                        <a href="${markerData.url}" class="block text-center bg-primary-600 hover:bg-primary-700 text-white text-[10px] font-bold py-1.5 rounded-lg mt-3 transition shadow-sm">Ver Perfil</a>
+                        <a href="${markerData.url}" class="block text-center bg-primary-600 hover:bg-primary-700 !text-white text-[10px] font-bold py-1.5 rounded-lg mt-3 transition shadow-sm" style="color: white !important;">Ver Perfil</a>
                     </div>
                 `;
 

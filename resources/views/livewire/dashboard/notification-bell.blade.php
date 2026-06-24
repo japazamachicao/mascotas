@@ -92,7 +92,7 @@
         <!-- Footer -->
         <div class="px-4 py-2 bg-gray-50 text-center">
             @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
-                <a href="{{ route('dashboard.provider.appointments') }}" class="text-[10px] font-bold text-gray-500 hover:text-primary-600 transition">
+                <a href="{{ route('dashboard.provider', ['section' => 'appointments']) }}" class="text-[10px] font-bold text-gray-500 hover:text-primary-600 transition">
                     Ver todas mis citas
                 </a>
             @else
