@@ -103,6 +103,32 @@
                                 @if($apt->notes)
                                     <p class="text-sm text-gray-600 mt-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 italic font-medium">"{{ $apt->notes }}"</p>
                                 @endif
+                                @if($apt->payment && $apt->payment->description)
+                                    <div class="mt-2.5 p-3 bg-indigo-50/40 rounded-xl border border-indigo-100 text-xs text-left max-w-md">
+                                        <p class="font-bold text-indigo-900 mb-1.5 flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <rect width="20" height="14" x="2" y="5" rx="2" />
+                                                <path d="M2 10h20" />
+                                            </svg>
+                                            Desglose de Cobros:
+                                        </p>
+                                        @php
+                                            $decodedAptCharges = json_decode($apt->payment->description, true);
+                                        @endphp
+                                        @if(is_array($decodedAptCharges))
+                                            <div class="space-y-1 bg-white p-2 rounded-lg border border-indigo-100/50">
+                                                @foreach($decodedAptCharges as $c)
+                                                    <div class="flex justify-between text-[11px] text-gray-700 py-0.5 border-b border-gray-100 last:border-0">
+                                                        <span>{{ $c['concept'] }}</span>
+                                                        <span class="font-bold text-gray-900">S/ {{ number_format($c['amount'], 2) }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <p class="text-gray-750 bg-white p-2.5 rounded-lg border border-indigo-100/50 leading-relaxed font-medium">{{ $apt->payment->description }}</p>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -238,6 +264,35 @@
                                     <span class="text-sm font-semibold text-primary-800">Monto a pagar:</span>
                                     <span class="text-xl font-extrabold text-primary-600">S/ {{ number_format($selectedAppointment->payment->amount, 2) }}</span>
                                 </div>
+
+                                @if($selectedAppointment->payment->description)
+                                    <div class="bg-indigo-50/40 p-4 rounded-xl border border-indigo-100 text-xs">
+                                        <p class="font-bold text-indigo-900 mb-1.5 flex items-center gap-1.5 text-left">
+                                            <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <rect width="20" height="14" x="2" y="5" rx="2" />
+                                                <path d="M2 10h20" />
+                                            </svg>
+                                            Detalle de los Cobros:
+                                        </p>
+                                        @php
+                                            $decodedModalCharges = json_decode($selectedAppointment->payment->description, true);
+                                        @endphp
+                                        @if(is_array($decodedModalCharges))
+                                            <div class="space-y-1.5 bg-white p-2.5 rounded-lg border border-indigo-100/50">
+                                                @foreach($decodedModalCharges as $c)
+                                                    <div class="flex justify-between text-[11px] text-gray-700 py-0.5 border-b border-gray-100 last:border-0">
+                                                        <span class="text-left">{{ $c['concept'] }}</span>
+                                                        <span class="font-bold text-gray-900">S/ {{ number_format($c['amount'], 2) }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <p class="text-gray-700 bg-white p-2.5 rounded-lg border border-indigo-100/50 text-left font-medium leading-relaxed">
+                                                {{ $selectedAppointment->payment->description }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                @endif
 
                                 <!-- Métodos de pago selector -->
                                 <div>

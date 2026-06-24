@@ -66,6 +66,32 @@
                                 @if($apt->notes)
                                     <p class="text-sm text-gray-600 mt-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 italic">"{{ $apt->notes }}"</p>
                                 @endif
+                                @if($apt->payment && $apt->payment->description)
+                                    <div class="mt-2.5 p-3 bg-indigo-50/40 rounded-xl border border-indigo-100 text-xs text-left max-w-md">
+                                        <p class="font-bold text-indigo-900 mb-1.5 flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <rect width="20" height="14" x="2" y="5" rx="2" />
+                                                <path d="M2 10h20" />
+                                            </svg>
+                                            Desglose de Cobros:
+                                        </p>
+                                        @php
+                                            $decodedProvCharges = json_decode($apt->payment->description, true);
+                                        @endphp
+                                        @if(is_array($decodedProvCharges))
+                                            <div class="space-y-1 bg-white p-2 rounded-lg border border-indigo-100/50">
+                                                @foreach($decodedProvCharges as $c)
+                                                    <div class="flex justify-between text-[11px] text-gray-700 py-0.5 border-b border-gray-100 last:border-0">
+                                                        <span>{{ $c['concept'] }}</span>
+                                                        <span class="font-bold text-gray-900">S/ {{ number_format($c['amount'], 2) }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <p class="text-gray-750 bg-white p-2.5 rounded-lg border border-indigo-100/50 leading-relaxed font-medium">{{ $apt->payment->description }}</p>
+                                        @endif
+                                    </div>
+                                @endif
 
                                 @if($apt->payment && $apt->payment->status === 'under_review')
                                     <div class="mt-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 flex flex-col md:flex-row md:items-center justify-between gap-4">

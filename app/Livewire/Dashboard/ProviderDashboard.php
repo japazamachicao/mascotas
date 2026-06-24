@@ -124,6 +124,11 @@ class ProviderDashboard extends Component
     public $confirmingCancel = null;
     public $showAppointmentModal = false;
     public $selectedAppointmentData = null;
+    public $editPaymentAmount = 0.0;
+    public $editPaymentDescription = '';
+    public array $extraCharges = [];
+    public string $newChargeConcept = '';
+    public $newChargeAmount = '';
 
     // Reseñas Recibidas y Respuestas
     public $receivedReviews = [];
@@ -618,6 +623,37 @@ class ProviderDashboard extends Component
         if ($appointment) {
             $this->selectedAppointmentData = $appointment;
             $this->showAppointmentModal = true;
+            $this->editPaymentAmount = $appointment->payment ? floatval($appointment->payment->amount) : 0.0;
+            $this->editPaymentDescription = $appointment->payment ? $appointment->payment->description : '';
+
+            $this->extraCharges = [];
+            if ($appointment->payment && $appointment->payment->description) {
+                $decoded = json_decode($appointment->payment->description, true);
+                if (is_array($decoded)) {
+                    $this->extraCharges = $decoded;
+                } else {
+                    // Retrocompatibilidad
+                    $this->extraCharges[] = [
+                        'concept' => $appointment->payment->description,
+                        'amount' => floatval($appointment->payment->amount)
+                    ];
+                }
+            } else {
+                if ($appointment->services && $appointment->services->isNotEmpty()) {
+                    foreach ($appointment->services as $service) {
+                        $this->extraCharges[] = [
+                            'concept' => $service->name,
+                            'amount' => floatval($service->pivot->price_at_booking ?? $service->price)
+                        ];
+                    }
+                } else {
+                    $this->extraCharges[] = [
+                        'concept' => 'Servicio contratado',
+                        'amount' => floatval($this->editPaymentAmount)
+                    ];
+                }
+            }
+            $this->calculateTotalFromCharges();
         }
     }
 
@@ -625,6 +661,47 @@ class ProviderDashboard extends Component
     {
         $this->showAppointmentModal = false;
         $this->selectedAppointmentData = null;
+    }
+
+    public function addExtraCharge(): void
+    {
+        $this->validate([
+            'newChargeConcept' => 'required|string|max:100',
+            'newChargeAmount' => 'required|numeric|min:0',
+        ], [
+            'newChargeConcept.required' => 'El concepto o servicio es obligatorio.',
+            'newChargeAmount.required' => 'El monto es obligatorio.',
+            'newChargeAmount.numeric' => 'El monto debe ser un valor numérico.',
+            'newChargeAmount.min' => 'El monto no puede ser negativo.',
+        ]);
+
+        $this->extraCharges[] = [
+            'concept' => $this->newChargeConcept,
+            'amount' => floatval($this->newChargeAmount)
+        ];
+
+        $this->newChargeConcept = '';
+        $this->newChargeAmount = '';
+        
+        $this->calculateTotalFromCharges();
+    }
+
+    public function removeExtraCharge(int $index): void
+    {
+        if (isset($this->extraCharges[$index])) {
+            unset($this->extraCharges[$index]);
+            $this->extraCharges = array_values($this->extraCharges);
+        }
+        $this->calculateTotalFromCharges();
+    }
+
+    public function calculateTotalFromCharges(): void
+    {
+        $total = 0.0;
+        foreach ($this->extraCharges as $charge) {
+            $total += floatval($charge['amount']);
+        }
+        $this->editPaymentAmount = round($total, 2);
     }
 
     public function confirmAppointment(int $id): void
@@ -656,13 +733,45 @@ class ProviderDashboard extends Component
     public function completeAppointment(int $id): void
     {
         $appointment = \App\Models\Appointment::where('provider_id', $this->user->id)->findOrFail($id);
+        
+        $this->validate([
+            'editPaymentAmount' => 'required|numeric|min:0',
+            'extraCharges' => 'required|array|min:1',
+            'extraCharges.*.concept' => 'required|string|max:100',
+            'extraCharges.*.amount' => 'required|numeric|min:0',
+        ], [
+            'extraCharges.required' => 'Debes registrar al menos un concepto en el desglose de cobros.',
+            'extraCharges.min' => 'Debes registrar al menos un concepto en el desglose de cobros.',
+            'extraCharges.*.concept.required' => 'El concepto de cobro es obligatorio.',
+            'extraCharges.*.amount.required' => 'El monto es obligatorio.',
+            'extraCharges.*.amount.numeric' => 'El monto debe ser numérico.',
+        ]);
+
         $appointment->update(['status' => 'completed']);
+
+        // Serializar desglose interactivo a JSON string
+        $descriptionJson = json_encode($this->extraCharges);
+
+        if ($appointment->payment) {
+            $appointment->payment->update([
+                'amount' => $this->editPaymentAmount,
+                'description' => $descriptionJson,
+            ]);
+        } else {
+            $appointment->payment()->create([
+                'amount' => $this->editPaymentAmount,
+                'description' => $descriptionJson,
+                'payment_method' => 'yape',
+                'status' => 'pending',
+            ]);
+        }
+
         $appointment->client->notify(new \App\Notifications\AppointmentStatusChanged($appointment));
         $this->loadAppointments();
         if ($this->showAppointmentModal && $this->selectedAppointmentData?->id === $id) {
             $this->openAppointmentModal($id);
         }
-        $this->dispatch('notify', message: '¡Cita completada exitosamente! ✓', type: 'success');
+        $this->dispatch('notify', message: '¡Cita completada con monto y desglose de cobros actualizados! ✓', type: 'success');
     }
 
     public function approveAppointmentPayment(int $id): void

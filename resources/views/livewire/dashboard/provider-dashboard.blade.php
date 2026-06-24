@@ -1932,6 +1932,106 @@
                                             @endif
                                         </div>
                                     @endif
+
+                                    @if($aptModal->status === 'confirmed')
+                                        <!-- Campos de Edición de Cobro (Cita Confirmada) -->
+                                        <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl space-y-4">
+                                            <h5 class="text-xs font-black text-gray-700 uppercase tracking-wider text-left">Desglose de Cobros y Conceptos</h5>
+                                            
+                                            <!-- Listado de cargos actuales -->
+                                            <div class="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                                                @forelse($extraCharges as $index => $charge)
+                                                    <div class="flex items-center justify-between p-2 bg-white rounded-xl border border-gray-150 text-xs shadow-xs">
+                                                        <div class="flex-1 text-left font-semibold text-gray-700 truncate pr-2">
+                                                            {{ $charge['concept'] }}
+                                                        </div>
+                                                        <div class="font-extrabold text-gray-900 pr-3">
+                                                            S/ {{ number_format($charge['amount'], 2) }}
+                                                        </div>
+                                                        <button type="button" wire:click="removeExtraCharge({{ $index }})" 
+                                                            class="text-red-500 hover:text-red-700 font-bold px-2 py-1 transition cursor-pointer text-xs">
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                @empty
+                                                    <div class="text-[11px] text-gray-450 italic text-center py-4 bg-white rounded-xl border border-dashed border-gray-200">No hay cargos registrados en este desglose.</div>
+                                                @endforelse
+                                            </div>
+
+                                            <!-- Formulario para agregar un nuevo cargo -->
+                                            <div class="bg-white p-3 rounded-xl border border-gray-150 space-y-3">
+                                                <div class="grid grid-cols-3 gap-2">
+                                                    <div class="col-span-2 text-left">
+                                                        <label for="newChargeConcept" class="block text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">Concepto / Servicio</label>
+                                                        <input type="text" id="newChargeConcept" wire:model="newChargeConcept" placeholder="Ej: Vacuna / Examen / Baño" 
+                                                            class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white">
+                                                        @error('newChargeConcept') <span class="text-red-500 text-[9px] font-bold mt-0.5 block text-left">{{ $message }}</span> @enderror
+                                                    </div>
+                                                    <div class="text-left">
+                                                        <label for="newChargeAmount" class="block text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">Monto (S/)</label>
+                                                        <input type="number" step="0.01" min="0" id="newChargeAmount" wire:model="newChargeAmount" placeholder="0.00" 
+                                                            class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white font-bold text-gray-900">
+                                                        @error('newChargeAmount') <span class="text-red-500 text-[9px] font-bold mt-0.5 block text-left">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="flex justify-end">
+                                                    <button type="button" wire:click="addExtraCharge" 
+                                                        class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-lg border border-indigo-150 transition cursor-pointer flex items-center gap-1">
+                                                        ➕ Agregar Cargo
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Total Calculado -->
+                                            <div class="flex justify-between items-center pt-2.5 border-t border-gray-200 font-black text-xs text-gray-800 text-left">
+                                                <span>Total Final a Cobrar:</span>
+                                                <span class="text-sm text-primary-600 font-extrabold bg-primary-50 px-3 py-1 rounded-lg border border-primary-100">
+                                                    S/ {{ number_format($editPaymentAmount, 2) }}
+                                                </span>
+                                            </div>
+                                            
+                                            <p class="text-[10px] text-gray-400 leading-normal text-left">
+                                                * Nota: Al presionar "Completar Cita" se registrará este desglose y se notificará al cliente para proceder con el pago.
+                                            </p>
+                                        </div>
+                                    @elseif($aptModal->status === 'completed' && $aptModal->payment && $aptModal->payment->description)
+                                        <!-- Detalle de Cobro Registrado (Cita Completada) -->
+                                        <div class="mt-4 p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl space-y-2 text-left">
+                                            <h5 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-emerald-600 fill-none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                    <rect width="20" height="14" x="2" y="5" rx="2" />
+                                                    <path d="M2 10h20" />
+                                                </svg>
+                                                Detalle del Cobro Registrado
+                                            </h5>
+
+                                            @php
+                                                $decodedCharges = json_decode($aptModal->payment->description, true);
+                                            @endphp
+
+                                            @if(is_array($decodedCharges))
+                                                <div class="space-y-1.5 my-2">
+                                                    @foreach($decodedCharges as $charge)
+                                                        <div class="flex justify-between text-xs text-gray-700 bg-white p-2.5 rounded-xl border border-emerald-100/30">
+                                                            <span class="font-medium">{{ $charge['concept'] }}</span>
+                                                            <span class="font-extrabold text-gray-900">S/ {{ number_format($charge['amount'], 2) }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="text-xs text-gray-650 bg-white p-2.5 rounded-lg border border-emerald-100/50 whitespace-pre-line leading-relaxed">
+                                                    {{ $aptModal->payment->description }}
+                                                </div>
+                                            @endif
+
+                                            <div class="flex justify-between items-center border-t border-emerald-250/50 pt-2.5 font-black text-xs text-gray-800">
+                                                <span>Monto Total Cobrado:</span>
+                                                <span class="text-emerald-700 font-extrabold bg-white px-2.5 py-1 rounded-lg border border-emerald-100">
+                                                    S/ {{ number_format($aptModal->payment->amount, 2) }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
