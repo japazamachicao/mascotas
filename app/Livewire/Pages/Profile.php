@@ -47,7 +47,7 @@ class Profile extends Component
 
     public function mount($id)
     {
-        $this->user = User::with([
+        $query = User::with([
             'veterinarianProfile.district.province.department', 
             'walkerProfile.district.province.department',
             'groomerProfile.district.province.department',
@@ -58,7 +58,30 @@ class Profile extends Component
             'petTaxiProfile.district.province.department',
             'petPhotographerProfile.district.province.department',
             'portfolio',
-        ])->findOrFail($id);
+        ]);
+
+        if (is_numeric($id)) {
+            $this->user = $query->findOrFail($id);
+        } else {
+            // Check if slug ends with -{id} (e.g., name-slug-60)
+            $parts = explode('-', $id);
+            $lastPart = end($parts);
+            
+            if (is_numeric($lastPart)) {
+                $this->user = $query->find($lastPart);
+            }
+            
+            // Fallback: look up by full name slug match (backward compatible/old urls)
+            if (!$this->user) {
+                $this->user = $query->get()->first(function ($u) use ($id) {
+                    return \Illuminate\Support\Str::slug($u->name) === $id;
+                });
+            }
+
+            if (!$this->user) {
+                abort(404, 'Perfil de proveedor no encontrado.');
+            }
+        }
 
         $this->detectProfile();
         
@@ -168,7 +191,7 @@ class Profile extends Component
         $this->detectProfile();
         
         $this->selectedServices = [];
-        $this->totalPrice = $this->profile->price_from ?? 0.0;
+        $this->totalPrice = 0.0;
         
         if ($this->profile && $this->profile->latitude && $this->profile->longitude) {
             $this->dispatch('profile-role-changed', latitude: $this->profile->latitude, longitude: $this->profile->longitude);
@@ -281,7 +304,7 @@ class Profile extends Component
 
         $amount = $hasServices 
             ? \App\Models\ProviderService::whereIn('id', $this->selectedServices)->sum('price')
-            : ($this->profile->price_from ?? 0.0);
+            : 0.0;
 
         \App\Models\Payment::create([
             'appointment_id' => $appointment->id,
@@ -319,7 +342,7 @@ class Profile extends Component
     public function openBookingModal()
     {
         $this->selectedServices = [];
-        $this->totalPrice = $this->profile->price_from ?? 0.0;
+        $this->totalPrice = 0.0;
         $this->showBookingModal = true;
     }
 

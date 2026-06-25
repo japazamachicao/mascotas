@@ -60,9 +60,17 @@
 
                     <!-- Nombre -->
                     <div>
-                        <label for="name" class="block text-sm font-bold text-gray-700">Nombre Completo</label>
+                        <label for="name" class="block text-sm font-bold text-gray-700">
+                            @if(Auth::user()->hasRole('client'))
+                                Nombre Completo
+                            @else
+                                Nombre Completo o Comercial (Negocio)
+                            @endif
+                        </label>
                         <div class="mt-1">
-                            <input type="text" wire:model="name" id="name" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                            <input type="text" wire:model="name" id="name" required 
+                                   placeholder="{{ Auth::user()->hasRole('client') ? 'Ej. Juan Pérez' : 'Ej. Veterinaria San Martín' }}"
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                         </div>
                         @error('name') <span class="text-red-600 text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>

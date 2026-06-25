@@ -56,7 +56,7 @@
                         </div>
 
                         <div class="flex gap-3">
-                            <a href="{{ route('profile.show', $provider->id) }}" class="flex-1 bg-primary-50 hover:bg-primary-100 text-primary-700 font-bold py-2 rounded-xl text-sm text-center transition">
+                            <a href="{{ $provider->profileUrl() }}" class="flex-1 bg-primary-50 hover:bg-primary-100 text-primary-700 font-bold py-2 rounded-xl text-sm text-center transition">
                                 Ver Perfil
                             </a>
                             <button wire:click="removeFavorite({{ $provider->id }})" class="bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 p-2 rounded-xl transition" title="Eliminar de favoritos">

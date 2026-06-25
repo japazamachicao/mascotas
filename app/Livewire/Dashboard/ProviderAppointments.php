@@ -63,15 +63,37 @@ class ProviderAppointments extends Component
     {
         $appointments = Appointment::with(['client', 'pet', 'payment'])
             ->where('provider_id', Auth::id())
-            ->when($this->filterStatus !== 'all', fn($q) => $q->where('status', $this->filterStatus))
+            ->when($this->filterStatus !== 'all', function ($q) {
+                if ($this->filterStatus === 'payment_pending') {
+                    return $q->whereIn('status', ['confirmed', 'completed'])
+                             ->whereHas('payment', function($qp) {
+                                 $qp->whereIn('status', ['pending', 'failed']);
+                             });
+                }
+                if ($this->filterStatus === 'payment_under_review') {
+                    return $q->whereHas('payment', function($qp) {
+                        $qp->where('status', 'under_review');
+                    });
+                }
+                return $q->where('status', $this->filterStatus);
+            })
             ->orderByDesc('scheduled_at')
             ->paginate(10);
 
+        $countsQuery = Appointment::where('provider_id', Auth::id());
         $counts = [
-            'pending'   => Appointment::where('provider_id', Auth::id())->where('status', 'pending')->count(),
-            'confirmed' => Appointment::where('provider_id', Auth::id())->where('status', 'confirmed')->count(),
-            'completed' => Appointment::where('provider_id', Auth::id())->where('status', 'completed')->count(),
-            'cancelled'  => Appointment::where('provider_id', Auth::id())->where('status', 'cancelled')->count(),
+            'all'                  => (clone $countsQuery)->count(),
+            'pending'              => (clone $countsQuery)->where('status', 'pending')->count(),
+            'confirmed'            => (clone $countsQuery)->where('status', 'confirmed')->count(),
+            'completed'            => (clone $countsQuery)->where('status', 'completed')->count(),
+            'cancelled'            => (clone $countsQuery)->where('status', 'cancelled')->count(),
+            'payment_pending'      => (clone $countsQuery)->whereIn('status', ['confirmed', 'completed'])
+                                                         ->whereHas('payment', function($qp) {
+                                                             $qp->whereIn('status', ['pending', 'failed']);
+                                                         })->count(),
+            'payment_under_review' => (clone $countsQuery)->whereHas('payment', function($qp) {
+                                                             $qp->where('status', 'under_review');
+                                                         })->count(),
         ];
 
         return view('livewire.dashboard.provider-appointments', compact('appointments', 'counts'))

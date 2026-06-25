@@ -354,7 +354,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold">
                                         @if(!$usr->hasRole('client') && !$usr->hasRole('super-admin'))
-                                            <a href="{{ route('profile.show', $usr->id) }}" target="_blank"
+                                            <a href="{{ $usr->profileUrl() }}" target="_blank"
                                                class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 text-xs font-bold transition">
                                                 🔍 Perfil Público
                                             </a>

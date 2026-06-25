@@ -209,7 +209,7 @@
 
                                     @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
                                         <a href="{{ route('dashboard.provider', ['section' => 'panel']) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mi Panel</a>
-                                        <a href="{{ route('profile.show', Auth::id()) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Ver Mi Perfil Público</a>
+                                        <a href="{{ Auth::user()->profileUrl() }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Ver Mi Perfil Público</a>
                                     @else
                                         <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mis Mascotas</a>
                                         <a href="{{ route('dashboard.appointments') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">Mis Citas</a>
@@ -287,7 +287,7 @@
                     <div class="mt-3 space-y-1">
                         @if(Auth::user()->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
                              <a href="{{ route('dashboard.provider', ['section' => 'panel']) }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Panel</a>
-                             <a href="{{ route('profile.show', Auth::id()) }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Perfil Público</a>
+                             <a href="{{ Auth::user()->profileUrl() }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Perfil Público</a>
                         @else
                              <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mis Mascotas</a>
                              <a href="{{ route('dashboard.profile') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Mi Perfil</a>

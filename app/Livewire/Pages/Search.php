@@ -153,8 +153,11 @@ class Search extends Component
         $tableName = $instance->getTable();
         $foreignKey = 'user_id';
 
+        $hasHourlyRate = \Illuminate\Support\Facades\Schema::hasColumn($tableName, 'hourly_rate');
+        $hasPriceFrom = \Illuminate\Support\Facades\Schema::hasColumn($tableName, 'price_from');
+
         $query = $modelClass::query()
-            ->with(['user', 'district.province.department'])
+            ->with(['user.services', 'district.province.department'])
             ->withAggregate('user', 'name')
             ->withAvg(['user as reviews_avg_rating' => function($query) {
                 $query->select(\DB::raw('avg(rating)'))->from('reviews')->whereColumn('provider_id', 'users.id');
@@ -221,6 +224,28 @@ class Search extends Component
             case 'name_asc':
                 $query->orderBy('users.name', 'asc');
                 break;
+            case 'price_asc':
+                if ($hasPriceFrom && $hasHourlyRate) {
+                    $query->orderByRaw('COALESCE((SELECT AVG(price) FROM provider_services WHERE provider_services.user_id = users.id), price_from, hourly_rate, 999999) ASC');
+                } elseif ($hasPriceFrom) {
+                    $query->orderByRaw('COALESCE((SELECT AVG(price) FROM provider_services WHERE provider_services.user_id = users.id), price_from, 999999) ASC');
+                } elseif ($hasHourlyRate) {
+                    $query->orderByRaw('COALESCE((SELECT AVG(price) FROM provider_services WHERE provider_services.user_id = users.id), hourly_rate, 999999) ASC');
+                } else {
+                    $query->orderByRaw('COALESCE((SELECT AVG(price) FROM provider_services WHERE provider_services.user_id = users.id), 999999) ASC');
+                }
+                break;
+            case 'price_desc':
+                if ($hasPriceFrom && $hasHourlyRate) {
+                    $query->orderByRaw('COALESCE((SELECT AVG(price) FROM provider_services WHERE provider_services.user_id = users.id), price_from, hourly_rate, 0) DESC');
+                } elseif ($hasPriceFrom) {
+                    $query->orderByRaw('COALESCE((SELECT AVG(price) FROM provider_services WHERE provider_services.user_id = users.id), price_from, 0) DESC');
+                } elseif ($hasHourlyRate) {
+                    $query->orderByRaw('COALESCE((SELECT AVG(price) FROM provider_services WHERE provider_services.user_id = users.id), hourly_rate, 0) DESC');
+                } else {
+                    $query->orderByRaw('COALESCE((SELECT AVG(price) FROM provider_services WHERE provider_services.user_id = users.id), 0) DESC');
+                }
+                break;
             case 'best_rated':
             default:
                 // Ordenar por el promedio de reviews calculado manual o via subquery
@@ -252,7 +277,8 @@ class Search extends Component
                 ];
                 $rating = round($item->user->reviewsReceived()->avg('rating') ?? 0, 1);
                 $ratingCount = $item->user->reviewsReceived()->count();
-                $price = $item->price_from ?? $item->hourly_rate ?? 0;
+                $minPrice = $item->user->minServicePrice();
+                $price = $minPrice > 0 ? $minPrice : ($item->hourly_rate ?? 0);
                 $imageUrl = $item->user->profile_photo_path 
                     ? \Illuminate\Support\Facades\Storage::url($item->user->profile_photo_path) 
                     : 'https://ui-avatars.com/api/?name=' . urlencode($item->user->name) . '&background=0ea5e9&color=fff';
@@ -268,7 +294,7 @@ class Search extends Component
                     'reviews_count' => $ratingCount,
                     'price' => $price > 0 ? 'S/ ' . number_format($price, 0) : 'A convenir',
                     'image' => $imageUrl,
-                    'url' => route('profile.show', ['id' => $item->user->id, 'role' => $this->serviceType]),
+                    'url' => $item->user->profileUrl($this->serviceType),
                     'level_badge' => !empty($lvl) ? $lvl['badge'] . ' ' . $lvl['label'] : null
                 ];
             })

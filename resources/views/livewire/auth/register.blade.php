@@ -18,7 +18,7 @@
                 <!-- Tipo de Cuenta -->
                 <div>
                     <label for="role" class="block text-sm font-medium text-gray-700">Quiero registrarme como</label>
-                    <select wire:model="role" id="role" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md border">
+                    <select wire:model.live="role" id="role" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md border">
                         <option value="client">Dueño de Mascota (Cliente)</option>
                         <option value="veterinarian">Veterinario</option>
                         <option value="walker">Paseador</option>
@@ -34,9 +34,17 @@
 
                 <!-- Nombre -->
                 <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700">Nombre Completo</label>
+                    <label for="name" class="block text-sm font-medium text-gray-700">
+                        @if($role === 'client')
+                            Nombre Completo
+                        @else
+                            Nombre Completo o Comercial (Negocio)
+                        @endif
+                    </label>
                     <div class="mt-1">
-                        <input wire:model="name" id="name" type="text" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                        <input wire:model="name" id="name" type="text" required 
+                               placeholder="{{ $role === 'client' ? 'Ej. Juan Pérez' : 'Ej. Veterinaria San Martín o Tu Nombre' }}"
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                         @error('name') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
                     </div>
                 </div>

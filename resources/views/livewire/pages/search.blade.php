@@ -348,6 +348,8 @@
                             </div>
                             <select wire:model.live="sortBy" class="w-full pl-9 pr-9 py-2 border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 appearance-none shadow-sm cursor-pointer hover:border-gray-300 transition-all">
                                 <option value="best_rated">Mejores Calificados</option>
+                                <option value="price_asc">Precio: Menor a Mayor</option>
+                                <option value="price_desc">Precio: Mayor a Menor</option>
                                 <option value="newest">Nuevos Ingresos</option>
                                 <option value="name_asc">Nombre (A - Z)</option>
                             </select>
@@ -407,7 +409,7 @@
                                     </div>
                                     
                                     <!-- Badge 24h Flotante -->
-                                    @if(rand(0,1)) 
+                                    @if(isset($result->emergency_24h) && $result->emergency_24h) 
                                         <div class="absolute -bottom-1 -right-1 bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm flex items-center gap-0.5">
                                             <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                                             24h
@@ -554,12 +556,6 @@
                                 <p class="text-xs text-gray-500 line-clamp-1 pl-1 mt-1">{{ $result->bio }}</p>
 
                             @elseif($serviceType === 'pet_sitter')
-                                @if(isset($result->hourly_rate))
-                                     <div class="flex items-center justify-between bg-primary-50 px-3 py-2 rounded-lg border border-primary-100 mb-2">
-                                        <span class="text-xs font-bold text-primary-700 uppercase">Tarifa</span>
-                                        <span class="text-lg font-black text-primary-900">S/ {{ number_format($result->hourly_rate ?? 0, 2) }}</span>
-                                    </div>
-                                @endif
                                 <div class="flex flex-wrap gap-2 mb-2">
                                     <span class="badge-feature bg-orange-50/70 text-orange-700 border-orange-100 text-[10px] px-2 py-1 rounded-full font-bold border flex items-center gap-1">
                                         <svg class="w-3.5 h-3.5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -615,20 +611,32 @@
                             
                             @else
                                 <!-- Fallback General (Walkers, Photographers, Shelter) -->
-                                @if(isset($result->hourly_rate))
-                                    <div class="flex items-center justify-between bg-primary-50 px-3 py-2 rounded-lg border border-primary-100 mb-2">
-                                        <span class="text-xs font-bold text-primary-700 uppercase">Tarifa por hora</span>
-                                        <span class="text-lg font-black text-primary-900">S/ {{ number_format($result->hourly_rate, 2) }}</span>
-                                    </div>
-                                @endif
                                 <p class="text-sm text-gray-500 line-clamp-2 pl-1">{{ $result->bio ?? ($result->experience ?? ($result->description ?? 'Sin presentación.')) }}</p>
+                            @endif
+                            <!-- Catálogo resumido de servicios -->
+                            @if($result->user->services->isNotEmpty())
+                                <div class="mt-4 space-y-2 bg-gray-50/60 p-3 rounded-xl border border-gray-100/80">
+                                    <span class="block text-[10px] text-gray-400 font-extrabold uppercase tracking-wider">Servicios y Precios</span>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach($result->user->services->take(3) as $srv)
+                                            <span class="bg-white border border-gray-200/80 rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:border-primary-400 hover:shadow-sm transition-all duration-200">
+                                                <span class="text-gray-700 truncate max-w-[110px]" title="{{ $srv->name }}">{{ $srv->name }}</span>
+                                                <span class="text-primary-600 font-extrabold shrink-0">S/ {{ number_format($srv->price, 0) }}</span>
+                                            </span>
+                                        @endforeach
+                                        @if($result->user->services->count() > 3)
+                                            <span class="bg-gray-100 text-gray-500 rounded-lg px-2 py-1 text-[10px] font-bold flex items-center justify-center shrink-0 border border-transparent">
+                                                +{{ $result->user->services->count() - 3 }} más
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
                             @endif
                             <!-- Para Hotel / Shelter podemos agregar lógica específica después si es necesario -->
                         </div>
 
-                        <!-- Action Footer -->
                         <div class="mt-6 pt-4 border-t border-gray-100 flex items-center gap-3">
-                            <a href="{{ route('profile.show', ['id' => $result->user->id, 'role' => $serviceType]) }}" class="flex-1 text-center bg-primary-600 text-white py-2.5 rounded-xl font-bold hover:bg-primary-700 transition-all shadow-md hover:shadow-lg text-sm flex items-center justify-center group-hover:scale-[1.02]">
+                            <a href="{{ $result->user->profileUrl($serviceType) }}" class="flex-1 text-center bg-primary-600 text-white py-2.5 rounded-xl font-bold hover:bg-primary-700 transition-all shadow-md hover:shadow-lg text-sm flex items-center justify-center group-hover:scale-[1.02]">
                                 Ver Perfil
                                 <svg class="w-4 h-4 ml-2 text-primary-200 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />

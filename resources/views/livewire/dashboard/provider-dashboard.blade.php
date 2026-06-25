@@ -47,8 +47,10 @@
         @endif
 
         @if($mainSection === 'panel')
-        <!-- Welcome Section -->
-        <div class="mb-8">
+        <div wire:key="main-section-panel-container">
+            <div wire:key="provider-panel-header">
+            <!-- Welcome Section -->
+            <div class="mb-8">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
                 Panel Profesional - {{ $providerRoles[$selectedRole] ?? 'Profesional' }}
             </h2>
@@ -72,55 +74,69 @@
         @endphp
 
         @if(count($userActiveRoles) > 1 || count($inactiveRoles) > 0)
-        <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-            <div class="flex items-center justify-between flex-wrap gap-3">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Mis Servicios:</span>
-                    @foreach($userActiveRoles as $role)
-                        <div class="inline-flex items-center rounded-lg border shadow-sm overflow-hidden shrink-0 transition-all duration-200
-                            {{ $selectedRole === $role 
-                                ? 'border-primary-600 bg-primary-600' 
-                                : 'border-gray-200 bg-white hover:border-gray-300' }}">
-                            <!-- Botón de seleccionar -->
-                            <button wire:click="selectRole('{{ $role }}')"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold transition-all duration-200 focus:outline-none cursor-pointer
+        <div class="mb-8 bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl border border-gray-200 shadow-sm p-5">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <div class="flex items-center gap-1.5 bg-gray-200/50 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Mis Servicios
+                    </div>
+                    
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        @foreach($userActiveRoles as $role)
+                            <div class="inline-flex items-center rounded-xl border transition-all duration-300 overflow-hidden shrink-0 group
                                 {{ $selectedRole === $role 
-                                    ? 'bg-primary-600 text-white hover:bg-primary-700' 
-                                    : 'bg-white text-gray-600 hover:bg-gray-50' }}">
-                                <span>{{ $roleIcons[$role] ?? '📋' }}</span>
-                                <span>{{ $providerRoles[$role] }}</span>
-                            </button>
-                            
-                            <!-- Botón de eliminar (solo si hay más de 1) -->
-                            @if(count($userActiveRoles) > 1)
-                                <button onclick="confirm('¿Estás seguro de que deseas desactivar el servicio de {{ $providerRoles[$role] }}? Se eliminarán los datos asociados a este perfil.') || event.stopImmediatePropagation()"
-                                    wire:click="deactivateRole('{{ $role }}')"
-                                    class="px-2 py-1.5 border-l text-sm font-bold transition-all duration-200 focus:outline-none cursor-pointer
+                                    ? 'border-primary-600 bg-gradient-to-r from-primary-600 to-indigo-600 shadow-md shadow-primary-500/20 scale-[1.02]' 
+                                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm hover:scale-[1.01]' }}">
+                                
+                                <!-- Botón de seleccionar -->
+                                <button wire:click="selectRole('{{ $role }}')"
+                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold transition-all duration-200 focus:outline-none cursor-pointer whitespace-nowrap
                                     {{ $selectedRole === $role 
-                                        ? 'border-primary-700/30 bg-primary-600 text-primary-200 hover:bg-primary-700 hover:text-white' 
-                                        : 'border-gray-200 bg-white text-red-500 hover:bg-red-50' }}"
-                                    title="Desactivar {{ $providerRoles[$role] }}">
-                                    <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                                        ? 'text-white' 
+                                        : 'text-gray-750 hover:bg-gray-50' }}">
+                                    <span class="text-base transform group-hover:scale-110 transition duration-300">{{ $roleIcons[$role] ?? '📋' }}</span>
+                                    <span>{{ $providerRoles[$role] }}</span>
                                 </button>
-                            @endif
-                        </div>
-                    @endforeach
+                                
+                                <!-- Botón de desactivar (solo si hay más de 1) -->
+                                @if(count($userActiveRoles) > 1)
+                                    <button onclick="confirm('¿Estás seguro de que deseas desactivar el servicio de {{ $providerRoles[$role] }}? Se eliminarán los datos asociados a este perfil.') || event.stopImmediatePropagation()"
+                                        wire:click="deactivateRole('{{ $role }}')"
+                                        class="px-2.5 py-2 border-l text-sm font-bold transition-all duration-200 focus:outline-none cursor-pointer
+                                        {{ $selectedRole === $role 
+                                            ? 'border-white/10 text-white/70 hover:bg-black/10 hover:text-white' 
+                                            : 'border-gray-150 text-red-500 hover:bg-red-50' }}"
+                                        title="Desactivar {{ $providerRoles[$role] }}">
+                                        <svg class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
 
                 @if(count($inactiveRoles) > 0)
-                <div x-data="{ showAddRole: false }" class="relative">
-                    <button @click="showAddRole = !showAddRole" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold rounded-lg border border-dashed border-primary-300 text-primary-600 bg-primary-50 hover:bg-primary-100 transition-all">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                        Agregar Servicio
+                <div x-data="{ showAddRole: false }" class="relative shrink-0">
+                    <button @click="showAddRole = !showAddRole" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-extrabold rounded-xl border border-dashed border-primary-300 text-primary-600 bg-primary-50 hover:bg-primary-100 hover:border-primary-400 transition-all shadow-xs focus:outline-none">
+                        <svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ofrecer otro servicio
                     </button>
                     <div x-show="showAddRole" @click.away="showAddRole = false" x-transition
-                         class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 py-2">
+                         class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 py-2">
+                        <div class="px-4 py-1.5 border-b border-gray-100 mb-1">
+                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Servicios disponibles</span>
+                        </div>
                         @foreach($inactiveRoles as $role)
                             <button wire:click="activateRole('{{ $role }}')" @click="showAddRole = false"
-                                class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center gap-2">
-                                <span>{{ $roleIcons[$role] ?? '📋' }}</span>
+                                class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center gap-2.5 font-bold">
+                                <span class="text-base">{{ $roleIcons[$role] ?? '📋' }}</span>
                                 {{ $providerRoles[$role] }}
                             </button>
                         @endforeach
@@ -130,12 +146,9 @@
             </div>
         </div>
         @endif
-        @endif
+        </div>
 
-
-
-        @if($mainSection === 'panel')
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6" wire:key="provider-panel-grid font-sans">
             <!-- Menú Lateral -->
             <div class="lg:col-span-1 space-y-6">
                 <!-- Perfil Card -->
@@ -186,16 +199,16 @@
                                     <x-level-badge level="{{ $providerLevel['name'] }}" size="sm" />
                                 </div>
                             @endif
-                            <a href="{{ route('profile.show', $user->id) }}" target="_blank" class="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center justify-center mt-1">
+                            <a href="{{ $user->profileUrl() }}" target="_blank" class="text-sm font-medium text-primary-600 hover:text-primary-500 flex items-center justify-center mt-1">
                                 Ver Perfil Público 
                                 <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                             </a>
                             <div x-data="{ copied: false }" class="mt-4 w-full bg-primary-50/50 rounded-2xl p-3 border border-primary-100 flex flex-col gap-2 shadow-xs">
                                 <div class="text-left">
                                     <p class="text-[9px] uppercase font-black tracking-widest text-primary-850">Comparte tu Perfil</p>
-                                    <p class="text-[10px] text-gray-500 truncate mt-0.5">{{ route('profile.show', $user->id) }}</p>
+                                    <p class="text-[10px] text-gray-500 truncate mt-0.5">{{ $user->profileUrl() }}</p>
                                 </div>
-                                <button @click="navigator.clipboard.writeText('{{ route('profile.show', $user->id) }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                <button @click="navigator.clipboard.writeText('{{ $user->profileUrl() }}'); copied = true; setTimeout(() => copied = false, 2000)"
                                         type="button"
                                         class="w-full py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-1 shadow-sm">
                                     <span x-show="!copied">📋 Copiar Enlace</span>
@@ -373,6 +386,65 @@
                                 <x-level-badge level="{{ $providerLevel['name'] ?? 'diamante' }}" size="md" />
                             </div>
                         </p>
+                    </div>
+                @endif
+
+                <!-- Alertas de Cuentas y Pagos Pendientes -->
+                @php
+                    $underReviewCount = \App\Models\Appointment::where('provider_id', $user->id)
+                        ->whereHas('payment', function($qp) {
+                            $qp->where('status', 'under_review');
+                        })->count();
+                    $pendingPaymentsCount = \App\Models\Appointment::where('provider_id', $user->id)
+                        ->whereIn('status', ['confirmed', 'completed'])
+                        ->whereHas('payment', function($qp) {
+                            $qp->whereIn('status', ['pending', 'failed']);
+                        })->count();
+                @endphp
+
+                @if($underReviewCount > 0)
+                    <div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_4px_12px_rgba(79,70,229,0.05)] transition duration-200 hover:shadow-[0_6px_16px_rgba(79,70,229,0.08)]">
+                        <div class="flex items-start gap-4 text-indigo-900">
+                            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 shadow-xs shrink-0 border border-indigo-200/50">
+                                <svg class="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </span>
+                            <div class="text-left">
+                                <h4 class="font-extrabold text-sm text-indigo-955">Tienes pagos pendientes de revisión</h4>
+                                <p class="text-xs text-indigo-700 mt-1 leading-relaxed font-medium">Hay {{ $underReviewCount }} {{ $underReviewCount === 1 ? 'cliente que ha subido su comprobante' : 'clientes que han subido sus comprobantes' }} de transferencia Yape/Plin. Por favor, revísalos para confirmarlos.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('dashboard.provider', ['section' => 'appointments', 'status' => 'payment_under_review']) }}"
+                            class="shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-sm transition hover:scale-[1.02] flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            Revisar Pagos
+                        </a>
+                    </div>
+                @endif
+
+                @if($pendingPaymentsCount > 0)
+                    <div class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_4px_12px_rgba(217,119,6,0.05)] transition duration-200 hover:shadow-[0_6px_16px_rgba(217,119,6,0.08)]">
+                        <div class="flex items-start gap-4 text-amber-900">
+                            <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 shadow-xs shrink-0 border border-amber-200/50">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </span>
+                            <div class="text-left">
+                                <h4 class="font-extrabold text-sm text-amber-955">Servicios completados/confirmados sin registrar pago</h4>
+                                <p class="text-xs text-amber-700 mt-1 leading-relaxed font-medium">Tienes {{ $pendingPaymentsCount }} {{ $pendingPaymentsCount === 1 ? 'cita donde el cliente aún no ha realizado' : 'citas donde los clientes aún no han realizado' }} el pago de Yape/Plin.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('dashboard.provider', ['section' => 'appointments', 'status' => 'payment_pending']) }}"
+                            class="shrink-0 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-xl shadow-sm transition hover:scale-[1.02] flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Ver Citas por Cobrar
+                        </a>
                     </div>
                 @endif
 
@@ -613,23 +685,7 @@
                                     <p class="mt-2 text-sm text-gray-500">Esta es tu carta de presentación. Sé descriptivo y amable.</p>
                                 </div>
 
-                                {{-- Precio base (común) --}}
-                                @if($selectedRole !== 'shelter')
-                                <div class="sm:col-span-3">
-                                    <label class="block text-sm font-medium text-gray-700">
-                                        Precio desde (S/)
-                                    </label>
-                                    <div class="mt-1 relative rounded-md shadow-sm">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <span class="text-gray-500 sm:text-sm">S/</span>
-                                        </div>
-                                        <input type="number" min="0" step="0.50" wire:model="price_from" class="pl-8 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="0.00">
-                                    </div>
-                                    <p class="mt-1 text-xs text-gray-500">Precio mínimo de tu servicio. Ayuda a los clientes a encontrarte.</p>
-                                </div>
-                                @endif
-
-                                {{-- Campos Específicos --}}
+                                 {{-- Campos Específicos --}}
                                 @if($selectedRole === 'veterinarian')
                                     <div class="sm:col-span-3">
                                         <label class="block text-sm font-medium text-gray-700">Número de Colegiatura (CMVP)</label>
@@ -850,7 +906,26 @@
                         </div>
                     </div>
 
-                    <form wire:submit.prevent="save" class="space-y-4">
+                    @if(empty($district_id))
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/85 rounded-2xl p-5 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <h4 class="text-sm font-black text-amber-900">Ubicación requerida en tu Perfil</h4>
+                                    <p class="text-xs text-amber-750 mt-1">Para poder guardar tu horario o configurar otros datos, primero debes definir tu **Ubicación (Departamento, Provincia y Distrito)** en la pestaña de <strong>Perfil y Contacto</strong>. Sin esto, no podrás guardar los cambios.</p>
+                                    <button type="button" wire:click="switchTab('profile')" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                                        Ir a Perfil y Contacto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <form wire:submit.prevent="save" class="space-y-4" @if(empty($district_id)) onsubmit="return false;" @endif>
                         @if($selectedRole === 'veterinarian')
                             <div class="flex items-center justify-between bg-red-50 border border-red-200 rounded-2xl p-4">
                                 <div class="flex items-center gap-3">
@@ -946,6 +1021,25 @@
                             </div>
                         </div>
                     </div>
+
+                    @if(empty($district_id))
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/85 rounded-2xl p-5 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <h4 class="text-sm font-black text-amber-900">Ubicación requerida en tu Perfil</h4>
+                                    <p class="text-xs text-amber-750 mt-1">Para poder subir fotos a tu portafolio o configurar otros datos, primero debes definir tu **Ubicación (Departamento, Provincia y Distrito)** en la pestaña de <strong>Perfil y Contacto</strong>. Sin esto, no podrás guardar los cambios.</p>
+                                    <button type="button" wire:click="switchTab('profile')" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                                        Ir a Perfil y Contacto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
                     <!-- Zona de upload -->
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -1053,6 +1147,25 @@
                             </div>
                         </div>
                     </div>
+
+                    @if(empty($district_id))
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/85 rounded-2xl p-5 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <h4 class="text-sm font-black text-amber-900">Ubicación requerida en tu Perfil</h4>
+                                    <p class="text-xs text-amber-755 mt-1">Para poder agregar servicios a tu catálogo o configurar otros datos, primero debes definir tu **Ubicación (Departamento, Provincia y Distrito)** en la pestaña de <strong>Perfil y Contacto</strong>. Sin esto, no podrás guardar los cambios.</p>
+                                    <button type="button" wire:click="switchTab('profile')" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-755 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                                        Ir a Perfil y Contacto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
                 <div class="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
                     <div class="px-6 py-5 sm:p-6">
@@ -1166,6 +1279,25 @@
                             </div>
                         </div>
                     </div>
+
+                    @if(empty($district_id))
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/85 rounded-2xl p-5 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <h4 class="text-sm font-black text-amber-900">Ubicación requerida en tu Perfil</h4>
+                                    <p class="text-xs text-amber-750 mt-1">Para poder configurar tus métodos de cobro o configurar otros datos, primero debes definir tu **Ubicación (Departamento, Provincia y Distrito)** en la pestaña de <strong>Perfil y Contacto</strong>. Sin esto, no podrás guardar los cambios.</p>
+                                    <button type="button" wire:click="switchTab('profile')" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-755 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                                        Ir a Perfil y Contacto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
                 <div class="bg-white shadow-xl rounded-3xl overflow-hidden border border-gray-100">
                     <div class="px-6 py-8">
@@ -1493,15 +1625,16 @@
 
             </div>
         </div>
+        </div>
         @elseif($mainSection === 'calendar')
             <!-- CALENDARIO FULL WIDTH -->
-            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6">
+            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6" wire:key="provider-calendar-section">
                 <livewire:dashboard.visual-calendar wire:key="provider-visual-calendar" />
             </div>
 
         @elseif($mainSection === 'reviews')
             <!-- RESEÑAS FULL WIDTH -->
-            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6 space-y-6">
+            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6 space-y-6" wire:key="provider-reviews-section">
                 <div class="border-b border-gray-100 pb-4 text-left">
                     <h3 class="text-xl font-black text-gray-900">Reseñas Recibidas</h3>
                     <p class="text-xs text-gray-500 mt-1">Aquí puedes leer las opiniones de tus clientes y responder a sus comentarios de manera pública.</p>
@@ -1567,29 +1700,42 @@
 
         @elseif($mainSection === 'appointments')
             <!-- CITAS FULL WIDTH -->
-            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6 space-y-6">
+            <div class="bg-white shadow-sm rounded-3xl overflow-hidden border border-gray-150 p-6 space-y-6" wire:key="provider-appointments-section">
                 <div class="border-b border-gray-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div class="text-left">
                         <h3 class="text-xl font-black text-gray-900">Control de Citas</h3>
                         <p class="text-xs text-gray-500 mt-1">Gestiona, filtra y confirma las citas agendadas por tus clientes.</p>
                     </div>
                     <div class="flex gap-1.5 flex-wrap">
-                        @foreach(['pending' => 'Pendientes', 'confirmed' => 'Confirmadas', 'completed' => 'Completadas', 'cancelled' => 'Canceladas', 'all' => 'Todas'] as $status => $label)
+                        @foreach(['pending' => 'Pendientes', 'confirmed' => 'Confirmadas', 'completed' => 'Completadas', 'cancelled' => 'Canceladas', 'payment_pending' => 'Pagos Pendientes', 'payment_under_review' => 'Por Revisar', 'all' => 'Todas'] as $status => $label)
+                            @php
+                                $cQuery = \App\Models\Appointment::where('provider_id', $user->id);
+                                if ($status === 'payment_pending') {
+                                    $cQuery->whereIn('status', ['confirmed', 'completed'])
+                                           ->whereHas('payment', function($qp) {
+                                               $qp->whereIn('status', ['pending', 'failed']);
+                                           });
+                                } elseif ($status === 'payment_under_review') {
+                                    $cQuery->whereHas('payment', function($qp) {
+                                        $qp->where('status', 'under_review');
+                                    });
+                                } elseif ($status !== 'all') {
+                                    $cQuery->where('status', $status);
+                                }
+                                $statusCount = $cQuery->count();
+                            @endphp
                             <button wire:click="$set('filterStatus', '{{ $status }}')"
                                 class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition duration-150 cursor-pointer
                                     {{ $filterStatus === $status
-                                        ? 'bg-primary-600 text-white border-primary-600 shadow-xs'
-                                        : 'bg-white text-gray-650 border-gray-200 hover:bg-gray-50 hover:text-gray-900' }}">
+                                        ? ($status === 'payment_under_review' ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : ($status === 'payment_pending' ? 'bg-amber-600 text-white border-amber-600 shadow-xs' : 'bg-primary-600 text-white border-primary-600 shadow-xs'))
+                                        : ($status === 'payment_under_review' && $statusCount > 0
+                                            ? 'bg-indigo-55 text-indigo-700 border-indigo-200 hover:bg-indigo-100/70 font-semibold'
+                                            : ($status === 'payment_pending' && $statusCount > 0
+                                                ? 'bg-amber-55 text-amber-700 border-amber-200 hover:bg-amber-100/70 font-semibold'
+                                                : 'bg-white text-gray-650 border-gray-200 hover:bg-gray-50 hover:text-gray-900')) }}">
                                 {{ $label }}
-                                @php
-                                    $cQuery = \App\Models\Appointment::where('provider_id', $user->id);
-                                    if ($status !== 'all') {
-                                        $cQuery->where('status', $status);
-                                    }
-                                    $statusCount = $cQuery->count();
-                                @endphp
                                 @if($statusCount > 0)
-                                    <span class="ml-1.5 {{ $filterStatus === $status ? 'bg-white/20 text-white' : 'bg-gray-150 text-gray-700' }} text-[9px] font-black px-1.5 py-0.5 rounded-full">{{ $statusCount }}</span>
+                                    <span class="ml-1.5 {{ $filterStatus === $status ? 'bg-white/20 text-white' : ($status === 'payment_under_review' ? 'bg-indigo-200 text-indigo-900' : ($status === 'payment_pending' ? 'bg-amber-200 text-amber-900' : 'bg-gray-150 text-gray-700')) }} text-[9px] font-black px-1.5 py-0.5 rounded-full">{{ $statusCount }}</span>
                                 @endif
                             </button>
                         @endforeach
@@ -1780,7 +1926,7 @@
                     'cancelled' => 'Cancelada',
                 ];
             @endphp
-            <div class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title-apt" role="dialog" aria-modal="true">
+            <div class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title-apt" role="dialog" aria-modal="true" wire:key="provider-appointment-detail-modal">
                 <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                     <div class="fixed inset-0 bg-gray-950/70 backdrop-blur-sm transition-opacity" aria-hidden="true" wire:click="closeAppointmentModal"></div>
                     <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
@@ -1918,7 +2064,7 @@
                                                 @endif
                                                 <p>Medio de Pago: <strong class="text-gray-950 uppercase">{{ $aptModal->payment->payment_method }}</strong></p>
                                                 @if($aptModal->payment->receipt_photo_path)
-                                                    <a href="{{ \Illuminate\Support\Facades\Storage::url($aptModal->payment->receipt_photo_path) }}" target="_blank" class="inline-flex items-center text-xs font-black text-indigo-650 hover:text-indigo-800 underline mt-1">
+                                                    <a href="{{ \Illuminate\Support\Facades\Storage::url($aptModal->payment->receipt_photo_path) }}" target="_blank" class="inline-flex items-center text-xs font-black text-indigo-600 hover:text-indigo-800 underline mt-1">
                                                         🔎 Ver imagen del comprobante
                                                     </a>
                                                 @endif

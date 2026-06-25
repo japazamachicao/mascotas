@@ -779,18 +779,7 @@
                 
                 <!-- Tarjeta de Acción / Reserva -->
                 <div class="bg-white rounded-xl shadow-lg border border-primary-100 p-6 sticky top-6">
-                    <div class="text-center mb-6">
-                        <p class="text-sm text-gray-500 mb-1">Precio</p>
-                        <p class="text-3xl font-extrabold text-gray-900">
-                            @if(!empty($profile->price_from) && $profile->price_from > 0)
-                                <span class="text-base font-normal text-gray-500">desde </span>S/ {{ number_format($profile->price_from, 0) }}
-                            @elseif(isset($profile->hourly_rate) && $profile->hourly_rate > 0)
-                                S/ {{ number_format($profile->hourly_rate, 0) }} <span class="text-base font-normal text-gray-500">/hora</span>
-                            @else
-                                <span class="text-xl text-gray-400">Consultar</span>
-                            @endif
-                        </p>
-                    </div>
+
 
                     @auth
                         <button wire:click="openBookingModal" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition">
@@ -977,9 +966,14 @@
                                             </div>
                                         @endif
 
-                                        <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
-                                            <span class="text-sm font-bold text-gray-700 uppercase">Monto Total Estimado:</span>
-                                            <span class="text-xl font-extrabold text-primary-600">S/ {{ number_format($totalPrice, 2) }}</span>
+                                        <div class="pt-4 border-t border-gray-100">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm font-bold text-gray-700 uppercase">Monto Total Estimado:</span>
+                                                <span class="text-xl font-extrabold text-primary-600">S/ {{ number_format($totalPrice, 2) }}</span>
+                                            </div>
+                                            <p class="mt-2 text-[11px] text-gray-400 leading-normal italic">
+                                                * Este monto es referencial y está basado en los servicios seleccionados. El precio final podría variar según los requerimientos específicos o adicionales acordados con el profesional al momento de finalizar el servicio.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

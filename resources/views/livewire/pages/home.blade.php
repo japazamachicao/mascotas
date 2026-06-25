@@ -538,7 +538,7 @@
                             </div>
 
                             <!-- Action button solid -->
-                            <a href="{{ route('profile.show', $provider->id) }}" class="block w-full text-center bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
+                            <a href="{{ $provider->profileUrl() }}" class="block w-full text-center bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
                                 Ver Perfil y Reservar
                             </a>
                         </div>

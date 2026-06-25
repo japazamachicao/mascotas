@@ -16,14 +16,28 @@ class ClientAppointments extends Component
     use WithFileUploads;
 
     public $filterStatus = 'all';
+    public $searchProvider = '';
+    public $filterPetId = '';
+    public $filterDate = '';
 
     // Payment Modal State
     public $showPaymentModal = false;
     public $selectedAppointmentId = null;
     public $selectedAppointment = null;
-    public $paymentMethod = 'culqi'; // 'culqi', 'yape', 'plin'
+    public $paymentMethod = 'yape'; // 'yape', 'plin'
     public $receiptPhoto;
     public $operationCode = '';
+
+    // Reset pagination when filters change
+    public function updatingFilterStatus() { $this->resetPage(); }
+    public function updatingSearchProvider() { $this->resetPage(); }
+    public function updatingFilterPetId() { $this->resetPage(); }
+    public function updatingFilterDate() { $this->resetPage(); }
+
+    public function resetFilters()
+    {
+        $this->reset(['searchProvider', 'filterPetId', 'filterDate']);
+    }
 
     // Livewire listeners
     protected $listeners = [
@@ -51,17 +65,10 @@ class ClientAppointments extends Component
     {
         $this->selectedAppointmentId = $appointmentId;
         $this->selectedAppointment = Appointment::with(['provider', 'payment', 'pet'])->findOrFail($appointmentId);
-        $this->paymentMethod = 'culqi';
+        $this->paymentMethod = 'yape';
         $this->receiptPhoto = null;
         $this->operationCode = '';
         $this->showPaymentModal = true;
-
-        $this->dispatch('openCulqiCheckout', [
-            'amount' => intval(round($this->selectedAppointment->payment->amount * 100)),
-            'email' => Auth::user()->email,
-            'description' => 'Servicio TodoPeludos #' . $this->selectedAppointment->id,
-            'appointmentId' => $this->selectedAppointmentId
-        ]);
     }
 
     public function processCulqiPayment($data)
@@ -166,20 +173,56 @@ class ClientAppointments extends Component
         ])
         ->where('client_id', Auth::id())
         ->when($this->filterStatus !== 'all', function ($q) {
+            if ($this->filterStatus === 'payment_pending') {
+                return $q->whereIn('status', ['confirmed', 'completed'])
+                         ->whereHas('payment', function($qp) {
+                             $qp->whereIn('status', ['pending', 'failed']);
+                         });
+            }
             return $q->where('status', $this->filterStatus);
+        })
+        ->when($this->searchProvider, function ($q) {
+            $q->whereHas('provider', function($qp) {
+                $qp->where('name', 'like', '%' . $this->searchProvider . '%');
+            });
+        })
+        ->when($this->filterPetId, function ($q) {
+            $q->where('pet_id', $this->filterPetId);
+        })
+        ->when($this->filterDate, function ($q) {
+            $q->whereDate('scheduled_at', $this->filterDate);
         })
         ->orderByDesc('scheduled_at')
         ->paginate(10);
 
+        $countsQuery = Appointment::where('client_id', Auth::id())
+            ->when($this->searchProvider, function ($q) {
+                $q->whereHas('provider', function($qp) {
+                    $qp->where('name', 'like', '%' . $this->searchProvider . '%');
+                });
+            })
+            ->when($this->filterPetId, function ($q) {
+                $q->where('pet_id', $this->filterPetId);
+            })
+            ->when($this->filterDate, function ($q) {
+                $q->whereDate('scheduled_at', $this->filterDate);
+            });
+
         $counts = [
-            'all'       => Appointment::where('client_id', Auth::id())->count(),
-            'pending'   => Appointment::where('client_id', Auth::id())->where('status', 'pending')->count(),
-            'confirmed' => Appointment::where('client_id', Auth::id())->where('status', 'confirmed')->count(),
-            'completed' => Appointment::where('client_id', Auth::id())->where('status', 'completed')->count(),
-            'cancelled' => Appointment::where('client_id', Auth::id())->where('status', 'cancelled')->count(),
+            'all'             => (clone $countsQuery)->count(),
+            'pending'         => (clone $countsQuery)->where('status', 'pending')->count(),
+            'confirmed'       => (clone $countsQuery)->where('status', 'confirmed')->count(),
+            'completed'       => (clone $countsQuery)->where('status', 'completed')->count(),
+            'cancelled'       => (clone $countsQuery)->where('status', 'cancelled')->count(),
+            'payment_pending' => (clone $countsQuery)->whereIn('status', ['confirmed', 'completed'])
+                                                    ->whereHas('payment', function($qp) {
+                                                        $qp->whereIn('status', ['pending', 'failed']);
+                                                    })->count(),
         ];
 
-        return view('livewire.dashboard.client-appointments', compact('appointments', 'counts'))
+        $pets = Auth::user()->pets;
+
+        return view('livewire.dashboard.client-appointments', compact('appointments', 'counts', 'pets'))
             ->layout('components.layouts.app');
     }
 }

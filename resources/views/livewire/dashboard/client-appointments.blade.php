@@ -25,7 +25,7 @@
 
         <!-- Tabs de estado -->
         <div class="flex gap-2 mb-6 flex-wrap">
-            @foreach(['all' => 'Todas', 'pending' => 'Pendientes', 'confirmed' => 'Confirmadas', 'completed' => 'Completadas', 'cancelled' => 'Canceladas'] as $status => $label)
+            @foreach(['all' => 'Todas', 'pending' => 'Pendientes', 'confirmed' => 'Confirmadas', 'completed' => 'Completadas', 'cancelled' => 'Canceladas', 'payment_pending' => 'Por Pagar'] as $status => $label)
                 @php
                     $badge = $counts[$status] ?? null;
                     $isActive = $filterStatus === $status;
@@ -33,14 +33,60 @@
                 <button wire:click="$set('filterStatus', '{{ $status }}')"
                     class="px-4 py-2 rounded-lg text-sm font-semibold border transition
                         {{ $isActive
-                            ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}">
+                            ? ($status === 'payment_pending' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-primary-600 text-white border-primary-600 shadow-sm')
+                            : ($status === 'payment_pending' && $badge > 0
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/70'
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50') }}">
                     {{ $label }}
                     @if($badge !== null && $badge > 0)
-                        <span class="ml-1.5 {{ $isActive ? 'bg-white text-primary-700' : 'bg-gray-100 text-gray-700' }} text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $badge }}</span>
+                        <span class="ml-1.5 {{ $isActive ? ($status === 'payment_pending' ? 'text-amber-700 bg-white' : 'text-primary-700 bg-white') : ($status === 'payment_pending' ? 'bg-amber-200 text-amber-900' : 'bg-gray-100 text-gray-700') }} text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $badge }}</span>
                     @endif
                 </button>
             @endforeach
+        </div>
+
+        <!-- Filtros y Búsqueda Premium -->
+        <div class="bg-white rounded-2xl border border-gray-200/80 shadow-sm mb-6 p-5">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <!-- Buscar por Proveedor -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Buscar Proveedor</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" wire:model.live.debounce.300ms="searchProvider" placeholder="Nombre del profesional..." class="w-full pl-9 py-2 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all duration-200 text-sm shadow-sm hover:border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Filtrar por Mascota -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Mascota</label>
+                    <div class="relative group">
+                        <select wire:model.live="filterPetId" class="w-full py-2 px-3 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all duration-200 text-sm shadow-sm cursor-pointer hover:border-gray-300">
+                            <option value="">Todas las Mascotas</option>
+                            @foreach($pets as $pet)
+                                <option value="{{ $pet->id }}">{{ $pet->name }} ({{ $pet->species }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Filtrar por Fecha -->
+                <div class="flex gap-2 items-end">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Fecha de Cita</label>
+                        <input type="date" wire:model.live="filterDate" class="w-full py-2 px-3 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary-100 focus:border-primary-500 transition-all duration-200 text-sm shadow-sm hover:border-gray-300">
+                    </div>
+                    @if($searchProvider || $filterPetId || $filterDate)
+                        <button wire:click="resetFilters" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition shadow-sm text-xs font-bold shrink-0" title="Limpiar Filtros">
+                            Limpiar
+                        </button>
+                    @endif
+                </div>
+            </div>
         </div>
 
         <!-- Lista de citas -->
@@ -69,7 +115,7 @@
                                  class="w-12 h-12 rounded-full object-cover shrink-0" alt="{{ $apt->provider->name }}">
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <a href="{{ route('profile.show', $apt->provider->id) }}" class="font-bold text-gray-900 text-base hover:text-primary-600 transition">
+                                    <a href="{{ $apt->provider->profileUrl() }}" class="font-bold text-gray-900 text-base hover:text-primary-600 transition">
                                         {{ $apt->provider->name }}
                                     </a>
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
@@ -183,7 +229,7 @@
 
                             <!-- Acciones -->
                             <div class="flex gap-2 items-center">
-                                @if($apt->status === 'confirmed' && $apt->payment && in_array($apt->payment->status, ['pending', 'failed']))
+                                @if(in_array($apt->status, ['confirmed', 'completed']) && $apt->payment && in_array($apt->payment->status, ['pending', 'failed']))
                                     <button wire:click="openPaymentModal({{ $apt->id }})"
                                         class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition">
                                         Pagar Cita (S/ {{ number_format($apt->payment->amount, 2) }})
@@ -208,6 +254,23 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Banner de Pago Requerido/Pendiente -->
+                    @if(in_array($apt->status, ['confirmed', 'completed']) && $apt->payment && in_array($apt->payment->status, ['pending', 'failed']))
+                        <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_2px_4px_rgba(217,119,6,0.03)]">
+                            <div class="flex items-start gap-2.5 text-amber-800">
+                                <span class="text-lg leading-none mt-0.5">⚠️</span>
+                                <div>
+                                    <h5 class="font-extrabold text-amber-900 text-sm">Monto Pendiente de Pago</h5>
+                                    <p class="mt-0.5 text-xs text-amber-700 leading-relaxed font-medium">Esta cita está {{ $apt->status === 'completed' ? 'completada' : 'confirmada' }} pero el pago aún no se ha completado. Por favor, selecciona "Pagar Ahora" para ver las opciones de Yape o Plin.</p>
+                                </div>
+                            </div>
+                            <button wire:click="openPaymentModal({{ $apt->id }})"
+                                class="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-lg shadow-sm transition hover:scale-[1.02] flex items-center justify-center gap-1.5">
+                                💳 Pagar Ahora (S/ {{ number_format($apt->payment->amount, 2) }})
+                            </button>
+                        </div>
+                    @endif
 
                     <!-- Modal de confirmación de cancelación -->
                     <div x-show="confirmingCancel" x-transition class="mt-4 bg-red-50 border border-red-200 rounded-xl p-4" style="display: none;">
@@ -296,89 +359,107 @@
 
                                 <!-- Métodos de pago selector -->
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Selecciona método de pago</label>
-                                    <div class="grid grid-cols-3 gap-3">
-                                        <!-- Culqi (Tarjeta) -->
-                                        <label class="flex flex-col items-center justify-center p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition"
-                                            :class="localPaymentMethod === 'culqi' ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200'">
-                                            <input type="radio" name="payment_method_sel" wire:model.live="paymentMethod" value="culqi" class="sr-only">
-                                            <span class="text-indigo-600 mb-1.5 shrink-0" title="Tarjeta">
-                                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <rect width="20" height="14" x="2" y="5" rx="2" />
-                                                    <path d="M2 10h20" />
-                                                </svg>
-                                            </span>
-                                            <span class="text-xs font-bold text-gray-900">Tarjeta</span>
-                                        </label>
-
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Selecciona método de pago</label>
+                                    <div class="grid grid-cols-2 gap-3">
                                         <!-- Yape -->
-                                        <label class="flex flex-col items-center justify-center p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition"
-                                            :class="localPaymentMethod === 'yape' ? 'border-purple-500 bg-purple-50/30' : 'border-gray-200'">
+                                        <label class="flex flex-col items-center justify-center p-3 border rounded-xl cursor-pointer transition duration-200 select-none shadow-sm"
+                                            :class="localPaymentMethod === 'yape' ? 'border-purple-600 bg-purple-50/40 text-purple-900 shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50/50 text-gray-500 hover:text-gray-700'">
                                             <input type="radio" name="payment_method_sel" wire:model.live="paymentMethod" value="yape" class="sr-only">
-                                            <span class="text-xl mb-1">📱</span>
-                                            <span class="text-xs font-bold text-gray-900">Yape</span>
+                                            <span class="text-xl mb-1 filter drop-shadow-sm">🟣</span>
+                                            <span class="text-xs font-black">Yape</span>
                                         </label>
 
                                         <!-- Plin -->
-                                        <label class="flex flex-col items-center justify-center p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition"
-                                            :class="localPaymentMethod === 'plin' ? 'border-teal-500 bg-teal-50/30' : 'border-gray-200'">
+                                        <label class="flex flex-col items-center justify-center p-3 border rounded-xl cursor-pointer transition duration-200 select-none shadow-sm"
+                                            :class="localPaymentMethod === 'plin' ? 'border-teal-600 bg-teal-50/40 text-teal-900 shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50/50 text-gray-500 hover:text-gray-700'">
                                             <input type="radio" name="payment_method_sel" wire:model.live="paymentMethod" value="plin" class="sr-only">
-                                            <span class="text-xl mb-1">📱</span>
-                                            <span class="text-xs font-bold text-gray-900">Plin</span>
+                                            <span class="text-xl mb-1 filter drop-shadow-sm">🟢</span>
+                                            <span class="text-xs font-black">Plin</span>
                                         </label>
                                     </div>
                                 </div>
 
                                 <!-- Secciones específicas por método -->
-                                <div x-show="localPaymentMethod === 'culqi'" class="space-y-4 pt-2">
-                                    <div class="bg-gray-50 p-4 rounded-xl border text-center">
-                                        <p class="text-sm text-gray-600 mb-4">Paga de forma rápida y segura usando cualquier tarjeta de crédito o débito a través de Culqi.</p>
-                                        <button id="btn-pay-culqi" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-2">
-                                            <span>Pagar con Tarjeta</span>
-                                        </button>
-                                    </div>
-                                </div>
-
                                 <div x-show="localPaymentMethod === 'yape'" class="space-y-4 pt-2" style="display: none;">
-                                    <div class="bg-purple-50/40 p-4 rounded-xl border border-purple-100 space-y-3">
-                                        <div class="text-center font-bold text-purple-900 text-sm">Escanea el QR o yapea al número:</div>
-                                        <div class="flex flex-col items-center gap-2">
+                                    <div class="bg-purple-50/40 p-5 rounded-2xl border border-purple-100 space-y-4">
+                                        <div class="flex items-center gap-2 text-purple-900 font-extrabold text-sm border-b border-purple-100/50 pb-2">
+                                            <span>🟣</span>
+                                            <span>Pagar con Yape</span>
+                                        </div>
+                                        <div class="flex flex-col items-center gap-3">
                                             @if($selectedAppointment->provider->yape_qr_path)
-                                                <img src="{{ \Illuminate\Support\Facades\Storage::url($selectedAppointment->provider->yape_qr_path) }}" class="h-40 w-40 object-contain rounded-xl border shadow-sm bg-white">
+                                                <div class="p-2.5 bg-white rounded-xl shadow-sm border border-purple-100/50">
+                                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($selectedAppointment->provider->yape_qr_path) }}" class="h-40 w-40 object-contain">
+                                                </div>
+                                                <span class="text-[10px] text-purple-600 font-extrabold tracking-wide uppercase">1. Escanea este código QR en tu app Yape</span>
                                             @else
-                                                <div class="p-4 border border-dashed rounded-lg text-xs text-gray-400 italic bg-white">El proveedor no subió QR</div>
+                                                <div class="p-4 border border-dashed border-purple-200 rounded-xl text-xs text-purple-600 italic bg-white text-center w-full">
+                                                    El proveedor no registró su código QR de Yape.
+                                                </div>
                                             @endif
-                                            <div class="text-base font-black text-gray-900">
-                                                Número Yape: {{ $selectedAppointment->provider->yape_number ?? 'No registrado' }}
+                                            
+                                            <div class="bg-white rounded-xl px-4 py-2.5 border border-purple-100 w-full text-center shadow-sm">
+                                                <span class="block text-[9px] text-gray-400 font-bold uppercase tracking-wider">Número de Celular</span>
+                                                <span class="text-lg font-black text-purple-950">{{ $selectedAppointment->provider->yape_number ?? 'No registrado' }}</span>
                                             </div>
+                                            <span class="text-[10px] text-purple-600 font-extrabold tracking-wide uppercase">2. O yapea al número del proveedor</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div x-show="localPaymentMethod === 'plin'" class="space-y-4 pt-2" style="display: none;">
-                                    <div class="bg-teal-50/40 p-4 rounded-xl border border-teal-100 space-y-3">
-                                        <div class="text-center font-bold text-teal-900 text-sm">Escanea el QR o realiza Plin al número:</div>
-                                        <div class="flex flex-col items-center gap-2">
+                                    <div class="bg-teal-50/40 p-5 rounded-2xl border border-teal-100 space-y-4">
+                                        <div class="flex items-center gap-2 text-teal-900 font-extrabold text-sm border-b border-teal-100/50 pb-2">
+                                            <span>🟢</span>
+                                            <span>Pagar con Plin</span>
+                                        </div>
+                                        <div class="flex flex-col items-center gap-3">
                                             @if($selectedAppointment->provider->plin_qr_path)
-                                                <img src="{{ \Illuminate\Support\Facades\Storage::url($selectedAppointment->provider->plin_qr_path) }}" class="h-40 w-40 object-contain rounded-xl border shadow-sm bg-white">
+                                                <div class="p-2.5 bg-white rounded-xl shadow-sm border border-teal-100/50">
+                                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($selectedAppointment->provider->plin_qr_path) }}" class="h-40 w-40 object-contain">
+                                                </div>
+                                                <span class="text-[10px] text-teal-600 font-extrabold tracking-wide uppercase">1. Escanea este código QR desde tu app financiera</span>
                                             @else
-                                                <div class="p-4 border border-dashed rounded-lg text-xs text-gray-400 italic bg-white">El proveedor no subió QR</div>
+                                                <div class="p-4 border border-dashed border-teal-200 rounded-xl text-xs text-teal-600 italic bg-white text-center w-full">
+                                                    El proveedor no registró su código QR de Plin.
+                                                </div>
                                             @endif
-                                            <div class="text-base font-black text-gray-900">
-                                                Número Plin: {{ $selectedAppointment->provider->plin_number ?? 'No registrado' }}
+                                            
+                                            <div class="bg-white rounded-xl px-4 py-2.5 border border-teal-100 w-full text-center shadow-sm">
+                                                <span class="block text-[9px] text-gray-400 font-bold uppercase tracking-wider">Número de Celular</span>
+                                                <span class="text-lg font-black text-teal-950">{{ $selectedAppointment->provider->plin_number ?? 'No registrado' }}</span>
                                             </div>
+                                            <span class="text-[10px] text-teal-600 font-extrabold tracking-wide uppercase">2. O realiza Plin al número del proveedor</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Formulario de subida de recibo para Yape/Plin -->
-                                <div x-show="localPaymentMethod === 'yape' || localPaymentMethod === 'plin'" class="space-y-3" style="display: none;">
-                                    <div class="border-t pt-3">
-                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Comprobante de Pago</label>
+                                <div x-show="localPaymentMethod === 'yape' || localPaymentMethod === 'plin'" class="space-y-4" style="display: none;">
+                                    <div class="border-t border-gray-100 pt-4">
+                                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Comprobante de Pago</label>
                                         <div class="flex flex-col gap-2">
-                                            <input type="file" wire:model.live="receiptPhoto" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200">
+                                            <div class="flex items-center justify-center w-full">
+                                                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all duration-200">
+                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <svg class="w-8 h-8 mb-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                        <p class="text-xs text-gray-500 font-extrabold">Sube la captura del comprobante</p>
+                                                        <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, JPEG (máx. 10MB)</p>
+                                                    </div>
+                                                    <input type="file" wire:model.live="receiptPhoto" class="hidden">
+                                                </label>
+                                            </div>
                                             @error('receiptPhoto') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
                                             
+                                            @if($receiptPhoto)
+                                                <div class="mt-1 flex items-center justify-between p-2.5 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-xs font-semibold">
+                                                    <span class="truncate pr-4">📸 {{ $receiptPhoto->getClientOriginalName() }}</span>
+                                                    <span class="text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0">Cargado</span>
+                                                </div>
+                                            @endif
+
                                             <div wire:loading wire:target="receiptPhoto" class="text-xs text-primary-600 font-semibold mt-1">
                                                 Cargando imagen...
                                             </div>
@@ -386,11 +467,11 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Código de Operación (Opcional)</label>
-                                        <input type="text" wire:model="operationCode" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="Ej: 123456">
+                                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Código de Operación (Opcional)</label>
+                                        <input type="text" wire:model="operationCode" class="w-full rounded-xl border-gray-200 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm text-sm" placeholder="Ej: 123456">
                                     </div>
 
-                                    <button wire:click="submitManualPayment" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg shadow-sm transition">
+                                    <button wire:click="submitManualPayment" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition duration-250">
                                         Enviar Comprobante
                                     </button>
                                 </div>

@@ -268,4 +268,26 @@ class User extends Authenticatable implements MustVerifyEmail
             ];
         }
     }
+
+    public function minServicePrice(): float
+    {
+        return (float) ($this->services()->min('price') ?? 0.0);
+    }
+
+    public function syncProfilesPriceFrom(): void
+    {
+        $minPrice = $this->minServicePrice();
+        foreach ($this->getActiveProviderProfiles() as $profile) {
+            $profile->update(['price_from' => $minPrice > 0 ? $minPrice : null]);
+        }
+    }
+
+    public function profileUrl($role = null): string
+    {
+        $params = ['id' => \Illuminate\Support\Str::slug($this->name) . '-' . $this->id];
+        if ($role) {
+            $params['role'] = $role;
+        }
+        return route('profile.show', $params);
+    }
 }

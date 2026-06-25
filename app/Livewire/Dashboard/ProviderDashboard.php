@@ -116,6 +116,7 @@ class ProviderDashboard extends Component
     public string $activeTab = 'profile';
 
     // Citas (gestionadas inline en la sección 'appointments')
+    #[Url(as: 'status')]
     public string $filterStatus = 'pending';
     public string $searchQuery = '';
     public string $dateFilter = 'all'; // all | today | tomorrow | this_week | custom
@@ -173,11 +174,17 @@ class ProviderDashboard extends Component
         }
     }
 
+    public function viewCitasWithFilter(string $status): void
+    {
+        $this->filterStatus = $status;
+        $this->resetPage();
+        $this->switchSection('appointments');
+    }
+
     protected function rules()
     {
         $rules = [
             'bio' => 'nullable|string|max:1000',
-            'price_from' => 'nullable|numeric|min:0',
             'website_url' => 'nullable|url',
             'facebook_url' => 'nullable|url',
             'instagram_url' => 'nullable|url',
@@ -789,6 +796,13 @@ class ProviderDashboard extends Component
 
     public function save()
     {
+        if (empty($this->district_id)) {
+            $this->addError('district_id', 'Debes seleccionar tu ubicación (Distrito) en la pestaña Perfil y Contacto antes de guardar.');
+            $this->dispatch('notify', message: 'Falta completar tu ubicación en el perfil.', type: 'error');
+            $this->activeTab = 'profile';
+            return;
+        }
+
         $this->validate();
 
         $data = [
@@ -799,7 +813,6 @@ class ProviderDashboard extends Component
             'whatsapp_number' => $this->whatsapp_number,
             'availability' => $this->availability,
             'district_id' => $this->district_id,
-            'price_from' => $this->price_from ?: null,
             'latitude' => $this->latitude ?: null,
             'longitude' => $this->longitude ?: null,
         ];
@@ -909,6 +922,8 @@ class ProviderDashboard extends Component
            $this->uploadVerificationDocument();
         }
 
+        $this->user->syncProfilesPriceFrom();
+        $this->loadProfile();
         $this->calculateCompleteness();
 
         $this->dispatch('notify', message: '¡Perfil actualizado correctamente! ✓', type: 'success');
@@ -1019,6 +1034,7 @@ class ProviderDashboard extends Component
 
         $this->resetServiceForm();
         $this->loadServices();
+        $this->user->syncProfilesPriceFrom();
         $this->calculateCompleteness();
     }
 
@@ -1041,6 +1057,7 @@ class ProviderDashboard extends Component
         if ($service) {
             $service->delete();
             $this->loadServices();
+            $this->user->syncProfilesPriceFrom();
             $this->calculateCompleteness();
             $this->dispatch('notify', message: 'Servicio eliminado del catálogo.', type: 'info');
         }
@@ -1198,7 +1215,20 @@ class ProviderDashboard extends Component
         if ($this->mainSection === 'appointments') {
             $appointmentsList = \App\Models\Appointment::with(['client', 'pet', 'services', 'payment'])
                 ->where('provider_id', $this->user->id)
-                ->when($this->filterStatus !== 'all', fn($q) => $q->where('status', $this->filterStatus))
+                ->when($this->filterStatus !== 'all', function ($q) {
+                    if ($this->filterStatus === 'payment_pending') {
+                        return $q->whereIn('status', ['confirmed', 'completed'])
+                                 ->whereHas('payment', function($qp) {
+                                     $qp->whereIn('status', ['pending', 'failed']);
+                                 });
+                    }
+                    if ($this->filterStatus === 'payment_under_review') {
+                        return $q->whereHas('payment', function($qp) {
+                            $qp->where('status', 'under_review');
+                        });
+                    }
+                    return $q->where('status', $this->filterStatus);
+                })
                 ->when($this->searchQuery !== '', function($q) {
                     $q->where(fn($sub) => $sub
                         ->whereHas('client', fn($c) => $c->where('name', 'like', '%' . $this->searchQuery . '%')

@@ -22,9 +22,6 @@ Route::get('/servicios/{serviceType}/{districtName?}', \App\Livewire\Pages\Searc
 Route::get('/perfil/{id}', \App\Livewire\Pages\Profile::class)->name('profile.show');
 Route::get('/p/{uuid}', \App\Livewire\Pages\PetProfile::class)->name('pet.profile');
 
-
-
-
 // Rutas Protegidas (Requieren Login)
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {

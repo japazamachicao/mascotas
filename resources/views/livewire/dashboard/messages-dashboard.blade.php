@@ -97,7 +97,7 @@
                     </div>
                     <div>
                         @if($activeContact->hasAnyRole(['veterinarian', 'walker', 'groomer', 'hotel', 'shelter', 'trainer', 'pet_sitter', 'pet_taxi', 'pet_photographer']))
-                            <a href="{{ route('profile.show', $activeContact->id) }}" target="_blank" 
+                            <a href="{{ $activeContact->profileUrl() }}" target="_blank" 
                                class="text-xs font-bold text-gray-500 hover:text-primary-600 transition flex items-center gap-1 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-primary-200 bg-gray-50/50">
                                 Ver Perfil
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>

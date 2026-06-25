@@ -18,7 +18,7 @@
 
         <!-- Tabs de estado -->
         <div class="flex gap-2 mb-6 flex-wrap">
-            @foreach(['pending' => 'Pendientes', 'confirmed' => 'Confirmadas', 'completed' => 'Completadas', 'cancelled' => 'Canceladas', 'all' => 'Todas'] as $status => $label)
+            @foreach(['pending' => 'Pendientes', 'confirmed' => 'Confirmadas', 'completed' => 'Completadas', 'cancelled' => 'Canceladas', 'payment_pending' => 'Pagos Pendientes', 'payment_under_review' => 'Por Revisar', 'all' => 'Todas'] as $status => $label)
                 @php
                     $badge = $counts[$status] ?? null;
                     $isActive = $filterStatus === $status;
@@ -26,11 +26,15 @@
                 <button wire:click="$set('filterStatus', '{{ $status }}')"
                     class="px-4 py-2 rounded-lg text-sm font-semibold border transition
                         {{ $isActive
-                            ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}">
+                            ? ($status === 'payment_under_review' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : ($status === 'payment_pending' ? 'bg-amber-600 text-white border-amber-600 shadow-sm' : 'bg-primary-600 text-white border-primary-600 shadow-sm'))
+                            : ($status === 'payment_under_review' && $badge > 0
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100/70'
+                                : ($status === 'payment_pending' && $badge > 0
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/70'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50')) }}">
                     {{ $label }}
                     @if($badge !== null && $badge > 0)
-                        <span class="ml-1.5 {{ $isActive ? 'bg-white text-primary-700' : 'bg-gray-100 text-gray-700' }} text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $badge }}</span>
+                        <span class="ml-1.5 {{ $isActive ? ($status === 'payment_under_review' ? 'bg-white text-indigo-700' : ($status === 'payment_pending' ? 'bg-white text-amber-700' : 'bg-white text-primary-750')) : ($status === 'payment_under_review' ? 'bg-indigo-200 text-indigo-900' : ($status === 'payment_pending' ? 'bg-amber-200 text-amber-900' : 'bg-gray-150 text-gray-700')) }} text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $badge }}</span>
                     @endif
                 </button>
             @endforeach
